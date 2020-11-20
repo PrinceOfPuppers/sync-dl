@@ -3,8 +3,8 @@ import logging
 import re
 import shelve
 
-from ytdlWrappers import getIDs, downloadID
-from helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,showMetaData
+from ytdlWrappers import getIDs
+from helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,showMetaData,rename,download
 import config as cfg
 
 def _checkDeletions(cwd):
@@ -30,7 +30,7 @@ def _checkDeletions(cwd):
         if numDeleted > 0:
             logging.info(f"songs numbered {deleted} are no longer in playlist")
 
-            numDidgets = len(str( len(metaData["ids"]) - numDeleted )) + 1
+            numDidgets = len(str( len(metaData["ids"]) - numDeleted ))
             newIndex = 0
 
             for newIndex, oldIndex in enumerate(currentDirNums):
@@ -66,13 +66,16 @@ def _checkDeletions(cwd):
                 del metaData["ids"][index - removedAlready]
                 del deleted[0]
 
-
-
-
-
+def _checkBlanks(cwd):
+    with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        for i,songId in metaData["ids"]:
+            if songId == '':
+                del metaData["ids"][i]
 
 def correctStateCorruption(cwd):
+    logging.info("Checking for playlist state Corruption")
     _checkDeletions(cwd)
+    _checkBlanks(cwd)
 
 
 
@@ -87,7 +90,7 @@ def editPlaylist(cwd, newOrder):
 
     currentDir = getLocalSongs(cwd)
 
-    numDidgets = len(str(len(newOrder))) + 1 #needed for creating starting number for auto ordering ie) 001, 0152
+    numDidgets = len(str(len(newOrder))) #needed for creating starting number for auto ordering ie) 001, 0152
 
     with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
@@ -101,15 +104,7 @@ def editPlaylist(cwd, newOrder):
                 # must download new song
                 num = createNumLabel(i,numDidgets)
                 
-                logging.info(f"Dowloading song Id to {newId}")
-                downloadID(newId,cwd,num)
-
-                if i >= len(metaData["ids"]):
-                    metaData["ids"].append(newId)
-                else:
-                    metaData["ids"][i] = newId
-
-                logging.info("Download Complete")
+                download(metaData,logging.info,cwd,num,newId,i)
 
             else:
                 #song exists locally, but must be reordered/renamed
@@ -128,30 +123,10 @@ def editPlaylist(cwd, newOrder):
                     # into the posistion that the other once had)
                     pass
                 
-                
-                logging.info(f"Renaming {oldName} to {newName}")
-                os.rename(f"{cwd}/{oldName}",f"{cwd}/{newName}")
+                rename(metaData,logging.info,cwd,oldName,newName,i,newId)
 
-                if i >= len(metaData["ids"]):
-                    metaData["ids"].append(newId)
-                else:
-                    metaData["ids"][i] = newId
-
-                logging.info("Renaming Complete")
     
 
 
     #TODO Deletions? ie if old order contains songs which arent in new order, likley should also ask for permission
     # check if song actually exists
-
-    
-
-
-
-
-
-
-
-
-
-

@@ -3,6 +3,7 @@ import json
 import re
 
 import config as cfg
+from ytdlWrappers import downloadID
 
 def showMetaData(metaData, printer,urlWithoutId = None):
     '''
@@ -18,7 +19,28 @@ def showMetaData(metaData, printer,urlWithoutId = None):
             url = f"{urlWithoutId}{songId}"
             printer(url)
 
-    
+
+def rename(metaData, printer, cwd, oldName, newName, index, newId):
+    printer(f"Renaming {oldName} to {newName}")
+    os.rename(f"{cwd}/{oldName}",f"{cwd}/{newName}")
+
+    if index >= len(metaData["ids"]):
+        metaData["ids"].append(newId)
+    else:
+        metaData["ids"][index] = newId
+
+    printer("Renaming Complete")
+
+def download(metaData, printer,cwd, num, newId, index):
+    printer(f"Dowloading song Id {newId}")
+    downloadID(newId,cwd,num)
+
+    if index >= len(metaData["ids"]):
+        metaData["ids"].append(newId)
+    else:
+        metaData["ids"][index] = newId
+
+    printer("Download Complete")
 
 def createNumLabel(n,numDigets):
     n = str(n)

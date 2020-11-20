@@ -2,10 +2,12 @@ import os
 import logging
 from sys import argv
 import shelve
+import re
+import ntpath
 
 from ytdlWrappers import getIDs, downloadID
 from plManagement import editPlaylist, correctStateCorruption
-from helpers import createNumLabel, smartSyncNewOrder,showMetaData
+from helpers import createNumLabel, smartSyncNewOrder,showMetaData, getLocalSongs, rename
 import config as cfg
 
 def newPlaylist(cwd,url):
@@ -17,7 +19,7 @@ def newPlaylist(cwd,url):
 
 
     ids = getIDs(url)
-    numDidgets = len(str(len(ids))) + 1 #needed for creating starting number for auto ordering ie) 001, 0152
+    numDidgets = len(str(len(ids))) #needed for creating starting number for auto ordering ie) 001, 0152
 
     with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         metaData["url"] = url
@@ -85,6 +87,44 @@ def hardSync():
 
 def appendNew():
     '''will append new songs in remote playlist to local playlist in order that they appear'''
+
+def manualAdd(cwd, path, posistion):
+    '''put song at path in posistion "posisiton" in the playlist'''
+
+    correctStateCorruption(cwd)
+
+    currentDir = getLocalSongs(cwd)
+
+    with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+
+        idsLen = len(metaData["ids"])
+        numDidgets = len(str( idsLen + 1 ))
+
+        #clamp posistion
+        if posistion > idsLen:
+            posistion = idsLen
+        elif posistion < 0:
+            posistion = 0
+
+        #shifting elements
+        for i in reversed(range(posistion, idsLen)):
+            oldName = currentDir[i]
+
+            newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i+1,numDidgets)}_" , oldName)
+
+            rename(metaData,logging.info,cwd,oldName,newName,i+1,metaData["ids"][i])
+
+            metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
+
+
+        newSongName = f"{createNumLabel(i+1,numDidgets)}_" + ntpath.basename(path)
+
+        rename(metaData,logging.info,cwd,path,newSongName,posistion,metaData["ids"][i])
+
+    
+
+
+
 
 
 
