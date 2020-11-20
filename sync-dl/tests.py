@@ -83,5 +83,6 @@ class test_smartSyncNewOrder(unittest.TestCase):
         result = smartSyncNewOrder(localIds,remoteIds)
         self.assertEqual(result,correct)
 
+
 if __name__ == "__main__":
     unittest.main()

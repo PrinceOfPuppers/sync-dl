@@ -1,33 +1,69 @@
 import os
 import json
+import re
+
+import config as cfg
+
+def showMetaData(metaData, printer,urlWithoutId = None):
+    '''
+    printer can be print or some level of logging
+    urlWithoutId is added if you wish to print out all full urls
+    '''
+    for item in metaData.items():
+        printer(f"{item[0]}: {item[1]}")
+    
+    if urlWithoutId != None:
+        printer(f"\n Links:")
+        for songId in metaData['ids']:
+            url = f"{urlWithoutId}{songId}"
+            printer(url)
+
+    
+
 def createNumLabel(n,numDigets):
+    n = str(n)
     lenN = len(n)
     if lenN>numDigets:
         raise Exception(f"Number Label Too large! Expected {numDigets} but got {lenN} digets")
 
     return (numDigets-lenN)*"0"+n
 
-def loadJson(path,name):
-    if not os.path.exists(f"{path}/{name}"):
-        open(f"{path}/{name}", 'a').close()
 
-    with open(f"{path}/{name}") as f:
-        return json.load(f)
+def sortByNum(element):
+    '''
+    returns the number in front of each song file
+    '''
+    match = re.match(cfg.filePrependRE,element)
 
-def atomicWriteJson(jsonDict,path,name):
-        if os.path.exists(f"{path}/tmp.json"):
-            raise Exception("Temp File Already Exists")
+    return int(match.group()[:-1])
 
-        with open(f"{path}/tmp.json","w+") as f:
-            json.dump(jsonDict,f)
-        
-        os.rename(f"{path}/tmp.json",f"{path}/{name}")
+def filterFunc(element):
+    '''
+    returns false for any string not preceded by some number followed by an underscore
+    used for filtering non song files
+    '''
+    match = re.match(cfg.filePrependRE,element)
+    if match:
+        return True
+    
+    return False
 
+
+def getLocalSongs(cwd):
+    '''
+    returns sanatized list of all songs in local playlist, in order
+    '''
+    currentDir = os.listdir(path=cwd) 
+    currentDir = sorted(filter(filterFunc,currentDir), key= sortByNum) #sorted and sanitized dir
+    return currentDir
 
 def smartSyncNewOrder(localIds,remoteIds):
-    '''used by smartSync, localIds will not be mutated but remtoeIds will'''
-    newOrder=[] #list of tuples ( Id of song, where to find it )
-            #the where to find it is the number in the old ordering (None if song is to be downloaded)
+    '''
+    used by smartSync, localIds will not be mutated but remtoeIds will
+    output is newOrder, a list of tuples ( Id of song, where to find it )
+    the "where to find it" is the number in the old ordering (None if song is to be downloaded)
+    '''
+    newOrder=[]
 
     localIdPairs = [(localIds[index],index) for index in range(len(localIds))] #contins ( Id of song, local order )
 
@@ -52,8 +88,6 @@ def smartSyncNewOrder(localIds,remoteIds):
         elif localId not in remoteIds:
             # current local song has been removed from remote playlist, it must remain in current order
             newOrder.append( localIdPairs.pop(0) )
-        
-
 
         
         # at this point the current local song and remote song arent the same, but the current local

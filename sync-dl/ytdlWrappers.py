@@ -1,5 +1,6 @@
 import youtube_dl
 import os
+import logging
 
 #ids are the unique part of each videos url
 def getIDs(playlistUrl):
@@ -20,4 +21,5 @@ def downloadID(videoId,path,number):
         os.system(f"youtube-dl --no-playlist -x -f bestaudio --add-metadata --output '{path}/{number}_%(title)s.%(ext)s' {url}")
         return True
     except:
+        logging.info(f"song at {url} is unavalible")
         return False

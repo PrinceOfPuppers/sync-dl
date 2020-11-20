@@ -1,84 +1,157 @@
 import os
-
+import logging
+import re
+import shelve
 
 from ytdlWrappers import getIDs, downloadID
-from helpers import createNumLabel, loadJson, atomicWriteJson, smartSyncNewOrder
+from helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,showMetaData
 import config as cfg
 
-def newPlaylist(cwd,name,url):
-    if name in os.listdir(path=f"{cwd}"):
-        print("Directory Is Not Empty, Cannot Make Playlist Here")
-        return
-
-
-    ids = getIDs(url)
-    numDidgets = len(str(len(ids))) + 1 #needed for creating starting number for auto ordering ie) 001, 0152
-
-    metaData = loadJson(cwd,cfg.metaDataName)
-    metaData["url"] = url
-    metaData["labelDigets"] = numDidgets
-
-    metaData["ids"] = []
-
-
-    for i,vidId in enumerate(ids):
-        num = createNumLabel(i,numDidgets)
-        downloadID(vidId,cwd,num)
-        metaData["ids"].append(vidId)
-
-    atomicWriteJson(metaData,cwd,cfg.metaDataName)
-
-
-
-
-
-def smartSync(cwd):
+def _checkDeletions(cwd):
     '''
-    Syncs to remote playlist however will Not delete local songs (will reorder). Songs not in remote (ie ones deleted) 
-    will be after the song they are currently after in local
-    Example 1
-        Local order: A B C D 
-        Remote order: A 1 B C 2
+    checks if metadata has songs that are no longer in directory
+    '''
+    currentDir = getLocalSongs(cwd)
 
-        Local becomes: A 1 B C D 2
+    #song numbers in currentDir
+    currentDirNums = [int(re.match(cfg.filePrependRE,song).group()[:-1]) for song in currentDir]
 
-        notice D was removed from remote but is still after C in Local
-    
-    Example 2
-        Local order: A B C D 
-        Remote order: A 1 C B 2
+    with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
-        Local becomes: A 1 C D B 2
 
-        notice C and B where swapped and D was deleted from Remote
-    
-    see test_smartSyncNewOrder in tests.py for more examples
+        numRange = range(len(metaData['ids']))
+
+        #difference between whats in the folder and whats in metadata
+        deleted = [i for i in numRange if i not in currentDirNums]
+        
+
+        numDeleted = len(deleted)
+
+        if numDeleted > 0:
+            logging.info(f"songs numbered {deleted} are no longer in playlist")
+
+            numDidgets = len(str( len(metaData["ids"]) - numDeleted )) + 1
+            newIndex = 0
+
+            for newIndex, oldIndex in enumerate(currentDirNums):
+                print(newIndex,oldIndex)
+                if newIndex != oldIndex:
+                    oldName = currentDir[newIndex]
+                    newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDidgets)}_" , oldName)
+                    logging.info(f"Renaming {oldName} to {newName}")
+                    os.rename(f"{cwd}/{oldName}",f"{cwd}/{newName}")
+
+                    if newIndex in deleted:
+                        # we only remove the deleted entry from metadata when its posistion has been filled
+                        logging.info(f"Removing {metaData['ids'][newIndex]} from metadata")
+
+                        #need to adjust for number already deleted
+                        removedAlready = (numDeleted - len(deleted))
+                        del metaData["ids"][newIndex - removedAlready] #removing via index error
+                        del deleted[0]
+
+                    logging.info("Renaming Complete")
+            
+
+
+            while len(deleted)!=0:
+                index = deleted[0]
+
+                # we remove any remaining deleted entries from metadata 
+                # note even if the program crashed at this point, running this fuction
+                # again would yeild an uncorrupted state
+                removedAlready = (numDeleted - len(deleted))
+                print(index,removedAlready)
+                logging.info(f"Removing {metaData['ids'][index - removedAlready]} from metadata")
+                del metaData["ids"][index - removedAlready]
+                del deleted[0]
+
+
+
+
+
+
+def correctStateCorruption(cwd):
+    _checkDeletions(cwd)
+
+
+
+def editPlaylist(cwd, newOrder):
+    '''
+    metaData is json as defined in newPlaylist
+    newOrder is an ordered list of tuples (Id of song, where to find it )
+    the "where to find it" is the number in the old ordering (None if song is to be downloaded)
     '''
 
-    existingFiles = os.listdir(path=f"{cwd}")
-    if cfg.metaDataName not in existingFiles:
-        print("Current Directory is Not Existing Playlist")
-        return
+    #files will be labled with several numbers then an underscore, followed by the file name
+
+    currentDir = getLocalSongs(cwd)
+
+    numDidgets = len(str(len(newOrder))) + 1 #needed for creating starting number for auto ordering ie) 001, 0152
+
+    with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+
+        logging.info(f"Editing Playlist, \nOld order:\n {metaData['ids']}")
+
+        for i in range(len(newOrder)):
+            newId,oldIndex = newOrder[i]
 
 
-    metaData = loadJson(cwd,cfg.metaDataName)
-    url = metaData["url"]
+            if oldIndex == None: 
+                # must download new song
+                num = createNumLabel(i,numDidgets)
+                
+                logging.info(f"Dowloading song Id to {newId}")
+                downloadID(newId,cwd,num)
 
-    remoteIds = getIDs(url)
-    localIds = metaData["ids"]
+                if i >= len(metaData["ids"]):
+                    metaData["ids"].append(newId)
+                else:
+                    metaData["ids"][i] = newId
+
+                logging.info("Download Complete")
+
+            else:
+                #song exists locally, but must be reordered/renamed
+
+                if i == oldIndex:
+                    # song is already in correct posisiton
+                    continue
+
+                oldName = currentDir[oldIndex]
+
+                newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i,numDidgets)}_" , oldName)
+
+                if newName in currentDir:
+                    logging.error(f"Naming Conflict {newName}")
+                    #TODO solve this naming conflict possibility (will only occur if 2 different songs have the same name and one is moving
+                    # into the posistion that the other once had)
+                    pass
+                
+                
+                logging.info(f"Renaming {oldName} to {newName}")
+                os.rename(f"{cwd}/{oldName}",f"{cwd}/{newName}")
+
+                if i >= len(metaData["ids"]):
+                    metaData["ids"].append(newId)
+                else:
+                    metaData["ids"][i] = newId
+
+                logging.info("Renaming Complete")
+    
 
 
-    newOrder = smartSyncNewOrder(localIds,remoteIds)    
+    #TODO Deletions? ie if old order contains songs which arent in new order, likley should also ask for permission
+    # check if song actually exists
+
+    
 
 
 
-def hardSync():
-    '''Syncs to remote playlist will delete local songs'''
-
-def appendNew():
-    '''will append new songs in remote playlist to local playlist in order that they appear'''
 
 
-if __name__ == "__main__":
-    #newPlaylist("/home/princeofpuppers/coding/python/pl-sync/test")
-    pass
+
+
+
+
+
