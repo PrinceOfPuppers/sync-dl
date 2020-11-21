@@ -4,7 +4,7 @@ import re
 import shelve
 
 from sync_dl.ytdlWrappers import getIDs
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,showMetaData,rename,download
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,showMetaData,rename,download, delete
 import sync_dl.config as cfg
 
 def _checkDeletions(cwd):
@@ -47,7 +47,7 @@ def _checkDeletions(cwd):
 
                         #need to adjust for number already deleted
                         removedAlready = (numDeleted - len(deleted))
-                        del metaData["ids"][newIndex - removedAlready] #removing via index error
+                        del metaData["ids"][newIndex - removedAlready]
                         del deleted[0]
 
                     logging.info("Renaming Complete")
@@ -86,9 +86,13 @@ def _removeGaps(cwd):
 
 def correctStateCorruption(cwd):
     logging.info("Checking for playlist state Corruption")
-    
+
     _checkBlanks(cwd) # must come first so later steps dont assume blanks are valid when checking len
+
     _checkDeletions(cwd) 
+
+    _removeGaps(cwd) # must come after check deletions (if user manually deletes, then we only have number
+                     # on song to go off of, hence removing gaps by chaning the numbers would break this)
 
 
 def editPlaylist(cwd, newOrder, deletions=False):
@@ -97,13 +101,12 @@ def editPlaylist(cwd, newOrder, deletions=False):
     newOrder is an ordered list of tuples (Id of song, where to find it )
     the "where to find it" is the number in the old ordering (None if song is to be downloaded)
     '''
-    #TODO add deletions
 
     currentDir = getLocalSongs(cwd)
 
+
+
     numDidgets = len(str(len(newOrder))) #needed for creating starting number for auto ordering ie) 001, 0152
-
-
 
     with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
@@ -139,5 +142,21 @@ def editPlaylist(cwd, newOrder, deletions=False):
 
                 logging.info("Renaming Complete")
 
+
+
+    if deletions:
+        oldIndices = [item[1] for item in newOrder]
+        with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            for i in reversed(range(len(currentDir))):
+                if i not in oldIndices:
+                    while True:
+                        answer = input(f"Would you like to Delete {currentDir[i]}? (y)es, (n)o: ")
+
+                        if answer == 'y' or answer == 'Y':
+                            delete(metaData,logging.info,cwd,currentDir[i],i)
+                            break
+
+                        elif answer == 'n' or answer == 'N':
+                            break
     _checkBlanks(cwd)
     _removeGaps(cwd)

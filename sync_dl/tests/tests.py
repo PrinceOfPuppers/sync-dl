@@ -89,7 +89,7 @@ class test_correctStateCorruption(unittest.TestCase):
 class test_editPlaylist(unittest.TestCase):
     
     def test_1(self):
-        name = 'testPl'
+        name = 'editPl1'
 
         songs = ['A' ,'B' ,'C' ,'D'] 
 
@@ -108,9 +108,61 @@ class test_editPlaylist(unittest.TestCase):
         self.assertEqual(result,correct)
 
 
+    def test_2(self):
+        name = 'editPl2'
+
+        songs = ['A' ,'B' ,'C' ,'D','E','F'] 
+
+        createFakePlaylist(name,songs)
+
+        newOrder = [ ('3', 3), ('4',4), ('2',2), ('0',0) ]
+        
+        correct = [ ('3', '0_D'), ('4','1_E'), ('2','2_C'), ('0','3_A') ]
+
+        editPlaylist(f'{cfg.testPlPath}/{name}',newOrder,True)
 
 
+        result = getPlaylistData(name)
 
+        shutil.rmtree(f'{cfg.testPlPath}/{name}')
+        self.assertEqual(result,correct)
+
+    def test_3(self):
+        name = 'editPl3'
+
+        songs = ['A' ,'B' ,'C'] 
+
+        createFakePlaylist(name,songs)
+
+        newOrder = [ ]
+        
+        correct = [ ]
+
+        editPlaylist(f'{cfg.testPlPath}/{name}',newOrder,True)
+
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(f'{cfg.testPlPath}/{name}')
+        self.assertEqual(result,correct)
+    
+    def test_4(self):
+        name = 'editPl3'
+
+        songs = ['A' ,'B' ,'C' ,'D', 'E', 'F', 'G'] 
+
+        createFakePlaylist(name,songs)
+
+        newOrder = [ ('6',6), ('3', 3), ('4',4), ('5',5), ('2',2) ]
+        
+        correct = [ ('6', '0_G'), ('3','1_D'), ('4','2_E'),('5','3_F'), ('2','4_C') ]
+        editPlaylist(f'{cfg.testPlPath}/{name}',newOrder,True)
+
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(f'{cfg.testPlPath}/{name}')
+        self.assertEqual(result,correct)
 
 class test_smartSyncNewOrder(unittest.TestCase):
 

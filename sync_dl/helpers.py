@@ -31,6 +31,14 @@ def rename(metaData, printer, cwd, oldName, newName, index, newId):
 
     printer("Renaming Complete")
 
+def delete(metaData, printer, cwd, name, index):
+    printer(f"Deleting {name}")
+    os.remove(f"{cwd}/{name}")
+
+    del metaData["ids"][index]
+
+    printer("Deleting Complete")
+
 
 
 def download(metaData, printer,cwd, num, newId, index):
