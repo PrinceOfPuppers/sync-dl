@@ -3,9 +3,9 @@ import logging
 import re
 import shelve
 
-from ytdlWrappers import getIDs
-from helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,showMetaData,rename,download
-import config as cfg
+from sync_dl.ytdlWrappers import getIDs
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,showMetaData,rename,download
+import sync_dl.config as cfg
 
 def _checkDeletions(cwd):
     '''

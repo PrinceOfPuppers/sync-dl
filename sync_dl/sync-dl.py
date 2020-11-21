@@ -5,10 +5,10 @@ import shelve
 import re
 import ntpath
 
-from ytdlWrappers import getIDs, downloadID
-from plManagement import editPlaylist, correctStateCorruption
-from helpers import createNumLabel, smartSyncNewOrder,showMetaData, getLocalSongs, rename
-import config as cfg
+from sync_dl.ytdlWrappers import getIDs, downloadID
+from sync_dl.plManagement import editPlaylist, correctStateCorruption
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder,showMetaData, getLocalSongs, rename
+import sync_dl.config as cfg
 
 def newPlaylist(cwd,url):
 

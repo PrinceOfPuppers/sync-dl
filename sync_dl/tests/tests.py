@@ -1,6 +1,6 @@
 import unittest
 
-from helpers import smartSyncNewOrder
+from sync_dl.helpers import smartSyncNewOrder
 
 
 class test_smartSyncNewOrder(unittest.TestCase):
@@ -82,7 +82,3 @@ class test_smartSyncNewOrder(unittest.TestCase):
 
         result = smartSyncNewOrder(localIds,remoteIds)
         self.assertEqual(result,correct)
-
-
-if __name__ == "__main__":
-    unittest.main()

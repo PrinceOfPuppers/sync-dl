@@ -2,8 +2,8 @@ import os
 import json
 import re
 
-import config as cfg
-from ytdlWrappers import downloadID
+import sync_dl.config as cfg
+from sync_dl.ytdlWrappers import downloadID
 
 def showMetaData(metaData, printer,urlWithoutId = None):
     '''
