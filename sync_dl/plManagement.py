@@ -27,6 +27,7 @@ def _checkDeletions(cwd):
 
         numDeleted = len(deleted)
 
+
         if numDeleted > 0:
             logging.info(f"songs numbered {deleted} are no longer in playlist")
 
@@ -34,7 +35,6 @@ def _checkDeletions(cwd):
             newIndex = 0
 
             for newIndex, oldIndex in enumerate(currentDirNums):
-                print(newIndex,oldIndex)
                 if newIndex != oldIndex:
                     oldName = currentDir[newIndex]
                     newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDidgets)}_" , oldName)
@@ -61,22 +61,21 @@ def _checkDeletions(cwd):
                 # note even if the program crashed at this point, running this fuction
                 # again would yeild an uncorrupted state
                 removedAlready = (numDeleted - len(deleted))
-                print(index,removedAlready)
                 logging.info(f"Removing {metaData['ids'][index - removedAlready]} from metadata")
                 del metaData["ids"][index - removedAlready]
                 del deleted[0]
 
 def _checkBlanks(cwd):
     with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-        for i,songId in metaData["ids"]:
+        for i,songId in enumerate(metaData["ids"]):
             if songId == '':
                 del metaData["ids"][i]
 
 def correctStateCorruption(cwd):
     logging.info("Checking for playlist state Corruption")
-    _checkDeletions(cwd)
-    _checkBlanks(cwd)
-
+    
+    _checkBlanks(cwd) # must come first so later steps dont assume blanks are valid when checking len
+    _checkDeletions(cwd) 
 
 
 def editPlaylist(cwd, newOrder):
