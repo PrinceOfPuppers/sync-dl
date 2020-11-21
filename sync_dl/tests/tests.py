@@ -10,8 +10,6 @@ from sync_dl.plManagement import editPlaylist,correctStateCorruption
 def createFakePlaylist(name,songs):
     '''creates fake playlist with all songs being as if they where locally added'''
 
-
-
     if not os.path.exists(cfg.testPlPath):
         os.mkdir(cfg.testPlPath)
         

@@ -31,6 +31,8 @@ def rename(metaData, printer, cwd, oldName, newName, index, newId):
 
     printer("Renaming Complete")
 
+
+
 def download(metaData, printer,cwd, num, newId, index):
     printer(f"Dowloading song Id {newId}")
     downloadID(newId,cwd,num)
@@ -51,7 +53,7 @@ def createNumLabel(n,numDigets):
     return (numDigets-lenN)*"0"+n
 
 
-def sortByNum(element):
+def _sortByNum(element):
     '''
     returns the number in front of each song file
     '''
@@ -59,7 +61,7 @@ def sortByNum(element):
 
     return int(match.group()[:-1])
 
-def filterFunc(element):
+def _filterFunc(element):
     '''
     returns false for any string not preceded by some number followed by an underscore
     used for filtering non song files
@@ -76,7 +78,7 @@ def getLocalSongs(cwd):
     returns sanatized list of all songs in local playlist, in order
     '''
     currentDir = os.listdir(path=cwd) 
-    currentDir = sorted(filter(filterFunc,currentDir), key= sortByNum) #sorted and sanitized dir
+    currentDir = sorted(filter(_filterFunc,currentDir), key= _sortByNum) #sorted and sanitized dir
     return currentDir
 
 def smartSyncNewOrder(localIds,remoteIds):

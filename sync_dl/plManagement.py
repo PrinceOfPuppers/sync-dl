@@ -29,7 +29,7 @@ def _checkDeletions(cwd):
 
 
         if numDeleted > 0:
-            logging.info(f"songs numbered {deleted} are no longer in playlist")
+            logging.warning(f"songs numbered {deleted} are no longer in playlist")
 
             numDidgets = len(str( len(metaData["ids"]) - numDeleted ))
             newIndex = 0
@@ -67,9 +67,22 @@ def _checkDeletions(cwd):
 
 def _checkBlanks(cwd):
     with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-        for i,songId in enumerate(metaData["ids"]):
+        for i in reversed(range(len(metaData["ids"]))):
+            songId = metaData['ids'][i]
             if songId == '':
+                logging.warning(f'Blank MetaData id Found at Index {i}, removing')
                 del metaData["ids"][i]
+
+def _removeGaps(cwd):
+    currentDir = getLocalSongs(cwd)
+
+    numDidgets = len(str(len(currentDir)))
+
+    for i,oldName in enumerate(currentDir):
+        newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i,numDidgets)}_" , oldName)
+        logging.info(f"Renaming {oldName} to {newName}")
+        os.rename(f"{cwd}/{oldName}",f"{cwd}/{newName}")
+        logging.info("Renaming Complete")
 
 def correctStateCorruption(cwd):
     logging.info("Checking for playlist state Corruption")
@@ -78,54 +91,53 @@ def correctStateCorruption(cwd):
     _checkDeletions(cwd) 
 
 
-def editPlaylist(cwd, newOrder):
+def editPlaylist(cwd, newOrder, deletions=False):
     '''
     metaData is json as defined in newPlaylist
     newOrder is an ordered list of tuples (Id of song, where to find it )
     the "where to find it" is the number in the old ordering (None if song is to be downloaded)
     '''
-
-    #files will be labled with several numbers then an underscore, followed by the file name
+    #TODO add deletions
 
     currentDir = getLocalSongs(cwd)
 
     numDidgets = len(str(len(newOrder))) #needed for creating starting number for auto ordering ie) 001, 0152
 
+
+
     with shelve.open(f"{cwd}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
-        logging.info(f"Editing Playlist, \nOld order:\n {metaData['ids']}")
-
+        logging.info(f"Editing Playlist, Old order: {metaData['ids']}")
         for i in range(len(newOrder)):
             newId,oldIndex = newOrder[i]
 
+            newIndex = len(newOrder) + i # we reorder the playlist with exclusivly new numbers in case a crash occurs
 
             if oldIndex == None: 
                 # must download new song
-                num = createNumLabel(i,numDidgets)
+                num = createNumLabel(newIndex,numDidgets)
                 
-                download(metaData,logging.info,cwd,num,newId,i)
-
+                download(metaData,logging.info,cwd,num,newId,newIndex)
+            
             else:
                 #song exists locally, but must be reordered/renamed
 
-                if i == oldIndex:
-                    # song is already in correct posisiton
-                    continue
-
                 oldName = currentDir[oldIndex]
 
-                newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i,numDidgets)}_" , oldName)
+                newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDidgets)}_" , oldName)
 
                 if newName in currentDir:
                     logging.error(f"Naming Conflict {newName}")
-                    #TODO solve this naming conflict possibility (will only occur if 2 different songs have the same name and one is moving
-                    # into the posistion that the other once had)
-                    pass
                 
-                rename(metaData,logging.info,cwd,oldName,newName,i,newId)
 
-    
+                logging.info(f"Renaming {oldName} to {newName}")
 
+                os.rename(f"{cwd}/{oldName}",f"{cwd}/{newName}")
+                metaData["ids"].append(newId)
+                metaData["ids"][oldIndex] = ''
+                
 
-    #TODO Deletions? ie if old order contains songs which arent in new order, likley should also ask for permission
-    # check if song actually exists
+                logging.info("Renaming Complete")
+
+    _checkBlanks(cwd)
+    _removeGaps(cwd)
