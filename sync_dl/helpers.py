@@ -1,28 +1,55 @@
 import os
 import json
 import re
+import logging
 
 import sync_dl.config as cfg
-from sync_dl.ytdlWrappers import downloadID
+from sync_dl.ytdlWrappers import downloadID,getIDs
 
-def showMetaData(metaData, printer,urlWithoutId = None):
+def showPlaylist(metaData, printer, plPath, urlWithoutId = None):
     '''
     printer can be print or some level of logging
     urlWithoutId is added if you wish to print out all full urls
     '''
+
     for item in metaData.items():
         printer(f"{item[0]}: {item[1]}")
-    
+
+    currentDir = getLocalSongs(plPath)
+
     if urlWithoutId != None:
-        printer(f"\n Links:")
-        for songId in metaData['ids']:
+        printer(f"i: Link                                         ->   Local Title")
+        for i,songId in enumerate(metaData['ids']):
             url = f"{urlWithoutId}{songId}"
-            printer(url)
+            printer(f"{i}: {url}  ->  {currentDir[i]}")
 
 
-def rename(metaData, printer, cwd, oldName, newName, index, newId):
+
+def compareMetaData(metaData, printer):
+    '''Tool for comparing ids held in metadata and their order compared to remote playlist ids'''
+    remoteIds = getIDs(metaData["url"])
+    localIds = metaData["ids"]
+    printer(f"i: Local ID    -> j: Remote ID")
+
+    for i,localId in enumerate(localIds):
+        if localId in remoteIds:
+            j = remoteIds.index(localId)
+            printer(f"{i}: {localId} -> {j}: {localId}")
+
+        else:
+            printer(f"{i}: {localId} ->  : ")
+
+
+    for j, remoteId in enumerate(remoteIds):
+        if remoteId not in localIds:
+
+            printer(f" :             -> {j}: {remoteId}")
+
+
+
+def rename(metaData, printer, plPath, oldName, newName, index, newId):
     printer(f"Renaming {oldName} to {newName}")
-    os.rename(f"{cwd}/{oldName}",f"{cwd}/{newName}")
+    os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
 
     if index >= len(metaData["ids"]):
         metaData["ids"].append(newId)
@@ -31,9 +58,9 @@ def rename(metaData, printer, cwd, oldName, newName, index, newId):
 
     printer("Renaming Complete")
 
-def delete(metaData, printer, cwd, name, index):
+def delete(metaData, printer, plPath, name, index):
     printer(f"Deleting {name}")
-    os.remove(f"{cwd}/{name}")
+    os.remove(f"{plPath}/{name}")
 
     del metaData["ids"][index]
 
@@ -41,9 +68,9 @@ def delete(metaData, printer, cwd, name, index):
 
 
 
-def download(metaData, printer,cwd, num, newId, index):
+def download(metaData, printer,plPath, num, newId, index):
     printer(f"Dowloading song Id {newId}")
-    downloadID(newId,cwd,num)
+    downloadID(newId,plPath,num)
 
     if index >= len(metaData["ids"]):
         metaData["ids"].append(newId)
@@ -81,11 +108,11 @@ def _filterFunc(element):
     return False
 
 
-def getLocalSongs(cwd):
+def getLocalSongs(plPath):
     '''
     returns sanatized list of all songs in local playlist, in order
     '''
-    currentDir = os.listdir(path=cwd) 
+    currentDir = os.listdir(path=plPath) 
     currentDir = sorted(filter(_filterFunc,currentDir), key= _sortByNum) #sorted and sanitized dir
     return currentDir
 

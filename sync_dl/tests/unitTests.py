@@ -7,6 +7,7 @@ import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
+
 def createFakePlaylist(name,songs):
     '''creates fake playlist with all songs being as if they where locally added'''
 
@@ -36,7 +37,6 @@ def getPlaylistData(name):
             result.append( (songId,songs[i]) )
     
     return result
-
 
 class test_correctStateCorruption(unittest.TestCase):
 
