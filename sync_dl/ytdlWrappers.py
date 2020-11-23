@@ -5,7 +5,7 @@ import subprocess
 
 #ids are the unique part of each videos url
 def getIDs(playlistUrl):
-    params={"extract_flat": True}
+    params={"extract_flat": True, "quiet": True}
     with youtube_dl.YoutubeDL(params) as ydl:
         result = ydl.extract_info(playlistUrl,download=False)
         ids = []
@@ -43,7 +43,7 @@ def downloadID(videoId,path,number):
     url = f"https://www.youtube.com/watch?v={videoId}"
 
     try:
-        os.system(f"youtube-dl --no-playlist -x -f bestaudio --add-metadata --output '{path}/{number}_%(title)s.%(ext)s' {url}")
+        os.system(f"youtube-dl --no-playlist -x -q -f bestaudio --add-metadata --output '{path}/{number}_%(title)s.%(ext)s' {url}")
         return True
     except:
         logging.info(f"song at {url} is unavalible")

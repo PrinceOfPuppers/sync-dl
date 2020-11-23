@@ -22,7 +22,7 @@ def newPlaylist(plPath,url):
 
 
     ids = getIDs(url)
-    numDidgets = len(str(len(ids))) #needed for creating starting number for auto ordering ie) 001, 0152
+    numDigets = len(str( len(ids) + 1)) #needed for creating starting number for auto ordering ie) 001, 0152
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         metaData["url"] = url
@@ -30,14 +30,13 @@ def newPlaylist(plPath,url):
 
         invalidSongs = 0
         for i,vidId in enumerate(ids):
-            num = createNumLabel(i,numDidgets)
+            num = createNumLabel(i,numDigets)
 
             if not downloadID(vidId,plPath,num):
                 invalidSongs+=1
 
 
             metaData["ids"].append(vidId)
-            print([item for item in metaData.items()])
 
         print(f"Downloaded {len(ids)-invalidSongs}/{len(ids)} Songs")
 
@@ -101,7 +100,7 @@ def manualAdd(plPath, songPath, posistion):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
         idsLen = len(metaData["ids"])
-        numDidgets = len(str( idsLen + 1 ))
+        numDigets = len(str( idsLen + 1 ))
 
         #clamp posistion
         if posistion > idsLen:
@@ -113,14 +112,14 @@ def manualAdd(plPath, songPath, posistion):
         for i in reversed(range(posistion, idsLen)):
             oldName = currentDir[i]
 
-            newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i+1,numDidgets)}_" , oldName)
+            newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i+1,numDigets)}_" , oldName)
 
             rename(metaData,logging.info,plPath,oldName,newName,i+1,metaData["ids"][i])
 
             metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
 
 
-        newSongName = f"{createNumLabel(i+1,numDidgets)}_" + ntpath.basename(songPath)
+        newSongName = f"{createNumLabel(i+1,numDigets)}_" + ntpath.basename(songPath)
 
         rename(metaData,logging.info,plPath,songPath,newSongName,posistion,metaData["ids"][i])
 
@@ -134,29 +133,32 @@ def swap(plPath, index1, index2):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
         idsLen = len(metaData["ids"])
-        numDidgets = len(str( idsLen + 1 ))
+        numDigets = len(str( idsLen + 1 ))
 
  
         #shift index1 out of the way (to idsLen)
 
         oldName = currentDir[index1]
-        shiftedName = re.sub(cfg.filePrependRE, f"{createNumLabel(idsLen,numDidgets)}_" , oldName)
+        tempName = relabel(metaData,logging.info,plPath,oldName,index1,idsLen,numDigets)
 
-        relabel(metaData,logging.info,plPath,oldName,index1,idsLen,numDidgets)
+        
 
         #move index2 to index1's old location
 
         oldName = currentDir[index2]
-        relabel(metaData,logging.info,plPath,oldName,index2,index1,numDidgets)
+        relabel(metaData,logging.info,plPath,oldName,index2,index1,numDigets)
 
         #move index1 (now =idsLen) to index2's old location
 
-        oldName = shiftedName
-        relabel(metaData,logging.info,plPath,oldName,idsLen,index2,numDidgets)
+        oldName = tempName
+        relabel(metaData,logging.info,plPath,oldName,idsLen,index2,numDigets)
 
         del metaData["ids"][idsLen]
 
 def move(plPath, currentIndex, newIndex):
+    if currentIndex==newIndex:
+        return
+
     correctStateCorruption(plPath)
 
     currentDir = getLocalSongs(plPath)
@@ -164,16 +166,30 @@ def move(plPath, currentIndex, newIndex):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
         idsLen = len(metaData["ids"])
-        numDidgets = len(str( idsLen + 1 ))
+        numDigets = len(str( idsLen + 1 ))
 
-        for i in reversed(range(newIndex,idsLen)):
-            #shift index1 out of the way (to idsLen)
-            oldName = currentDir[i]
-            shiftedName = re.sub(cfg.filePrependRE, f"{createNumLabel(i+1,numDidgets)}_" , oldName)
+        #moves song to end of list
+        tempName = relabel(metaData,logging.info,plPath,currentDir[currentIndex],currentIndex,idsLen,numDigets)
+
+        if currentIndex>newIndex:
+            #shifts all songs from newIndex to currentIndex-1 by +1
+            for i in reversed(range(newIndex,currentIndex)):
+                
+                oldName = currentDir[i]
+                relabel(metaData,logging.info,plPath,oldName,i,i+1,numDigets)
+    
+        
+        else:
+            #shifts all songs from currentIndex+1 to newIndex by -1
+            for i in range(currentIndex+1,newIndex+1):
+                oldName = currentDir[i]
+                relabel(metaData,logging.info,plPath,oldName,i,i-1,numDigets)
+        
+        #moves song back
+        relabel(metaData,logging.info,plPath,tempName,idsLen,newIndex,numDigets)
+        del metaData['ids'][idsLen]
 
             
-            rename(metaData,logging.info,plPath,oldName,shiftedName,idsLen,metaData["ids"][i])
-            metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
 
 
 
@@ -226,20 +242,30 @@ if __name__ == "__main__":
         os.mkdir(path)    
 
     while True:
-        task = input("1) create playlist, 2) smart sync, 3) view playList 4) correct state corruption 5) compare metadata: ")
+        task = input("1) create playlist, 2) smart sync, 3) view playList 4) correct state corruption 5) compare metadata\n6) move song 7) swap songs: ")
         if task == '1':
             newPlaylist(path, url)
 
-        if task == '2':
+        elif task == '2':
             smartSync(path)
 
-        if task == '3':
+        elif task == '3':
             with shelve.open(f"{path}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
                 showPlaylist(metaData,print,path,"https://www.youtube.com/watch?v=")
         
-        if task == '4':
+        elif task == '4':
             correctStateCorruption(path)
 
-        if task == '5':
+        elif task == '5':
             with shelve.open(f"{path}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
                 compareMetaData(metaData,print)
+        
+        elif task == '6':
+            currentIndex = int(input("index to move: "))
+            newIndex = int(input("new index: "))
+            move(path,currentIndex,newIndex)
+
+        elif task == '7':
+            index1 = int(input("song index 1: "))
+            index2 = int(input("song index 2: "))
+            swap(path,index1,index2)

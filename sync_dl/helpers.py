@@ -65,6 +65,8 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
 
     note this does NOT prevent you from overwriting numbering of 
     an existing song
+
+    returns new name which is needed in some cases (ie when a song is temporarily moved)
     '''
 
     newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDigets)}_" , oldName)
@@ -81,6 +83,7 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
     metaData['ids'][oldIndex] = ''
 
     printer("Relabeling Complete")
+    return newName
 
 def delete(metaData, printer, plPath, name, index):
     printer(f"Deleting {name}")
