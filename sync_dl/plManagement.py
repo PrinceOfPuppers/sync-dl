@@ -123,8 +123,6 @@ def editPlaylist(plPath, newOrder, deletions=False):
 
             if oldIndex == None: 
                 # must download new song
-                num = createNumLabel(newIndex,numDigets)
-                
                 download(metaData,logging.info,plPath,newId,newIndex,numDigets)
 
             

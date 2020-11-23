@@ -38,13 +38,21 @@ def getTitle(url):
     title = subprocess.getoutput(command)
     return title
 
-#downloads video at id, returns bool for success/failure 
-def downloadID(videoId,path,numberStr):
+def downloadID(videoId, path,numberStr):
     url = f"https://www.youtube.com/watch?v={videoId}"
+    
+    params={"quiet": True, "noplaylist": True, "outtmpl": f'{path}/{numberStr}_%(title)s.%(ext)s', #'addmetadata':True,
+        'format': 'bestaudio',
+        'postprocessors': [
+            {'key': 'FFmpegExtractAudio'},
+            {'key': 'FFmpegMetadata'}
+            ],
+    }
 
-    try:
-        os.system(f"youtube-dl --no-playlist -x -q -f bestaudio --add-metadata --output '{path}/{numberStr}_%(title)s.%(ext)s' {url}")
-        return True
-    except:
-        logging.info(f"song at {url} is unavalible")
-        return False
+    with youtube_dl.YoutubeDL(params) as ydl:
+        try:
+            ydl.download([url])
+            return True
+        except:
+            logging.info(f"song at {url} is unavalible")
+            return False
