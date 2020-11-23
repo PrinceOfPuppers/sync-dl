@@ -58,6 +58,30 @@ def rename(metaData, printer, plPath, oldName, newName, index, newId):
 
     printer("Renaming Complete")
 
+def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
+    '''
+    used for changing the number of an element in the playlist
+    will blank out old posistion in the metaData
+
+    note this does NOT prevent you from overwriting numbering of 
+    an existing song
+    '''
+
+    newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDigets)}_" , oldName)
+    songId = metaData['ids'][oldIndex]
+    printer(f"Relabeling {oldName} to {newName}")
+    os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
+
+
+    if newIndex >= len(metaData["ids"]):
+        metaData["ids"].append(songId)
+    else:
+        metaData["ids"][newIndex] = songId
+
+    metaData['ids'][oldIndex] = ''
+
+    printer("Relabeling Complete")
+
 def delete(metaData, printer, plPath, name, index):
     printer(f"Deleting {name}")
     os.remove(f"{plPath}/{name}")

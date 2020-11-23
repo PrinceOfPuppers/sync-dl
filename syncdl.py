@@ -8,7 +8,7 @@ from random import randint
 
 from sync_dl.ytdlWrappers import getIDs, downloadID
 from sync_dl.plManagement import editPlaylist, correctStateCorruption
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder,showPlaylist, getLocalSongs, rename, compareMetaData
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder,showPlaylist, getLocalSongs, rename, compareMetaData, relabel
 import sync_dl.config as cfg
 
 def newPlaylist(plPath,url):
@@ -138,26 +138,22 @@ def swap(plPath, index1, index2):
 
  
         #shift index1 out of the way (to idsLen)
+
         oldName = currentDir[index1]
         shiftedName = re.sub(cfg.filePrependRE, f"{createNumLabel(idsLen,numDidgets)}_" , oldName)
 
-        rename(metaData,logging.info,plPath,oldName,shiftedName,idsLen,metaData["ids"][index1])
-        metaData["ids"][index1] = '' #wiped in case of crash, this blank entries can be removed restoring state
+        relabel(metaData,logging.info,plPath,oldName,index1,idsLen,numDidgets)
 
         #move index2 to index1's old location
 
         oldName = currentDir[index2]
-        newName = re.sub(cfg.filePrependRE, f"{createNumLabel(index1,numDidgets)}_" , oldName)
-
-        rename(metaData,logging.info,plPath,oldName,newName,index1,metaData["ids"][index2])
-        metaData["ids"][index2] = '' #wiped in case of crash, this blank entries can be removed restoring state
-
+        relabel(metaData,logging.info,plPath,oldName,index2,index1,numDidgets)
 
         #move index1 (now =idsLen) to index2's old location
-        oldName = shiftedName
-        newName = re.sub(cfg.filePrependRE, f"{createNumLabel(index2,numDidgets)}_" , oldName)
 
-        rename(metaData,logging.info,plPath,oldName,newName,index2,metaData["ids"][idsLen])
+        oldName = shiftedName
+        relabel(metaData,logging.info,plPath,oldName,idsLen,index2,numDidgets)
+
         del metaData["ids"][idsLen]
 
 def shuffle(plPath):

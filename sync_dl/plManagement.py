@@ -4,7 +4,7 @@ import re
 import shelve
 
 from sync_dl.ytdlWrappers import getIDs
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,rename,download, delete
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,download, delete, relabel
 import sync_dl.config as cfg
 
 def _checkDeletions(plPath):
@@ -79,10 +79,13 @@ def _removeGaps(plPath):
     numDidgets = len(str(len(currentDir)))
 
     for i,oldName in enumerate(currentDir):
-        newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i,numDidgets)}_" , oldName)
-        logging.info(f"Renaming {oldName} to {newName}")
-        os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
-        logging.info("Renaming Complete")
+        newPrepend = f"{createNumLabel(i,numDidgets)}_"
+        oldPrepend = re.search(cfg.filePrependRE, oldName).group(0)
+        if oldPrepend!=newPrepend:
+            newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i,numDidgets)}_" , oldName)
+            logging.info(f"Renaming {oldName} to {newName}")
+            os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
+            logging.info("Renaming Complete")
 
 def correctStateCorruption(plPath):
     logging.info("Checking for playlist state Corruption")
@@ -100,13 +103,13 @@ def editPlaylist(plPath, newOrder, deletions=False):
     metaData is json as defined in newPlaylist
     newOrder is an ordered list of tuples (Id of song, where to find it )
     the "where to find it" is the number in the old ordering (None if song is to be downloaded)
+
+    note if song is in playlist already the id of song in newOrder will not be used
     '''
 
     currentDir = getLocalSongs(plPath)
 
-
-
-    numDidgets = len(str(2*len(newOrder))) #needed for creating starting number for auto ordering ie) 001, 0152
+    numDigets = len(str(2*len(newOrder))) #needed for creating starting number for auto ordering ie) 001, 0152
                                            # len is doubled because we will be first numbering with numbers above the
                                            # so state remains recoverable in event of crash
 
@@ -120,7 +123,7 @@ def editPlaylist(plPath, newOrder, deletions=False):
 
             if oldIndex == None: 
                 # must download new song
-                num = createNumLabel(newIndex,numDidgets)
+                num = createNumLabel(newIndex,numDigets)
                 
                 download(metaData,logging.info,plPath,num,newId,newIndex)
             
@@ -129,21 +132,7 @@ def editPlaylist(plPath, newOrder, deletions=False):
 
                 oldName = currentDir[oldIndex]
 
-                newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDidgets)}_" , oldName)
-
-                if newName in currentDir:
-                    logging.error(f"Naming Conflict {newName}")
-                
-
-                logging.info(f"Renaming {oldName} to {newName}")
-
-                os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
-                metaData["ids"].append(newId)
-                metaData["ids"][oldIndex] = ''
-                
-
-                logging.info("Renaming Complete")
-
+                relabel(metaData,logging.info,plPath,oldName,oldIndex,newIndex,numDigets)
 
 
     if deletions:

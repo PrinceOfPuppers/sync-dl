@@ -154,8 +154,14 @@ class test_integration(unittest.TestCase):
         
         #deletes a third (rounded down) of the songs in the playlist
         toDelete = []
-        for i in range(int(len(currentDir)/3)):
-            toDelete.append(random.choice(currentDir))
+        for _ in range(int(len(currentDir)/3)):
+            randSong = random.choice(currentDir)
+
+            while randSong in toDelete:
+                #ensures we dont try to delete the same song twice
+                randSong = random.choice(currentDir)
+            
+            toDelete.append(randSong)
 
         for song in toDelete:
             os.remove(f'{self.plPath}/{song}')
@@ -174,7 +180,7 @@ class test_integration(unittest.TestCase):
     def test_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
         logging.info("End of Integration Test Summery")
-        
+
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
             compareMetaData(metaData, logging.info)
             showPlaylist(metaData,logging.info,self.plPath,urlWithoutId='https://www.youtube.com/watch?v=')
