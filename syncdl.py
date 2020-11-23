@@ -156,6 +156,27 @@ def swap(plPath, index1, index2):
 
         del metaData["ids"][idsLen]
 
+def move(plPath, currentIndex, newIndex):
+    correctStateCorruption(plPath)
+
+    currentDir = getLocalSongs(plPath)
+
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+
+        idsLen = len(metaData["ids"])
+        numDidgets = len(str( idsLen + 1 ))
+
+        for i in reversed(range(newIndex,idsLen)):
+            #shift index1 out of the way (to idsLen)
+            oldName = currentDir[i]
+            shiftedName = re.sub(cfg.filePrependRE, f"{createNumLabel(i+1,numDidgets)}_" , oldName)
+
+            
+            rename(metaData,logging.info,plPath,oldName,shiftedName,idsLen,metaData["ids"][i])
+            metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
+
+
+
 def shuffle(plPath):
     '''randomizes playlist order'''
     correctStateCorruption(plPath)

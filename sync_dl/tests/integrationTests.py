@@ -5,7 +5,6 @@ import unittest
 import os
 import shelve
 import shutil
-import difflib
 import random
 
 from syncdl import smartSync,newPlaylist,swap,shuffle
@@ -80,13 +79,12 @@ def metaDataMatches(metaData,plPath):
             logging.error(message)
             return False
 
-        diffRatio = difflib.SequenceMatcher(None,localTitle,remoteTitle).ratio()
-        if diffRatio<0.9:
+
+        if localTitle!=remoteTitle:
                 message = (f"{i}th Local Title:          {localTitle}\n"
                            f"With Id:                    {localId}\n"
                            f"Differes from Remote Title: {remoteTitle}\n"
-                           f"With Id:                    {localId}"
-                           f"Title Diff Ratio:           {diffRatio}")
+                           f"With Id:                    {localId}")
                 logging.error(message)
                 return False
     return True
