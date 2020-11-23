@@ -95,14 +95,17 @@ def delete(metaData, printer, plPath, name, index):
 
 
 
-def download(metaData, printer,plPath, num, newId, index):
-    printer(f"Dowloading song Id {newId}")
-    downloadID(newId,plPath,num)
+def download(metaData, printer,plPath, songId, index,numDigets):
+
+    num = createNumLabel(index,numDigets)
+
+    printer(f"Dowloading song Id {songId}")
+    downloadID(songId,plPath,num)
 
     if index >= len(metaData["ids"]):
-        metaData["ids"].append(newId)
+        metaData["ids"].append(songId)
     else:
-        metaData["ids"][index] = newId
+        metaData["ids"][index] = songId
 
     printer("Download Complete")
 

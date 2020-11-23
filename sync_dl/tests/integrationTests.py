@@ -7,7 +7,7 @@ import shelve
 import shutil
 import random
 
-from syncdl import smartSync,newPlaylist,swap,shuffle
+from syncdl import smartSync,newPlaylist,swap,shuffle,move
 import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs, compareMetaData, showPlaylist
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
@@ -132,7 +132,23 @@ class test_integration(unittest.TestCase):
             passed = metaDataMatches(metaData,self.plPath)
 
         self.assertTrue(passed)
-    
+
+    def test_smartSyncMove(self):
+        logging.info("Running test_smartSyncSwap")
+
+        with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            numIds = len(metaData['ids'])
+
+        move(self.plPath,0 , int(numIds/2))
+        
+        smartSync(self.plPath)
+
+        with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            passed = metaDataMatches(metaData,self.plPath)
+
+        self.assertTrue(passed)
+
+
     def test_smartSyncShuffle(self):
         '''Simulates remote reordering by shuffling local'''
         logging.info("Running test_smartSyncShuffle")

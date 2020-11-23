@@ -125,7 +125,8 @@ def editPlaylist(plPath, newOrder, deletions=False):
                 # must download new song
                 num = createNumLabel(newIndex,numDigets)
                 
-                download(metaData,logging.info,plPath,num,newId,newIndex)
+                download(metaData,logging.info,plPath,newId,newIndex,numDigets)
+
             
             else:
                 #song exists locally, but must be reordered/renamed

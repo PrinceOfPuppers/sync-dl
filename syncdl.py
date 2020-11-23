@@ -8,7 +8,7 @@ from random import randint
 
 from sync_dl.ytdlWrappers import getIDs, downloadID
 from sync_dl.plManagement import editPlaylist, correctStateCorruption
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder,showPlaylist, getLocalSongs, rename, compareMetaData, relabel
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder,showPlaylist, getLocalSongs, rename, compareMetaData, relabel,download
 import sync_dl.config as cfg
 
 def newPlaylist(plPath,url):
@@ -87,8 +87,23 @@ def smartSync(plPath):
 def hardSync():
     '''Syncs to remote playlist will delete local songs'''
 
-def appendNew():
+def appendNew(plPath):
     '''will append new songs in remote playlist to local playlist in order that they appear'''
+
+    correctStateCorruption(plPath)
+
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+
+        idsLen = len(metaData["ids"])
+        numDigets = len(str( idsLen + 1 ))
+
+        remoteIds = getIDs(url)
+
+        for remoteId in remoteIds:
+            if remoteId not in metaData['ids']:
+                download(metaData,logging.info,plPath,remoteId,len(metaData['ids']),numDigets)
+
+
 
 def manualAdd(plPath, songPath, posistion):
     '''put song in posistion in the playlist'''
@@ -192,7 +207,6 @@ def move(plPath, currentIndex, newIndex):
             
 
 
-
 def shuffle(plPath):
     '''randomizes playlist order'''
     correctStateCorruption(plPath)
@@ -242,30 +256,49 @@ if __name__ == "__main__":
         os.mkdir(path)    
 
     while True:
-        task = input("1) create playlist, 2) smart sync, 3) view playList 4) correct state corruption 5) compare metadata\n6) move song 7) swap songs: ")
+        prompt = ("\n1) create playlist 2) view playList  3) compare metadata\n"
+                  "4) smart sync      5) append new     6) correct state corruption\n"
+                  "7) move song       8) swap songs: ")
+                  
+        task = input(prompt)
+        print('')
+
+        #new playlist
         if task == '1':
             newPlaylist(path, url)
 
+        #view playlist
         elif task == '2':
-            smartSync(path)
-
-        elif task == '3':
             with shelve.open(f"{path}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
                 showPlaylist(metaData,print,path,"https://www.youtube.com/watch?v=")
-        
-        elif task == '4':
-            correctStateCorruption(path)
 
-        elif task == '5':
+        #compare metadata
+        elif task == '3':
             with shelve.open(f"{path}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
                 compareMetaData(metaData,print)
         
+        #smart sync
+        elif task == '4':
+            smartSync(path)
+
+        #append
+        elif task == '5':
+            appendNew(path)
+        
+        #correct state corruption
         elif task == '6':
+            correctStateCorruption(path)
+
+
+        #move
+        elif task == '7':
             currentIndex = int(input("index to move: "))
             newIndex = int(input("new index: "))
             move(path,currentIndex,newIndex)
 
-        elif task == '7':
+        #swap
+        elif task == '8':
             index1 = int(input("song index 1: "))
             index2 = int(input("song index 2: "))
             swap(path,index1,index2)
+
