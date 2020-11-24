@@ -1,12 +1,32 @@
+import configparser
 from re import compile
+import logging
+from ntpath import dirname
 
-metaDataName = ".metaData"
+'''
+contains all global variables, also parses config into global variables
+'''
 
+
+modulePath = dirname(__file__)
+
+#loading config
+parser = configparser.ConfigParser(allow_no_value=True)
+parser.optionxform = str 
+parser.read(f'{modulePath}/config.ini')
+section = parser['DEFAULT']
+
+
+#global config variables
 filePrependRE = compile(r'\d+_')
 
-manualAddId = '-manualAddition' # id given to mannually added songs (cannont conflict with url ids and cannot be empty string)
+metaDataName = section['metaDataName']
 
-testPlPath = 'sync_dl/tests/testPlaylists'
+manualAddId =section['manualAddId']
 
-tmpDownloadPath = 'sync_dl/tmp'
+testPlPath = f"{modulePath}/{section['testPlPath']}" 
+
+tmpDownloadPath = f"{modulePath}/{section['tmpDownloadPath']}"
+
+musicDir = section['musicDir']
 

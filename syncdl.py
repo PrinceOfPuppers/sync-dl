@@ -307,7 +307,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description,formatter_class=ArgsOnce)
 
     #posistional
-    parser.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
+    parser.add_argument('PLAYLIST',nargs='?', type=str, help='the name of the directory for the playlist')
 
     #playlist managing
     group = parser.add_mutually_exclusive_group()
@@ -353,15 +353,34 @@ if __name__ == "__main__":
 
     #setting and getting cwd
     if args.local_dir:
-        #TODO edit config file adding music folder
-        cwd = args.local_dir
-        pass
-    else:
-        #TODO get config file music folder if avalible
+        
+        
+        if not os.path.exists(args.local_dir):
+            logging.error("Provided Music Directory Does not Exist")
+            exit()
+        #saves args.local_dir to config
+        music = os.path.abspath(args.local_dir)
+
+
+        cfg.parser.set('DEFAULT','musicDir',music)
+        with open(f'{cfg.modulePath}/config.ini', 'w') as configfile:
+            cfg.parser.write(configfile)
+
+        cfg.musicDir = music
+
+    if cfg.musicDir == '':
         cwd = os.getcwd()
+    else:
+        cwd = cfg.musicDir
 
-    plPath = f"{cwd}/{args.playlist}"
 
+    # if no playlist was provided all further functions cannot run
+    if args.PLAYLIST:
+        plPath = f"{cwd}/{args.PLAYLIST}"
+    else:
+        if not args.local_dir: #only option which can run without playlist
+            logging.error("playlist name required")
+        exit()
 
 
     #viewing playlist     
