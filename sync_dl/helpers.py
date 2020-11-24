@@ -85,29 +85,34 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
     printer("Relabeling Complete")
     return newName
 
-def delete(metaData, printer, plPath, name, index):
-    printer(f"Deleting {name}")
+def delete(metaData, plPath, name, index):
+    logging.info(f"Deleting {name}")
     os.remove(f"{plPath}/{name}")
 
     del metaData["ids"][index]
 
-    printer("Deleting Complete")
+    logging.debug("Deleting Complete")
 
 
 
-def download(metaData, printer,plPath, songId, index,numDigets):
-
+def download(metaData,plPath, songId, index,numDigets):
+    '''
+    downloads song and adds it to metadata at index
+    returns whether or not the download succeeded 
+    '''
     num = createNumLabel(index,numDigets)
 
-    printer(f"Dowloading song Id {songId}")
-    downloadID(songId,plPath,num)
+    logging.info(f"Dowloading song Id {songId}")
+    if downloadID(songId,plPath,num):
 
-    if index >= len(metaData["ids"]):
-        metaData["ids"].append(songId)
-    else:
-        metaData["ids"][index] = songId
-
-    printer("Download Complete")
+        if index >= len(metaData["ids"]):
+            metaData["ids"].append(songId)
+        else:
+            metaData["ids"][index] = songId
+        
+        logging.debug("Download Complete")
+        return True
+    return False
 
 def createNumLabel(n,numDigets):
     n = str(n)

@@ -73,6 +73,6 @@ def downloadID(videoId, path,numberStr, embedThumbnail=True):
 
 
             return True
-        except Exception as e:
-            logging.info(f"Unable to download song at {url}, Exception {e}")
+        except:
+            logging.info(f"Song No longer avalible at {url}")
             return False

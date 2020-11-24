@@ -1,6 +1,6 @@
 import unittest
 import logging
-#from sync_dl.tests.unitTests import test_smartSyncNewOrder, test_editPlaylist, test_correctStateCorruption
+from sync_dl.tests.unitTests import test_smartSyncNewOrder, test_editPlaylist, test_correctStateCorruption
 from sync_dl.tests.integrationTests import test_integration
 
 if __name__ == "__main__":

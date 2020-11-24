@@ -2,6 +2,8 @@ import unittest
 import os
 import shutil
 import shelve
+import logging
+import inspect
 
 import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
@@ -41,6 +43,7 @@ def getPlaylistData(name):
 class test_correctStateCorruption(unittest.TestCase):
 
     def test_removedSongs(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         name = 'RemovedSongs'
 
         songs = ['A' ,'B' ,'C' ,'D', 'E'] 
@@ -64,6 +67,7 @@ class test_correctStateCorruption(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_blankMetaData(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         name = 'blankMetaData'
 
         songs = ['A' ,'B' ,'C' ,'D'] 
@@ -89,6 +93,7 @@ class test_correctStateCorruption(unittest.TestCase):
 class test_editPlaylist(unittest.TestCase):
     
     def test_1(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         name = 'editPl1'
 
         songs = ['A' ,'B' ,'C' ,'D'] 
@@ -109,6 +114,7 @@ class test_editPlaylist(unittest.TestCase):
 
 
     def test_2(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         name = 'editPl2'
 
         songs = ['A' ,'B' ,'C' ,'D','E','F'] 
@@ -128,6 +134,7 @@ class test_editPlaylist(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_3(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         name = 'editPl3'
 
         songs = ['A' ,'B' ,'C'] 
@@ -147,6 +154,7 @@ class test_editPlaylist(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_4(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         name = 'editPl3'
 
         songs = ['A' ,'B' ,'C' ,'D', 'E', 'F', 'G'] 
@@ -167,6 +175,7 @@ class test_editPlaylist(unittest.TestCase):
 class test_smartSyncNewOrder(unittest.TestCase):
 
     def test_insertAndDelete(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = ['A' ,'B' ,'C' ,'D'] 
         remoteIds = ['A' ,'1' ,'B' ,'C' ,'2']
 
@@ -177,6 +186,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_insertDeleteSwap(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = ['A' ,'B' ,'C' ,'D'] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2']
 
@@ -188,6 +198,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_3(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E', 'F','G'] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2','F']
 
@@ -200,6 +211,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
 
 
     def test_LocalDeleteAll(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = [] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2','F']
 
@@ -211,6 +223,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_RemoteDeleteAll(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E', 'F','G'] 
         remoteIds = []
 
@@ -222,6 +235,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_Reversal(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E'] 
         remoteIds = ['E','D','C','B','A']
 
@@ -234,6 +248,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
 
 
     def test_7(self):
+        logging.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E'] 
         remoteIds = ['E','1','D','2','B','A']
 

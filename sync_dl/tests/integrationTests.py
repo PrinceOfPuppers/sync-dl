@@ -47,7 +47,7 @@ def metaDataMatches(metaData,plPath):
     '''
     metadata and local playlist must perfectly match remote playlist for this to return true
     '''
-    logging.info("Testing If Metadata Perfect Matches Remote Playlist")
+    logging.info("Testing If Metadata Perfectly Matches Remote Playlist")
 
     currentDir = getLocalSongs(plPath)
 
