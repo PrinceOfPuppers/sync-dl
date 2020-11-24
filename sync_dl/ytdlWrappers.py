@@ -3,6 +3,9 @@ import os
 import logging
 import subprocess
 
+
+import sync_dl.config as cfg
+
 #ids are the unique part of each videos url
 def getIDs(playlistUrl):
     params={"extract_flat": True, "quiet": True}
@@ -38,21 +41,38 @@ def getTitle(url):
     title = subprocess.getoutput(command)
     return title
 
-def downloadID(videoId, path,numberStr):
+def downloadID(videoId, path,numberStr, embedThumbnail=True):
     url = f"https://www.youtube.com/watch?v={videoId}"
     
-    params={"quiet": True, "noplaylist": True, "outtmpl": f'{path}/{numberStr}_%(title)s.%(ext)s', #'addmetadata':True,
-        'format': 'bestaudio',
+    if not os.path.exists(cfg.tmpDownloadPath):
+        os.mkdir(cfg.tmpDownloadPath)
+    
+    params={"quiet": True, "noplaylist": True, "outtmpl": f'{cfg.tmpDownloadPath}/{numberStr}_%(title)s.%(ext)s',
+        'format': 'bestaudio', 
         'postprocessors': [
             {'key': 'FFmpegExtractAudio'},
+            #{'key': 'EmbedThumbnail'},
             {'key': 'FFmpegMetadata'}
             ],
     }
 
+
     with youtube_dl.YoutubeDL(params) as ydl:
+
+        #ensures tmp is empty
+        tmp = os.listdir(path=cfg.tmpDownloadPath) 
+        for f in tmp:
+            os.remove(f"{cfg.tmpDownloadPath}/{f}")
+
         try:
             ydl.download([url])
+
+            tmp = os.listdir(path=cfg.tmpDownloadPath) 
+
+            os.rename(f"{cfg.tmpDownloadPath}/{tmp[0]}", f"{path}/{tmp[0]}")
+
+
             return True
-        except:
-            logging.info(f"song at {url} is unavalible")
+        except Exception as e:
+            logging.info(f"Unable to download song at {url}, Exception {e}")
             return False

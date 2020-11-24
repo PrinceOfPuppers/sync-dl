@@ -3,3 +3,4 @@ sync_dl/tests/testPlaylists
 sync_dl/tests/testing.log
 notepad.py
 debug.log
+sync_dl/tmp
