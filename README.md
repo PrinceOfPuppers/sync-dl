@@ -48,7 +48,3 @@ Options:
     -v, --verbose                   runs application in verbose mode
 
     -q, --quiet                     runs application with no print outs
-
-    -r, --recover                   Fixes any gaps in playlist and checks for manual deletions
-                                    it is important to run this after a crash before manually deleting
-                                    songs from the playlist

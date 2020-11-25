@@ -10,7 +10,7 @@ from random import randint
 
 from sync_dl.ytdlWrappers import getIDs, downloadID
 from sync_dl.plManagement import editPlaylist, correctStateCorruption
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder,showPlaylist, getLocalSongs, rename, compareMetaData, relabel,download
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download
 import sync_dl.config as cfg
 
 
@@ -272,3 +272,42 @@ def shuffle(plPath):
             newOrder.append( (ids[oldIndex],oldIndex) )
     
     editPlaylist(plPath, newOrder)
+
+
+def showPlaylist(metaData, printer, plPath, urlWithoutId = None):
+    '''
+    printer can be print or some level of logging
+    urlWithoutId is added if you wish to print out all full urls
+    '''
+    
+    print(f"Playlist URL: {metaData['url']}")
+
+    currentDir = getLocalSongs(plPath)
+
+    if urlWithoutId != None:
+        printer(f"i: Link                                         ->   Local Title")
+        for i,songId in enumerate(metaData['ids']):
+            url = f"{urlWithoutId}{songId}"
+            printer(f"{i}: {url}  ->  {currentDir[i]}")
+
+
+
+def compareMetaData(metaData, printer):
+    '''Tool for comparing ids held in metadata and their order compared to remote playlist ids'''
+    remoteIds = getIDs(metaData["url"])
+    localIds = metaData["ids"]
+    printer(f"i: Local ID    -> j: Remote ID")
+
+    for i,localId in enumerate(localIds):
+        if localId in remoteIds:
+            j = remoteIds.index(localId)
+            printer(f"{i}: {localId} -> {j}: {localId}")
+
+        else:
+            printer(f"{i}: {localId} ->  : ")
+
+
+    for j, remoteId in enumerate(remoteIds):
+        if remoteId not in localIds:
+
+            printer(f" :             -> {j}: {remoteId}")

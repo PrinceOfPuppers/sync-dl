@@ -6,10 +6,9 @@ import argparse
 import shelve
 
 from sync_dl.plManagement import correctStateCorruption
-from sync_dl.helpers import showPlaylist, compareMetaData
 import sync_dl.config as cfg
 
-from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap
+from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData
     
 #modified version of help formatter which only prints args once in help message
 class ArgsOnce(argparse.HelpFormatter):
@@ -66,10 +65,6 @@ def parseArgs():
     #info 
     parser.add_argument('-p','--print',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
     parser.add_argument('-d','--view-metadata',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
-    
-    #recovery
-    parser.add_argument('-r','--recover',action='store_true', help='fixes any gaps in playlist and checks for manual deletions it is important to run this after a crash before manually deleting songs from the playlist' )
-
 
     args = parser.parse_args()
     return args
@@ -151,11 +146,6 @@ if __name__ == "__main__":
     if not playlistExists(plPath):
         exit()
 
-    #recovery
-    if args.recover:
-        correctStateCorruption(plPath)
-        logging.info("State Recovered")
-
 
     #viewing playlist     
     if args.print:
@@ -169,21 +159,30 @@ if __name__ == "__main__":
 
 
     #playlist managing
-    if args.smart_sync:
-        smartSync(plPath)
+    try:
 
-    elif args.append_new:
-        appendNew(plPath)
-    
-    elif args.manual_add:
-        if not args.manual_add[1].isdigit():
-            logging.error("Index must be positive Integer")
-        else:
-            manualAdd(plPath,args.manual_add[0],int(args.manual_add[1]))
+        if args.smart_sync:
+            smartSync(plPath)
+
+        elif args.append_new:
+            appendNew(plPath)
+
+        elif args.manual_add:
+            if not args.manual_add[1].isdigit():
+                logging.error("Index must be positive Integer")
+            else:
+
+                manualAdd(plPath,args.manual_add[0],int(args.manual_add[1]))
 
 
-    elif args.move:
-        move(plPath,args.move[0],args.move[1])
-    elif args.swap:
-        swap(plPath,args.swap[0],args.swap[1])
+        elif args.move:
+            move(plPath,args.move[0],args.move[1])
+        elif args.swap:
+            swap(plPath,args.swap[0],args.swap[1])
+
+    except Exception as e:
+        logging.exception(e)
+        correctStateCorruption(plPath)
+        logging.info("State Recovered")
+
 

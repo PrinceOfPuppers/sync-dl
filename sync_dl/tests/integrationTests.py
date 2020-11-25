@@ -9,7 +9,8 @@ import random
 
 from sync_dl.commands import smartSync,newPlaylist,swap,shuffle,move
 import sync_dl.config as cfg
-from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs, compareMetaData, showPlaylist
+from sync_dl.commands import compareMetaData, showPlaylist
+from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 from sync_dl.ytdlWrappers import getTitle,getIdsAndTitles
 
