@@ -7,7 +7,7 @@ import shelve
 import shutil
 import random
 
-from syncdl import smartSync,newPlaylist,swap,shuffle,move
+from sync_dl.commands import smartSync,newPlaylist,swap,shuffle,move
 import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs, compareMetaData, showPlaylist
 from sync_dl.plManagement import editPlaylist,correctStateCorruption

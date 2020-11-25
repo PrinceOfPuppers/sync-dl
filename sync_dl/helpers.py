@@ -11,7 +11,7 @@ def showPlaylist(metaData, printer, plPath, urlWithoutId = None):
     printer can be print or some level of logging
     urlWithoutId is added if you wish to print out all full urls
     '''
-
+    
     for item in metaData.items():
         printer(f"{item[0]}: {item[1]}")
 

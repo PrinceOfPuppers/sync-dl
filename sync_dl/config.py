@@ -1,4 +1,5 @@
 import configparser
+import os
 from re import compile
 import logging
 from ntpath import dirname
@@ -11,6 +12,9 @@ contains all global variables, also parses config into global variables
 modulePath = dirname(__file__)
 
 #loading config
+if not os.path.exists(f'{modulePath}/config.ini'):
+    os.rename(f'{modulePath}/config-default.ini',f'{modulePath}/config.ini')
+
 parser = configparser.ConfigParser(allow_no_value=True)
 parser.optionxform = str 
 parser.read(f'{modulePath}/config.ini')

@@ -4,3 +4,5 @@ sync_dl/tests/testing.log
 notepad.py
 debug.log
 sync_dl/tmp
+sync_dl/config.ini
+config.ini
