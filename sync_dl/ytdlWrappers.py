@@ -2,7 +2,7 @@ import youtube_dl
 import os
 import logging
 import subprocess
-
+import shutil
 
 import sync_dl.config as cfg
 
@@ -68,8 +68,8 @@ def downloadID(videoId, path,numberStr, embedThumbnail=True):
             ydl.download([url])
 
             tmp = os.listdir(path=cfg.tmpDownloadPath) 
-
-            os.rename(f"{cfg.tmpDownloadPath}/{tmp[0]}", f"{path}/{tmp[0]}")
+            shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
+            #os.rename(f"{cfg.tmpDownloadPath}/{tmp[0]}", f"{path}/{tmp[0]}")
 
 
             return True
