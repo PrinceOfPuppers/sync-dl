@@ -69,6 +69,24 @@ def parseArgs():
     args = parser.parse_args()
     return args
 
+def setLogging(args):
+    '''sets logging level based on verbosity'''
+    #verbosity
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG,
+        format="[%(levelname)s] %(message)s",
+        handlers=[logging.StreamHandler()]
+        )
+    elif args.quiet:
+        logging.basicConfig(level=logging.ERROR,
+        format="[%(levelname)s] %(message)s",
+        handlers=[logging.StreamHandler()]
+        )
+    else:
+        logging.basicConfig(level=logging.INFO,
+        format="%(message)s",
+        handlers=[logging.StreamHandler()]
+        )
 
 def getCwd(args):
     #setting and getting cwd
@@ -93,6 +111,7 @@ def getCwd(args):
 
 
 def playlistExists(plPath):
+    '''tests if valid playlist with metadata file exists at provided path'''
     #everything past this point only works if the playlist exists
     if not os.path.exists(plPath):
         logging.error(f"Directory {plPath} Doesnt Exist")
@@ -107,26 +126,10 @@ def playlistExists(plPath):
 
 
 
-
 if __name__ == "__main__":
     args = parseArgs()
 
-    #verbosity
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG,
-        format="[%(levelname)s] %(message)s",
-        handlers=[logging.StreamHandler()]
-        )
-    elif args.quiet:
-        logging.basicConfig(level=logging.ERROR,
-        format="[%(levelname)s] %(message)s",
-        handlers=[logging.StreamHandler()]
-        )
-    else:
-        logging.basicConfig(level=logging.INFO,
-        format="%(message)s",
-        handlers=[logging.StreamHandler()]
-        )
+    setLogging(args)
 
     cwd = getCwd(args)
 
@@ -160,13 +163,15 @@ if __name__ == "__main__":
 
     #playlist managing
     try:
-
+        #smart syncing
         if args.smart_sync:
             smartSync(plPath)
 
+        #appending
         elif args.append_new:
             appendNew(plPath)
 
+        #manual adding
         elif args.manual_add:
             if not args.manual_add[1].isdigit():
                 logging.error("Index must be positive Integer")
@@ -174,12 +179,14 @@ if __name__ == "__main__":
 
                 manualAdd(plPath,args.manual_add[0],int(args.manual_add[1]))
 
-
+        #moving/swaping songs
         elif args.move:
             move(plPath,args.move[0],args.move[1])
+
         elif args.swap:
             swap(plPath,args.swap[0],args.swap[1])
 
+    #fixing metadata corruption in event of crash
     except Exception as e:
         logging.exception(e)
         correctStateCorruption(plPath)
