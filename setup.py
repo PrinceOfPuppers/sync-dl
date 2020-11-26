@@ -21,5 +21,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    scripts=["bin/sync-dl"]
+    scripts=["bin/sync-dl"],
+    entry_points={
+        'console_scripts': ['sync-dl = sync_dl:main'],
+    },
 )
