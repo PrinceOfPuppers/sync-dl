@@ -9,16 +9,33 @@ from shutil import copyfile
 contains all global variables, also parses config into global variables
 '''
 
+def createDefaultConfig(parser):
+    defaultConfig = {
+        'metaDataName' : '.metaData',
+        'manualAddId' : '-manualAddition',
+        'testPlPath' : 'tests/testPlaylists',
+        'tmpDownloadPath' : 'tmp',
+        'musicDir' : '',
+    }
+
+    parser['DEFAULT'] = defaultConfig
+    with open(f'{modulePath}/config.ini','w+') as f:
+        parser.write(f)
+    
+
 
 modulePath = dirname(__file__)
 
 #loading config
-if not os.path.exists(f'{modulePath}/config.ini'):
-    copyfile(f'{modulePath}/config-default.ini',f'{modulePath}/config.ini')
-
 parser = configparser.ConfigParser(allow_no_value=True)
 parser.optionxform = str 
-parser.read(f'{modulePath}/config.ini')
+
+if not os.path.exists(f'{modulePath}/config.ini'):
+    createDefaultConfig(parser)
+    
+
+else:
+    parser.read(f'{modulePath}/config.ini')
 section = parser['DEFAULT']
 
 

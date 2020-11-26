@@ -1,3 +1,4 @@
+#!/url/bin/env python
 import os
 import logging
 
@@ -35,7 +36,7 @@ class ArgsOnce(argparse.HelpFormatter):
 
 
 def parseArgs():
-    description = ("An application for downloading and syncing remote playlists to your computer. Created to avoid having\n"
+    description = ("A tool for downloading and syncing remote playlists to your computer. Created to avoid having\n"
                     "music deleted but still have the convenience of browsing and adding and reordering new music using\n"
                     "remote services such as youtube.")
 
