@@ -1,11 +1,16 @@
 import setuptools
 
+with open('README.md', 'r') as f:
+    longDescription = f.read()
+
 setuptools.setup(
     name="sync-dl",
     version="0.0.1",
     author="Joshua McPherson",
     author_email="joshuamcpherson5@gmail.com",
     description="A tool for downloading and syncing remote playlists to your computer",
+    long_description = longDescription,
+    long_description_content_type = 'text/markdown',
     url="https://github.com/PrinceOfPuppers/sync-dl",
     packages=setuptools.find_packages(),
     include_package_data=True,
@@ -16,5 +21,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    scripts=["sync_dl/sync-dl"]
+    scripts=["bin/sync-dl"]
 )

@@ -6,3 +6,7 @@ debug.log
 sync_dl/tmp
 sync_dl/config.ini
 config.ini
+sync_dl.egg-info
+
+build
+dist

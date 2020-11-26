@@ -192,5 +192,3 @@ if __name__ == "__main__":
         logging.exception(e)
         correctStateCorruption(plPath)
         logging.info("State Recovered")
-
-

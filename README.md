@@ -1,50 +1,88 @@
-About:
-    An application for downloading and syncing remote playlists to your computer. Created to avoid having
-    music deleted but still have the convenience of browsing and adding and reordering new music using 
-    remote services such as youtube.
-
-    the application does not store any metadata in songs, metadata is stored next to them in a .metadata
-    file, the music files are managed through numbering, allowing them to be played alphanumerically using
-    any playback service (such as VLC)
-
-
-Smart Sync:
-    Adds new music from remote playlist to local playlist, also takes ordering of remote playlist
-    without deleting songs no longer available in remote playlist.
-
-    songs that are no longer available in remote, will remain after the song they are currently after
-    in the local playlist
+# sync-dl
+> A tool for downloading and syncing remote playlists to your computer
+- [INSTALLATION](#INSTALLATION)
+- [ABOUT](#ABOUT)
+- [USAGE](#USAGE)
+- [EXAMPLE](#EXAMPLE)
+- [DEVLOPMENT](#DEVLOPMENT)
 
 
-Usage:
-    syncdl [options] PLAYLIST
+# INSTALLATION
+``` 
+pip install sync-dl
+```
 
-    where playlist is simply the name of the directory you wish to store the playlist in. playlist directory will
-    always be in current working directory unless a music directory is specified using the -l, --local-dir option
-    to hard set a music directory
+# ABOUT
+Created to avoid having music deleted but still have the convenience of browsing, adding and reordering new music using remote services such as youtube.
 
-Options:
-    -h, --help                      prints help message
+the application does not store any of its metadata in songs, metadata is stored next to them in a .metadata file, the music files are managed through numbering, allowing them to be played alphanumerically using any playback service (such as VLC)
 
-    -n, --new-playlist URL          downloads new playlist from URL with name PLAYLIST 
 
-    -s, --smart-sync                apply smart sync local playlist with remote playlist
+# Usage
+```
+syncdl [options] PLAYLIST
+```
+where playlist is simply the name of the directory you wish to store the playlist in. playlist directory will always be in current working directory unless a music directory is specified using the -l, --local-dir option to hard set a music directory.
 
-    -a, --append-new                append new songs in remote playlist to end of local playlist
+To see all options use the command:
+```
+syncdl -h
+```
 
-    -M, --manual-add PATH INDEX     manually add song at PATH to playlist in posistion INDEX
+### Smart Sync:
+The main feature of sync-dl
+```
+syncdl -s PLAYLIST
+```
+Adds new music from remote playlist to local playlist, also takes ordering of remote playlist
+without deleting songs no longer available in remote playlist.
 
-    -m, --move I1 I2                moves song from I1 to I2 in local playlist
+songs that are no longer available in remote, will remain after the song they are currently after
+in the local playlist
 
-    -w, --swap I1 I2                swaps order of songs at I1 and I2
 
-    -p, --print                     prints playlist information
+# EXAMPLE
+```
+syncdl -l my/local/music/folder
+```
+Will use my/local/music/folder to store and manipulate playlist in the future.
+```
+syncdl -n https://www.youtube.com/playlist?list=PL-lQgJ3eJ1HtLvM6xtxOY_1clTLov0qM3 sweetJams
+```
+Will create a new playlist at my/local/music/folder/sweetJams and
+download the playlist at the provided url to it.
 
-    -d, --view-metadata             prints out playlist metadata information compared to remote playlist information
+```
+syncdl -m 1 5 sweetJams
+```
+Will move song number 1 in the playlist to posistion 5
+```
+syncdl -a sweetJams
+```
+Will check for any new songs in the remote playlist and append them to the end of sweetJams
+```
+syncdl -s sweetJams
+```
+Will use smart sync on sweetJams, downloading new songs from the remote playlist and reordering the playlist to match the order of the remote playlist without deleting anysongs that are no longer avalible
+```
+syncdl -p sweetJams
+```
+Will give you all the urls for the songs in sweetJams
 
-    -l, --local-dir PATH            sets local music directory to PATH, overrides current working directory and 
-                                    manages playlists in PATH in the future
-    
-    -v, --verbose                   runs application in verbose mode
 
-    -q, --quiet                     runs application with no print outs
+# DEVLOPMENT
+To build for devlopment run:
+```
+git clone https://github.com/PrinceOfPuppers/sync-dl.git
+
+cd sync-dl
+
+pip install -e .
+```
+This will build and install sync-dl in place, allowing you to work on the code without having to reinstall after changes
+
+### Automated Testing
+```
+python test.py [options] TEST_PLAYLIST_URL
+```
+will run all unit and integration tests, for the integration tests it will use the playlist TEST_PLAYLIST_URL
