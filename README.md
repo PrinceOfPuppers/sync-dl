@@ -1,3 +1,5 @@
+<img src="banner.gif" />
+
 # sync-dl
 > A tool for downloading and syncing remote playlists to your computer
 - [INSTALLATION](#INSTALLATION)
