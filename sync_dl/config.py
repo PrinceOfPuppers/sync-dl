@@ -9,6 +9,8 @@ from shutil import copyfile
 contains all global variables, also parses config into global variables
 '''
 
+
+
 def createDefaultConfig(parser):
     defaultConfig = {
         'metaDataName' : '.metaData',
@@ -18,11 +20,14 @@ def createDefaultConfig(parser):
         'musicDir' : '',
     }
 
-    parser['DEFAULT'] = defaultConfig
+    parser['CONFIG'] = defaultConfig
     with open(f'{modulePath}/config.ini','w+') as f:
         parser.write(f)
     
-
+def writeToConfig(key,value):
+    parser.set('CONFIG',key,value)
+    with open(f'{modulePath}/config.ini', 'w') as configfile:
+        parser.write(configfile)
 
 modulePath = dirname(__file__)
 
@@ -36,9 +41,9 @@ if not os.path.exists(f'{modulePath}/config.ini'):
 
 else:
     parser.read(f'{modulePath}/config.ini')
-section = parser['DEFAULT']
 
 
+section = parser['CONFIG']
 #global config variables
 filePrependRE = compile(r'\d+_')
 
@@ -51,4 +56,3 @@ testPlPath = f"{modulePath}/{section['testPlPath']}"
 tmpDownloadPath = f"{modulePath}/{section['tmpDownloadPath']}"
 
 musicDir = section['musicDir']
-

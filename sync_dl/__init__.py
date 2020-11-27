@@ -2,11 +2,13 @@ import os
 import logging
 
 import argparse
-
+import pkg_resources
 import shelve
+
 
 from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
+
 
 from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData
     
@@ -57,7 +59,8 @@ def parseArgs():
     group.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
     
     
-    parser.add_argument('-l','--local-dir',metavar='PATH',type=str, help='sets local music directory to PATH, overrides current working directory and manages playlists in PATH in the future' )
+    # the '\n' are used as defaults so they dont get confused with actual paths
+    parser.add_argument('-l','--local-dir', nargs='?',metavar='PATH',default='\n',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
     
     parser.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
     parser.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
@@ -65,6 +68,9 @@ def parseArgs():
     #info 
     parser.add_argument('-p','--print',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
     parser.add_argument('-d','--view-metadata',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
+
+    version = pkg_resources.require("sync_dl")[0].version
+    parser.add_argument('--version', action='version', version='%(prog)s ' + version)
 
     args = parser.parse_args()
     return args
@@ -91,17 +97,19 @@ def setLogging(args):
 def getCwd(args):
     #setting and getting cwd
     if args.local_dir:
+        if args.local_dir == '\n':
+            if cfg.musicDir=='':
+                print("Music Directory Not Set, Set With: sync-dl -l PATH")
+            else:
+                print(cfg.musicDir)
+            exit()
         if not os.path.exists(args.local_dir):
             logging.error("Provided Music Directory Does not Exist")
             exit()
         #saves args.local_dir to config
         music = os.path.abspath(args.local_dir)
 
-
-        cfg.parser.set('DEFAULT','musicDir',music)
-        with open(f'{cfg.modulePath}/config.ini', 'w') as configfile:
-            cfg.parser.write(configfile)
-
+        cfg.writeToConfig('musicDir',music)
         cfg.musicDir = music
 
     if cfg.musicDir == '':
