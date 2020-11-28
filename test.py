@@ -1,6 +1,7 @@
 import unittest
 import logging
 
+
 import argparse
 import sys
 
@@ -31,20 +32,26 @@ def parseArgs():
 
     return args
 
+def setLogging(args):
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    fh = logging.FileHandler(f"{cfg.modulePath}/tests/testing.log")
+    fh.setFormatter(formatter)
+
+    cfg.logger.addHandler(fh)
+
+    if args.print:
+        sh = logging.StreamHandler()
+        sh.setFormatter(formatter)
+        cfg.logger.addHandler(sh)
+
+    cfg.logger.setLevel(level=logging.DEBUG)
+
 if __name__ == "__main__":
 
     args = parseArgs()
 
-    handlers = [logging.FileHandler(f"{cfg.modulePath}/tests/testing.log")]
+    setLogging(args)
 
-    if args.print:
-        handlers.append(logging.StreamHandler())
-
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=handlers
-    )
 
     runall = not (args.unit or args.integration)
 

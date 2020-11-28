@@ -1,7 +1,6 @@
 import configparser
 import os
 from re import compile
-import logging
 from ntpath import dirname
 from shutil import copyfile
 
@@ -56,3 +55,7 @@ testPlPath = f"{modulePath}/{section['testPlPath']}"
 tmpDownloadPath = f"{modulePath}/{section['tmpDownloadPath']}"
 
 musicDir = section['musicDir']
+
+#logger
+import logging
+logger = logging.getLogger('sync_dl')

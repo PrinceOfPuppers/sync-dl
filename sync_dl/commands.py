@@ -1,5 +1,5 @@
 import os
-import logging
+
 
 import argparse
 
@@ -19,10 +19,10 @@ def newPlaylist(plPath,url):
         os.makedirs(plPath)
 
     elif len(os.listdir(path=plPath))!=0:
-        logging.error(f"Directory Is Not Empty, Cannot Make Playlist in {plPath}")
+        cfg.logger.error(f"Directory Is Not Empty, Cannot Make Playlist in {plPath}")
         return
 
-    logging.info(f"Creating New Playlist Named {ntpath.basename(plPath)} from URL: {url}")
+    cfg.logger.info(f"Creating New Playlist Named {ntpath.basename(plPath)} from URL: {url}")
 
     ids = getIDs(url)
     numDigits = len(str( len(ids) + 1)) #needed for creating starting number for auto ordering ie) 001, 0152
@@ -35,14 +35,14 @@ def newPlaylist(plPath,url):
         for i,songId in enumerate(ids):
             num = createNumLabel(i,numDigits)
 
-            logging.info(f"Dowloading song Id {songId}")
+            cfg.logger.info(f"Dowloading song Id {songId}")
             if downloadID(songId,plPath,num):
                 metaData["ids"].append(songId)
-                logging.debug("Download Complete")
+                cfg.logger.debug("Download Complete")
             else:
                 invalidSongs+=1
 
-        logging.info(f"Downloaded {len(ids)-invalidSongs}/{len(ids)} Songs")
+        cfg.logger.info(f"Downloaded {len(ids)-invalidSongs}/{len(ids)} Songs")
 
 
 def smartSync(plPath):
@@ -67,13 +67,13 @@ def smartSync(plPath):
     
     see test_smartSyncNewOrder in tests.py for more examples
     '''
-    logging.info("Smart Syncing...")
+    cfg.logger.info("Smart Syncing...")
     correctStateCorruption(plPath)
 
 
     existingFiles = os.listdir(path=f"{plPath}")
     if cfg.metaDataName not in existingFiles:
-        logging.critical("Current Directory is Not Existing Playlist")
+        cfg.logger.critical("Current Directory is Not Existing Playlist")
         return
 
 
@@ -95,7 +95,7 @@ def hardSync():
 def appendNew(plPath):
     '''will append new songs in remote playlist to local playlist in order that they appear'''
 
-    logging.info("Appending New Songs...")
+    cfg.logger.info("Appending New Songs...")
 
     correctStateCorruption(plPath)
 
@@ -116,7 +116,7 @@ def manualAdd(plPath, songPath, posistion):
     '''put song in posistion in the playlist'''
 
     if not os.path.exists(songPath):
-        logging.error(f'{songPath} Does Not Exist')
+        cfg.logger.error(f'{songPath} Does Not Exist')
         return
 
     correctStateCorruption(plPath)
@@ -134,7 +134,7 @@ def manualAdd(plPath, songPath, posistion):
         elif posistion < 0:
             posistion = 0
         
-        logging.info(f"Adding {ntpath.basename(songPath)} to {ntpath.basename(plPath)} in Posistion {posistion}")
+        cfg.logger.info(f"Adding {ntpath.basename(songPath)} to {ntpath.basename(plPath)} in Posistion {posistion}")
 
         #shifting elements
         for i in reversed(range(posistion, idsLen)):
@@ -142,7 +142,7 @@ def manualAdd(plPath, songPath, posistion):
 
             newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i+1,numDigits)}_" , oldName)
 
-            rename(metaData,logging.debug,plPath,oldName,newName,i+1,metaData["ids"][i])
+            rename(metaData,cfg.logger.debug,plPath,oldName,newName,i+1,metaData["ids"][i])
 
             metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
 
@@ -160,7 +160,7 @@ def manualAdd(plPath, songPath, posistion):
 def swap(plPath, index1, index2):
     '''moves song to provided posistion, shifting all below it down'''
     if index1 == index2:
-        logging.info(f"Given Index are the Same")
+        cfg.logger.info(f"Given Index are the Same")
 
 
     correctStateCorruption(plPath)
@@ -175,34 +175,34 @@ def swap(plPath, index1, index2):
         numDigits = len(str( idsLen + 1 ))
 
         if index1>=idsLen or index2>=idsLen:
-            logging.error(f"Given Index is Larger than Max {idsLen-1}")
+            cfg.logger.error(f"Given Index is Larger than Max {idsLen-1}")
             return
         elif index1<0 or index2<0:
-            logging.error(f"Given Index is Negative")
+            cfg.logger.error(f"Given Index is Negative")
             return
 
-        logging.info(f"Swapping {currentDir[index1]} and {currentDir[index2]}")
+        cfg.logger.info(f"Swapping {currentDir[index1]} and {currentDir[index2]}")
         #shift index1 out of the way (to idsLen)
 
         oldName = currentDir[index1]
-        tempName = relabel(metaData,logging.debug,plPath,oldName,index1,idsLen,numDigits)
+        tempName = relabel(metaData,cfg.logger.debug,plPath,oldName,index1,idsLen,numDigits)
 
         
         #move index2 to index1's old location
 
         oldName = currentDir[index2]
-        relabel(metaData,logging.debug,plPath,oldName,index2,index1,numDigits)
+        relabel(metaData,cfg.logger.debug,plPath,oldName,index2,index1,numDigits)
 
         #move index1 (now =idsLen) to index2's old location
 
         oldName = tempName
-        relabel(metaData,logging.debug,plPath,oldName,idsLen,index2,numDigits)
+        relabel(metaData,cfg.logger.debug,plPath,oldName,idsLen,index2,numDigits)
 
         del metaData["ids"][idsLen]
 
 def move(plPath, currentIndex, newIndex):
     if currentIndex==newIndex:
-        logging.info("Indexes Are the Same")
+        cfg.logger.info("Indexes Are the Same")
         return
 
 
@@ -218,10 +218,10 @@ def move(plPath, currentIndex, newIndex):
 
 
         if currentIndex>=idsLen:
-            logging.error(f"No song has Index {currentIndex}, Largest Index is {idsLen-1}")
+            cfg.logger.error(f"No song has Index {currentIndex}, Largest Index is {idsLen-1}")
             return
         elif currentIndex<0:
-            logging.error(f"No Song has a Negative Index")
+            cfg.logger.error(f"No Song has a Negative Index")
             return
 
         #clamp newIndex
@@ -230,34 +230,34 @@ def move(plPath, currentIndex, newIndex):
         elif newIndex < 0:
             newIndex = 0
         
-        logging.info(f"Moving {currentDir[currentIndex]} to Index {newIndex}")
+        cfg.logger.info(f"Moving {currentDir[currentIndex]} to Index {newIndex}")
         
         #moves song to end of list
-        tempName = relabel(metaData,logging.debug,plPath,currentDir[currentIndex],currentIndex,idsLen,numDigits)
+        tempName = relabel(metaData,cfg.logger.debug,plPath,currentDir[currentIndex],currentIndex,idsLen,numDigits)
 
         if currentIndex>newIndex:
             #shifts all songs from newIndex to currentIndex-1 by +1
             for i in reversed(range(newIndex,currentIndex)):
                 
                 oldName = currentDir[i]
-                relabel(metaData,logging.debug,plPath,oldName,i,i+1,numDigits)
+                relabel(metaData,cfg.logger.debug,plPath,oldName,i,i+1,numDigits)
     
         
         else:
             #shifts all songs from currentIndex+1 to newIndex by -1
             for i in range(currentIndex+1,newIndex+1):
                 oldName = currentDir[i]
-                relabel(metaData,logging.debug,plPath,oldName,i,i-1,numDigits)
+                relabel(metaData,cfg.logger.debug,plPath,oldName,i,i-1,numDigits)
         
         #moves song back
-        relabel(metaData,logging.debug,plPath,tempName,idsLen,newIndex,numDigits)
+        relabel(metaData,cfg.logger.debug,plPath,tempName,idsLen,newIndex,numDigits)
         del metaData['ids'][idsLen]
 
 
 
 def shuffle(plPath):
     '''randomizes playlist order'''
-    logging.info("Shuffling Playlist")
+    cfg.logger.info("Shuffling Playlist")
     correctStateCorruption(plPath)
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -276,10 +276,10 @@ def shuffle(plPath):
 
 def showPlaylist(metaData, printer, plPath, urlWithoutId = None):
     '''
-    printer can be print or some level of logging
+    printer can be print or some level of cfg.logger
     urlWithoutId is added if you wish to print out all full urls
     '''
-    logging.critical(f"Playlist URL: {metaData['url']}")
+    cfg.logger.critical(f"Playlist URL: {metaData['url']}")
 
     currentDir = getLocalSongs(plPath)
 

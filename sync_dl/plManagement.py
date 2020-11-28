@@ -1,5 +1,4 @@
 import os
-import logging
 import re
 import shelve
 
@@ -38,7 +37,7 @@ def _checkDeletions(plPath):
 
 
         if numDeleted > 0:
-            logging.debug(f"songs numbered {deleted} are no longer in playlist")
+            cfg.logger.debug(f"songs numbered {deleted} are no longer in playlist")
 
             numDidgets = len(str( len(metaData["ids"]) - numDeleted ))
             newIndex = 0
@@ -47,19 +46,19 @@ def _checkDeletions(plPath):
                 if newIndex != oldIndex:
                     oldName = currentDir[newIndex]
                     newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDidgets)}_" , oldName)
-                    logging.debug(f"Renaming {oldName} to {newName}")
+                    cfg.logger.debug(f"Renaming {oldName} to {newName}")
                     os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
 
                     if newIndex in deleted:
                         # we only remove the deleted entry from metadata when its posistion has been filled
-                        logging.debug(f"Removing {metaData['ids'][newIndex]} from metadata")
+                        cfg.logger.debug(f"Removing {metaData['ids'][newIndex]} from metadata")
 
                         #need to adjust for number already deleted
                         removedAlready = (numDeleted - len(deleted))
                         del metaData["ids"][newIndex - removedAlready]
                         del deleted[0]
 
-                    logging.debug("Renaming Complete")
+                    cfg.logger.debug("Renaming Complete")
             
 
 
@@ -70,7 +69,7 @@ def _checkDeletions(plPath):
                 # note even if the program crashed at this point, running this fuction
                 # again would yeild an uncorrupted state
                 removedAlready = (numDeleted - len(deleted))
-                logging.debug(f"Removing {metaData['ids'][index - removedAlready]} from metadata")
+                cfg.logger.debug(f"Removing {metaData['ids'][index - removedAlready]} from metadata")
                 del metaData["ids"][index - removedAlready]
                 del deleted[0]
 
@@ -79,7 +78,7 @@ def _checkBlanks(plPath):
         for i in reversed(range(len(metaData["ids"]))):
             songId = metaData['ids'][i]
             if songId == '':
-                logging.debug(f'Blank MetaData id Found at Index {i}, removing')
+                cfg.logger.debug(f'Blank MetaData id Found at Index {i}, removing')
                 del metaData["ids"][i]
 
 def _removeGaps(plPath):
@@ -92,12 +91,12 @@ def _removeGaps(plPath):
         oldPrepend = re.search(cfg.filePrependRE, oldName).group(0)
         if oldPrepend!=newPrepend:
             newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i,numDidgets)}_" , oldName)
-            logging.debug(f"Renaming {oldName} to {newName}")
+            cfg.logger.debug(f"Renaming {oldName} to {newName}")
             os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
-            logging.debug("Renaming Complete")
+            cfg.logger.debug("Renaming Complete")
 
 def correctStateCorruption(plPath):
-    logging.debug("Checking for playlist state Corruption")
+    cfg.logger.debug("Checking for playlist state Corruption")
 
     _checkBlanks(plPath) # must come first so later steps dont assume blanks are valid when checking len
 
@@ -124,8 +123,8 @@ def editPlaylist(plPath, newOrder, deletions=False):
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         idsLen = len(metaData['ids'])
-        logging.info(f"Editing Playlist...")
-        logging.debug(f"Old Order: {metaData['ids']}")
+        cfg.logger.info(f"Editing Playlist...")
+        cfg.logger.debug(f"Old Order: {metaData['ids']}")
 
         for i in range(len(newOrder)):
             newId,oldIndex = newOrder[i]
@@ -142,7 +141,7 @@ def editPlaylist(plPath, newOrder, deletions=False):
 
                 oldName = currentDir[oldIndex]
 
-                relabel(metaData,logging.debug,plPath,oldName,oldIndex,newIndex,numDigets)
+                relabel(metaData,cfg.logger.debug,plPath,oldName,oldIndex,newIndex,numDigets)
 
 
     if deletions:

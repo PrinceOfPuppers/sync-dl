@@ -1,5 +1,5 @@
 
-import logging
+
 import re
 import unittest
 import os
@@ -23,7 +23,7 @@ def metaDataSongsCorrect(metaData,plPath):
     test fails if local title does not match remote title
     manually added songs are ignored
     '''
-    logging.info("Testing if Metadata IDs Corrispond to Correct Songs")
+    cfg.logger.info("Testing if Metadata IDs Corrispond to Correct Songs")
 
     currentDir = getLocalSongs(plPath)
 
@@ -39,16 +39,16 @@ def metaDataSongsCorrect(metaData,plPath):
                 message = (f"{i}th Local Title:          {localTitle}\n"
                            f"Differes from Remote Title: {remoteTitle}\n"
                            f"With same Id:               {localId}")
-                logging.error(message)
+                cfg.logger.error(message)
                 return False
-    logging.info("Test Passed")
+    cfg.logger.info("Test Passed")
     return True
 
 def metaDataMatches(metaData,plPath):
     '''
     metadata and local playlist must perfectly match remote playlist for this to return true
     '''
-    logging.info("Testing If Metadata Perfectly Matches Remote Playlist")
+    cfg.logger.info("Testing If Metadata Perfectly Matches Remote Playlist")
 
     currentDir = getLocalSongs(plPath)
 
@@ -57,10 +57,10 @@ def metaDataMatches(metaData,plPath):
     remoteIds, remoteTitles = getIdsAndTitles(metaData['url'])
 
     if len(localIds) != len(currentDir):
-        logging.error(f"metadata ids and local playlist differ in length {len(localIds)} to {len(currentDir)}")
+        cfg.logger.error(f"metadata ids and local playlist differ in length {len(localIds)} to {len(currentDir)}")
         return False
     if len(localIds)!= len(remoteIds):
-        logging.error(f"local and remote playlists differ in length {len(localIds)} to {len(remoteIds)}")
+        cfg.logger.error(f"local and remote playlists differ in length {len(localIds)} to {len(remoteIds)}")
         return False
 
 
@@ -77,7 +77,7 @@ def metaDataMatches(metaData,plPath):
                        f"With title:              {localTitle}\n"
                        f"Differes from Remote id: {remoteId}\n"
                        f"With title:              {remoteTitle}")
-            logging.error(message)
+            cfg.logger.error(message)
             return False
 
 
@@ -86,7 +86,7 @@ def metaDataMatches(metaData,plPath):
                            f"With Id:                    {localId}\n"
                            f"Differes from Remote Title: {remoteTitle}\n"
                            f"With Id:                    {localId}")
-                logging.error(message)
+                cfg.logger.error(message)
                 return False
     return True
 
@@ -102,7 +102,7 @@ class test_integration(unittest.TestCase):
     plPath = f'{cfg.testPlPath}/{plName}'
 
     def test_creation(self):
-        logging.info("Running test_creation")
+        cfg.logger.info("Running test_creation")
         if not os.path.exists(self.plPath):
             newPlaylist(self.plPath,self.PL_URL)
 
@@ -115,7 +115,7 @@ class test_integration(unittest.TestCase):
             self.skipTest('Integration Testing Playlist Already Downloaded')
     
     def test_smartSyncNoEdit(self):
-        logging.info("Running test_smartSyncNoEdit")
+        cfg.logger.info("Running test_smartSyncNoEdit")
         smartSync(self.plPath)
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
             passed = metaDataMatches(metaData,self.plPath)
@@ -125,7 +125,7 @@ class test_integration(unittest.TestCase):
 
     def test_smartSyncSwap(self):
         '''Simulates remote reordering by reordering local'''
-        logging.info("Running test_smartSyncSwap")
+        cfg.logger.info("Running test_smartSyncSwap")
         swap(self.plPath,0 , 1)
 
         smartSync(self.plPath)
@@ -135,7 +135,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
 
     def test_smartSyncMove(self):
-        logging.info("Running test_smartSyncSwap")
+        cfg.logger.info("Running test_smartSyncSwap")
 
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
             numIds = len(metaData['ids'])
@@ -152,7 +152,7 @@ class test_integration(unittest.TestCase):
 
     def test_smartSyncShuffle(self):
         '''Simulates remote reordering by shuffling local'''
-        logging.info("Running test_smartSyncShuffle")
+        cfg.logger.info("Running test_smartSyncShuffle")
         shuffle(self.plPath)
 
         smartSync(self.plPath)
@@ -162,7 +162,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
 
     def test_smartSyncDelAndShuffle(self):
-        logging.info("Running test_smartSyncDelAndShuffle")
+        cfg.logger.info("Running test_smartSyncDelAndShuffle")
         shuffle(self.plPath)
 
         currentDir = getLocalSongs(self.plPath)
@@ -194,8 +194,8 @@ class test_integration(unittest.TestCase):
 
     def test_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
-        logging.info("End of Integration Test Summery")
+        cfg.logger.info("End of Integration Test Summery")
 
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-            compareMetaData(metaData, logging.info)
-            showPlaylist(metaData,logging.info,self.plPath,urlWithoutId='https://www.youtube.com/watch?v=')
+            compareMetaData(metaData, cfg.logger.info)
+            showPlaylist(metaData,cfg.logger.info,self.plPath,urlWithoutId='https://www.youtube.com/watch?v=')

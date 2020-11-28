@@ -1,6 +1,6 @@
 import youtube_dl
 import os
-import logging
+
 import subprocess
 import shutil
 
@@ -73,5 +73,5 @@ def downloadID(videoId, path,numberStr, embedThumbnail=True):
 
             return True
         except:
-            logging.info(f"Song No longer avalible at {url}")
+            cfg.logger.info(f"Song No longer avalible at {url}")
             return False

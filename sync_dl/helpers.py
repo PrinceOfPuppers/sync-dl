@@ -1,7 +1,7 @@
 import os
 import json
 import re
-import logging
+
 
 import sync_dl.config as cfg
 from sync_dl.ytdlWrappers import downloadID,getIDs
@@ -47,12 +47,12 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
     return newName
 
 def delete(metaData, plPath, name, index):
-    logging.info(f"Deleting {name}")
+    cfg.logger.info(f"Deleting {name}")
     os.remove(f"{plPath}/{name}")
 
     del metaData["ids"][index]
 
-    logging.debug("Deleting Complete")
+    cfg.logger.debug("Deleting Complete")
 
 
 
@@ -63,7 +63,7 @@ def download(metaData,plPath, songId, index,numDigets):
     '''
     num = createNumLabel(index,numDigets)
 
-    logging.info(f"Dowloading song Id {songId}")
+    cfg.logger.info(f"Dowloading song Id {songId}")
     if downloadID(songId,plPath,num):
 
         if index >= len(metaData["ids"]):
@@ -71,7 +71,7 @@ def download(metaData,plPath, songId, index,numDigets):
         else:
             metaData["ids"][index] = songId
         
-        logging.debug("Download Complete")
+        cfg.logger.debug("Download Complete")
         return True
     return False
 

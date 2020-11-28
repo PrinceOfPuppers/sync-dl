@@ -76,35 +76,32 @@ def parseArgs():
     return args
 
 def setLogging(args):
-    '''sets logging level based on verbosity'''
+    '''sets cfg.logger level based on verbosity'''
     #verbosity
+    stream = logging.StreamHandler()
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG,
-        format="[%(levelname)s] %(message)s",
-        handlers=[logging.StreamHandler()]
-        )
+        cfg.logger.setLevel(logging.DEBUG)
+        stream.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
+
     elif args.quiet:
-        logging.basicConfig(level=logging.ERROR,
-        format="[%(levelname)s] %(message)s",
-        handlers=[logging.StreamHandler()]
-        )
+        cfg.logger.setLevel(logging.ERROR)
+        stream.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
     else:
-        logging.basicConfig(level=logging.INFO,
-        format="%(message)s",
-        handlers=[logging.StreamHandler()]
-        )
+        cfg.logger.setLevel(logging.INFO)
+        stream.setFormatter(logging.Formatter("%(message)s"))
+    cfg.logger.addHandler(stream)
 
 def getCwd(args):
     #setting and getting cwd
     if args.local_dir:
         if args.local_dir == '\n':
             if cfg.musicDir=='':
-                logging.critical("Music Directory Not Set, Set With: sync-dl -l PATH")
+                cfg.logger.critical("Music Directory Not Set, Set With: sync-dl -l PATH")
             else:
-                logging.critical(cfg.musicDir)
+                cfg.logger.critical(cfg.musicDir)
             exit()
         if not os.path.exists(args.local_dir):
-            logging.error("Provided Music Directory Does not Exist")
+            cfg.logger.error("Provided Music Directory Does not Exist")
             exit()
         #saves args.local_dir to config
         music = os.path.abspath(args.local_dir)
@@ -122,11 +119,11 @@ def playlistExists(plPath):
     '''tests if valid playlist with metadata file exists at provided path'''
     #everything past this point only works if the playlist exists
     if not os.path.exists(plPath):
-        logging.error(f"Directory {plPath} Doesnt Exist")
+        cfg.logger.error(f"Directory {plPath} Doesnt Exist")
         return False
     
     if not os.path.exists(f'{plPath}/{cfg.metaDataName}'):
-        logging.error(f"No Playlist Exists at {plPath}, Could not Find Metadata")
+        cfg.logger.error(f"No Playlist Exists at {plPath}, Could not Find Metadata")
         return False
     return True
 
@@ -145,7 +142,7 @@ def main():
         plPath = f"{cwd}/{args.PLAYLIST}"
     else:
         if not args.local_dir: #only option which can run without playlist
-            logging.error("Playlist Name Required")
+            cfg.logger.error("Playlist Name Required")
         exit()
 
     if args.new_playlist: 
@@ -180,7 +177,7 @@ def main():
         #manual adding
         elif args.manual_add:
             if not args.manual_add[1].isdigit():
-                logging.error("Index must be positive Integer")
+                cfg.logger.error("Index must be positive Integer")
             else:
 
                 manualAdd(plPath,args.manual_add[0],int(args.manual_add[1]))
@@ -194,6 +191,6 @@ def main():
 
     #fixing metadata corruption in event of crash
     except Exception as e:
-        logging.exception(e)
+        cfg.logger.exception(e)
         correctStateCorruption(plPath)
-        logging.info("State Recovered")
+        cfg.logger.info("State Recovered")
