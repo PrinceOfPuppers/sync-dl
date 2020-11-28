@@ -69,7 +69,6 @@ def downloadID(videoId, path,numberStr, embedThumbnail=True):
 
             tmp = os.listdir(path=cfg.tmpDownloadPath) 
             shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
-            #os.rename(f"{cfg.tmpDownloadPath}/{tmp[0]}", f"{path}/{tmp[0]}")
 
 
             return True

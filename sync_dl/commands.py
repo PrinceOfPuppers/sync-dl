@@ -73,7 +73,7 @@ def smartSync(plPath):
 
     existingFiles = os.listdir(path=f"{plPath}")
     if cfg.metaDataName not in existingFiles:
-        print("Current Directory is Not Existing Playlist")
+        logging.critical("Current Directory is Not Existing Playlist")
         return
 
 
@@ -279,8 +279,7 @@ def showPlaylist(metaData, printer, plPath, urlWithoutId = None):
     printer can be print or some level of logging
     urlWithoutId is added if you wish to print out all full urls
     '''
-    
-    print(f"Playlist URL: {metaData['url']}")
+    logging.critical(f"Playlist URL: {metaData['url']}")
 
     currentDir = getLocalSongs(plPath)
 

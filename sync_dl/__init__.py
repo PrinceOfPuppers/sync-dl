@@ -60,7 +60,7 @@ def parseArgs():
     
     
     # the '\n' are used as defaults so they dont get confused with actual paths
-    parser.add_argument('-l','--local-dir', nargs='?',metavar='PATH',default='\n',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
+    parser.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
     
     parser.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
     parser.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
@@ -99,9 +99,9 @@ def getCwd(args):
     if args.local_dir:
         if args.local_dir == '\n':
             if cfg.musicDir=='':
-                print("Music Directory Not Set, Set With: sync-dl -l PATH")
+                logging.critical("Music Directory Not Set, Set With: sync-dl -l PATH")
             else:
-                print(cfg.musicDir)
+                logging.critical(cfg.musicDir)
             exit()
         if not os.path.exists(args.local_dir):
             logging.error("Provided Music Directory Does not Exist")

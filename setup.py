@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name="sync-dl",
-    version="0.1.1",
+    version="0.1.2",
     author="Joshua McPherson",
     author_email="joshuamcpherson5@gmail.com",
     description="A tool for downloading and syncing remote playlists to your computer",
@@ -19,6 +19,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Environment :: Console",
+        "Intended Audience :: End Users/Desktop",
     ],
     python_requires='>=3.6',
     scripts=["bin/sync-dl"],
@@ -26,3 +28,5 @@ setuptools.setup(
         'console_scripts': ['sync-dl = sync_dl:main'],
     },
 )
+
+
