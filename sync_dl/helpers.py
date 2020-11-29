@@ -2,22 +2,23 @@ import os
 import json
 import re
 
-
+from sync_dl import noInterrupt
 import sync_dl.config as cfg
 from sync_dl.ytdlWrappers import downloadID,getIDs
 
 
 
 def rename(metaData, printer, plPath, oldName, newName, index, newId):
-    printer(f"Renaming {oldName} to {newName}")
-    os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
+    with noInterrupt:
+        printer(f"Renaming {oldName} to {newName}")
+        os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
 
-    if index >= len(metaData["ids"]):
-        metaData["ids"].append(newId)
-    else:
-        metaData["ids"][index] = newId
+        if index >= len(metaData["ids"]):
+            metaData["ids"].append(newId)
+        else:
+            metaData["ids"][index] = newId
 
-    printer("Renaming Complete")
+        printer("Renaming Complete")
 
 def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
     '''
@@ -31,28 +32,32 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
     '''
 
     newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDigets)}_" , oldName)
+
     songId = metaData['ids'][oldIndex]
-    printer(f"Relabeling {oldName} to {newName}")
-    os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
+    with noInterrupt:
+        printer(f"Relabeling {oldName} to {newName}")
+
+        os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
 
 
-    if newIndex >= len(metaData["ids"]):
-        metaData["ids"].append(songId)
-    else:
-        metaData["ids"][newIndex] = songId
+        if newIndex >= len(metaData["ids"]):
+            metaData["ids"].append(songId)
+        else:
+            metaData["ids"][newIndex] = songId
 
-    metaData['ids'][oldIndex] = ''
+        metaData['ids'][oldIndex] = ''
 
-    printer("Relabeling Complete")
+        printer("Relabeling Complete")
     return newName
 
 def delete(metaData, plPath, name, index):
-    cfg.logger.info(f"Deleting {name}")
-    os.remove(f"{plPath}/{name}")
+    with noInterrupt:
+        cfg.logger.info(f"Deleting {name}")
+        os.remove(f"{plPath}/{name}")
 
-    del metaData["ids"][index]
+        del metaData["ids"][index]
 
-    cfg.logger.debug("Deleting Complete")
+        cfg.logger.debug("Deleting Complete")
 
 
 
@@ -63,16 +68,17 @@ def download(metaData,plPath, songId, index,numDigets):
     '''
     num = createNumLabel(index,numDigets)
 
-    cfg.logger.info(f"Dowloading song Id {songId}")
-    if downloadID(songId,plPath,num):
-
-        if index >= len(metaData["ids"]):
-            metaData["ids"].append(songId)
-        else:
-            metaData["ids"][index] = songId
+    with noInterrupt:
+        cfg.logger.info(f"Dowloading song Id {songId}")
+        if downloadID(songId,plPath,num):
         
-        cfg.logger.debug("Download Complete")
-        return True
+            if index >= len(metaData["ids"]):
+                metaData["ids"].append(songId)
+            else:
+                metaData["ids"][index] = songId
+            
+            cfg.logger.debug("Download Complete")
+            return True
     return False
 
 def createNumLabel(n,numDigets):

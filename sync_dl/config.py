@@ -43,6 +43,7 @@ else:
 
 
 section = parser['CONFIG']
+
 #global config variables
 filePrependRE = compile(r'\d+_')
 
@@ -59,3 +60,4 @@ musicDir = section['musicDir']
 #logger
 import logging
 logger = logging.getLogger('sync_dl')
+

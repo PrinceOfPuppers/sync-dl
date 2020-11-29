@@ -8,6 +8,8 @@ import re
 import ntpath
 from random import randint
 
+
+from sync_dl import noInterrupt
 from sync_dl.ytdlWrappers import getIDs, downloadID
 from sync_dl.plManagement import editPlaylist, correctStateCorruption
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download
@@ -35,12 +37,13 @@ def newPlaylist(plPath,url):
         for i,songId in enumerate(ids):
             num = createNumLabel(i,numDigits)
 
-            cfg.logger.info(f"Dowloading song Id {songId}")
-            if downloadID(songId,plPath,num):
-                metaData["ids"].append(songId)
-                cfg.logger.debug("Download Complete")
-            else:
-                invalidSongs+=1
+            with noInterrupt:
+                cfg.logger.info(f"Dowloading song Id {songId}")
+                if downloadID(songId,plPath,num):
+                    metaData["ids"].append(songId)
+                    cfg.logger.debug("Download Complete")
+                else:
+                    invalidSongs+=1
 
         cfg.logger.info(f"Downloaded {len(ids)-invalidSongs}/{len(ids)} Songs")
 
@@ -142,19 +145,21 @@ def manualAdd(plPath, songPath, posistion):
 
             newName = re.sub(cfg.filePrependRE, f"{createNumLabel(i+1,numDigits)}_" , oldName)
 
-            rename(metaData,cfg.logger.debug,plPath,oldName,newName,i+1,metaData["ids"][i])
+            with noInterrupt:
+                rename(metaData,cfg.logger.debug,plPath,oldName,newName,i+1,metaData["ids"][i])
 
-            metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
+                metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
 
 
         newSongName = f"{createNumLabel(posistion,numDigits)}_" + ntpath.basename(songPath)
 
-        os.rename(songPath,f'{plPath}/{newSongName}')
-
-        if posistion >= len(metaData["ids"]):
-            metaData["ids"].append(cfg.manualAddId)
-        else:
-            metaData["ids"][posistion] = cfg.manualAddId
+        with noInterrupt:
+            os.rename(songPath,f'{plPath}/{newSongName}')
+    
+            if posistion >= len(metaData["ids"]):
+                metaData["ids"].append(cfg.manualAddId)
+            else:
+                metaData["ids"][posistion] = cfg.manualAddId
 
 
 def swap(plPath, index1, index2):

@@ -2,6 +2,7 @@ import os
 import re
 import shelve
 
+from sync_dl import noInterrupt
 from sync_dl.ytdlWrappers import getIDs
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,download, delete, relabel
 import sync_dl.config as cfg
@@ -46,32 +47,34 @@ def _checkDeletions(plPath):
                 if newIndex != oldIndex:
                     oldName = currentDir[newIndex]
                     newName = re.sub(cfg.filePrependRE, f"{createNumLabel(newIndex,numDidgets)}_" , oldName)
-                    cfg.logger.debug(f"Renaming {oldName} to {newName}")
-                    os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
 
-                    if newIndex in deleted:
-                        # we only remove the deleted entry from metadata when its posistion has been filled
-                        cfg.logger.debug(f"Removing {metaData['ids'][newIndex]} from metadata")
+                    with noInterrupt:
+                        cfg.logger.debug(f"Renaming {oldName} to {newName}")
+                        os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
 
-                        #need to adjust for number already deleted
-                        removedAlready = (numDeleted - len(deleted))
-                        del metaData["ids"][newIndex - removedAlready]
-                        del deleted[0]
+                        if newIndex in deleted:
+                            # we only remove the deleted entry from metadata when its posistion has been filled
+                            cfg.logger.debug(f"Removing {metaData['ids'][newIndex]} from metadata")
 
-                    cfg.logger.debug("Renaming Complete")
+                            #need to adjust for number already deleted
+                            removedAlready = (numDeleted - len(deleted))
+                            del metaData["ids"][newIndex - removedAlready]
+                            del deleted[0]
+
+                        cfg.logger.debug("Renaming Complete")
             
 
 
             while len(deleted)!=0:
                 index = deleted[0]
-
                 # we remove any remaining deleted entries from metadata 
                 # note even if the program crashed at this point, running this fuction
                 # again would yeild an uncorrupted state
                 removedAlready = (numDeleted - len(deleted))
-                cfg.logger.debug(f"Removing {metaData['ids'][index - removedAlready]} from metadata")
-                del metaData["ids"][index - removedAlready]
-                del deleted[0]
+                with noInterrupt:
+                    cfg.logger.debug(f"Removing {metaData['ids'][index - removedAlready]} from metadata")
+                    del metaData["ids"][index - removedAlready]
+                    del deleted[0]
 
 def _checkBlanks(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
