@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 
 import argparse
@@ -99,10 +100,10 @@ def getCwd(args):
                 cfg.logger.critical("Music Directory Not Set, Set With: sync-dl -l PATH")
             else:
                 cfg.logger.critical(cfg.musicDir)
-            exit()
+            sys.exit()
         if not os.path.exists(args.local_dir):
             cfg.logger.error("Provided Music Directory Does not Exist")
-            exit()
+            sys.exit()
         #saves args.local_dir to config
         music = os.path.abspath(args.local_dir)
 
@@ -145,24 +146,22 @@ def cli():
     else:
         if not args.local_dir: #only option which can run without playlist
             cfg.logger.error("Playlist Name Required")
-        exit()
+        sys.exit()
 
     if args.new_playlist: 
         newPlaylist(plPath,args.new_playlist)
 
 
     if not playlistExists(plPath):
-        exit()
+        sys.exit()
 
 
     #viewing playlist     
     if args.print:
-        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-            showPlaylist(metaData,print,plPath,"https://www.youtube.com/watch?v=")
+        showPlaylist(plPath)
 
     if args.view_metadata:
-        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-            compareMetaData(metaData,print)
+        compareMetaData(plPath)
 
 
 
@@ -194,5 +193,9 @@ def cli():
     #fixing metadata corruption in event of crash
     except Exception as e:
         cfg.logger.exception(e)
+        correctStateCorruption(plPath)
+        cfg.logger.info("State Recovered")
+
+    except: #sys.exit calls
         correctStateCorruption(plPath)
         cfg.logger.info("State Recovered")

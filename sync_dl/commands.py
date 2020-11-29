@@ -38,7 +38,7 @@ def newPlaylist(plPath,url):
             num = createNumLabel(i,numDigits)
 
             with noInterrupt:
-                cfg.logger.info(f"Dowloading song Id {songId}")
+                cfg.logger.info(f"Dowloading song {i}/{len(ids)}, Id {songId}")
                 if downloadID(songId,plPath,num):
                     metaData["ids"].append(songId)
                     cfg.logger.debug("Download Complete")
@@ -155,7 +155,7 @@ def manualAdd(plPath, songPath, posistion):
 
         with noInterrupt:
             os.rename(songPath,f'{plPath}/{newSongName}')
-    
+
             if posistion >= len(metaData["ids"]):
                 metaData["ids"].append(cfg.manualAddId)
             else:
@@ -279,39 +279,43 @@ def shuffle(plPath):
     editPlaylist(plPath, newOrder)
 
 
-def showPlaylist(metaData, printer, plPath, urlWithoutId = None):
+def showPlaylist(plPath, urlWithoutId = "https://www.youtube.com/watch?v="):
     '''
     printer can be print or some level of cfg.logger
     urlWithoutId is added if you wish to print out all full urls
     '''
-    cfg.logger.critical(f"Playlist URL: {metaData['url']}")
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        cfg.logger.critical(f"Playlist URL: {metaData['url']}")
 
-    currentDir = getLocalSongs(plPath)
+        currentDir = getLocalSongs(plPath)
 
-    if urlWithoutId != None:
-        printer(f"i: Link                                         ->   Local Title")
-        for i,songId in enumerate(metaData['ids']):
-            url = f"{urlWithoutId}{songId}"
-            printer(f"{i}: {url}  ->  {currentDir[i]}")
+        if urlWithoutId != None:
+            spacer=' '*len(urlWithoutId)
+
+            cfg.logger.critical(f"i: ID{spacer}           ->   Local Title")
+            for i,songId in enumerate(metaData['ids']):
+                url = f"{urlWithoutId}{songId}"
+                cfg.logger.critical(f"{i}: {url}  ->  {currentDir[i]}")
 
 
 
-def compareMetaData(metaData, printer):
+def compareMetaData(plPath):
     '''Tool for comparing ids held in metadata and their order compared to remote playlist ids'''
-    remoteIds = getIDs(metaData["url"])
-    localIds = metaData["ids"]
-    printer(f"i: Local ID    -> j: Remote ID")
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        remoteIds = getIDs(metaData["url"])
+        localIds = metaData["ids"]
+        cfg.logger.critical(f"i: Local ID    -> j: Remote ID")
 
-    for i,localId in enumerate(localIds):
-        if localId in remoteIds:
-            j = remoteIds.index(localId)
-            printer(f"{i}: {localId} -> {j}: {localId}")
+        for i,localId in enumerate(localIds):
+            if localId in remoteIds:
+                j = remoteIds.index(localId)
+                cfg.logger.critical(f"{i}: {localId} -> {j}: {localId}")
 
-        else:
-            printer(f"{i}: {localId} ->  : ")
+            else:
+                cfg.logger.critical(f"{i}: {localId} ->  : ")
 
 
-    for j, remoteId in enumerate(remoteIds):
-        if remoteId not in localIds:
+        for j, remoteId in enumerate(remoteIds):
+            if remoteId not in localIds:
 
-            printer(f" :             -> {j}: {remoteId}")
+                cfg.logger.critical(f" :             -> {j}: {remoteId}")

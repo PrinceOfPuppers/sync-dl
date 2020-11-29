@@ -195,7 +195,6 @@ class test_integration(unittest.TestCase):
     def test_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
         cfg.logger.info("End of Integration Test Summery")
-
-        with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-            compareMetaData(metaData, cfg.logger.info)
-            showPlaylist(metaData,cfg.logger.info,self.plPath,urlWithoutId='https://www.youtube.com/watch?v=')
+        
+        compareMetaData(self.plPath)
+        showPlaylist(self.plPath)

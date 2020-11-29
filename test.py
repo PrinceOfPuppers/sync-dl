@@ -47,10 +47,6 @@ def setLogging(args):
     cfg.logger.setLevel(level=logging.DEBUG)
 
 if __name__ == "__main__":
-    from sync_dl import noInterrupt
-    from signal import signal,SIGINT
-    signal(SIGINT,noInterrupt.handler)
-    
     args = parseArgs()
 
     setLogging(args)
