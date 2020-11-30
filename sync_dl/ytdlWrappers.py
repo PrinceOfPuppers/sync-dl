@@ -47,17 +47,9 @@ def downloadID(videoId, path,numberStr, embedThumbnail=True):
     if not os.path.exists(cfg.tmpDownloadPath):
         os.mkdir(cfg.tmpDownloadPath)
     
-    params={"quiet": True, "noplaylist": True, "outtmpl": f'{cfg.tmpDownloadPath}/{numberStr}_%(title)s.%(ext)s',
-        'format': 'bestaudio', 
-        'postprocessors': [
-            {'key': 'FFmpegExtractAudio'},
-            #{'key': 'EmbedThumbnail'},
-            {'key': 'FFmpegMetadata'}
-            ],
-    }
-
-
-    with youtube_dl.YoutubeDL(params) as ydl:
+    cfg.params["outtmpl"] = f'{cfg.tmpDownloadPath}/{numberStr}_%(title)s.%(ext)s'
+    
+    with youtube_dl.YoutubeDL(cfg.params) as ydl:
 
         #ensures tmp is empty
         tmp = os.listdir(path=cfg.tmpDownloadPath) 

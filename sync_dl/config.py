@@ -44,7 +44,7 @@ else:
 
 section = parser['CONFIG']
 
-#global config variables
+# global config variables
 filePrependRE = compile(r'\d+_')
 
 metaDataName = section['metaDataName']
@@ -57,7 +57,17 @@ tmpDownloadPath = f"{modulePath}/{section['tmpDownloadPath']}"
 
 musicDir = section['musicDir']
 
-#logger
+# logger
 import logging
 logger = logging.getLogger('sync_dl')
 
+
+# youtube-dl params, used in downloadID
+params={"quiet": True, "noplaylist": True,
+    'format': 'bestaudio', 
+    'postprocessors': [
+        {'key': 'FFmpegExtractAudio'},
+        #{'key': 'EmbedThumbnail'},
+        {'key': 'FFmpegMetadata'}
+        ],
+}
