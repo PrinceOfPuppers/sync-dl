@@ -74,12 +74,6 @@ def smartSync(plPath):
     correctStateCorruption(plPath)
 
 
-    existingFiles = os.listdir(path=f"{plPath}")
-    if cfg.metaDataName not in existingFiles:
-        cfg.logger.critical("Current Directory is Not Existing Playlist")
-        return
-
-
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         url = metaData["url"]
         localIds = metaData["ids"]
