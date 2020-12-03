@@ -8,15 +8,16 @@ import sync_dl.config as cfg
 
 #ids are the unique part of each videos url
 def getIDs(playlistUrl):
-    params={"extract_flat": True, "quiet": True}
-    with youtube_dl.YoutubeDL(params) as ydl:
-        result = ydl.extract_info(playlistUrl,download=False)
-        ids = []
-        for videoData in result['entries']:
-            ids.append(videoData["id"])
-        
-
-    return ids
+    try:
+        params={"extract_flat": True, "quiet": True}
+        with youtube_dl.YoutubeDL(params) as ydl:
+            result = ydl.extract_info(playlistUrl,download=False)
+            ids = []
+            for videoData in result['entries']:
+                ids.append(videoData["id"])
+        return ids
+    except:
+        return []
 
 
 def getIdsAndTitles(playlistUrl):

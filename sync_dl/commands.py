@@ -16,6 +16,7 @@ from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, re
 import sync_dl.config as cfg
 
 
+
 def newPlaylist(plPath,url):
     if not os.path.exists(plPath):
         os.makedirs(plPath)
@@ -23,10 +24,15 @@ def newPlaylist(plPath,url):
     elif len(os.listdir(path=plPath))!=0:
         cfg.logger.error(f"Directory Is Not Empty, Cannot Make Playlist in {plPath}")
         return
+    
 
     cfg.logger.info(f"Creating New Playlist Named {ntpath.basename(plPath)} from URL: {url}")
 
     ids = getIDs(url)
+    if len(ids) == 0:
+        cfg.logger.error(f"No Videos Found at {plPath}")
+        return
+        
     numDigits = len(str( len(ids) + 1)) #needed for creating starting number for auto ordering ie) 001, 0152
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
