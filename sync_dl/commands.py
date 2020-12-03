@@ -30,7 +30,7 @@ def newPlaylist(plPath,url):
 
     ids = getIDs(url)
     if len(ids) == 0:
-        cfg.logger.error(f"No Videos Found at {plPath}")
+        cfg.logger.error(f"No Videos Found at {url}")
         return
         
     numDigits = len(str( len(ids) + 1)) #needed for creating starting number for auto ordering ie) 001, 0152
@@ -279,9 +279,10 @@ def shuffle(plPath):
     editPlaylist(plPath, newOrder)
 
 
-def showPlaylist(plPath, urlWithoutId = "https://www.youtube.com/watch?v="):
+def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/watch?v="):
     '''
     printer can be print or some level of cfg.logger
+    lineBreak can be set to newline if you wish to format for small screens
     urlWithoutId is added if you wish to print out all full urls
     '''
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -290,12 +291,12 @@ def showPlaylist(plPath, urlWithoutId = "https://www.youtube.com/watch?v="):
         currentDir = getLocalSongs(plPath)
 
         if urlWithoutId != None:
-            spacer=' '*len(urlWithoutId)
+            spacer=' '*(len(urlWithoutId)+11)
 
-            cfg.logger.critical(f"i: ID{spacer}           ->   Local Title")
+            cfg.logger.critical(f"i: ID{spacer}{lineBreak}->   Local Title{lineBreak}")
             for i,songId in enumerate(metaData['ids']):
                 url = f"{urlWithoutId}{songId}"
-                cfg.logger.critical(f"{i}: {url}  ->  {currentDir[i]}")
+                cfg.logger.critical(f"{i}: {url}{lineBreak}  ->  {currentDir[i]}{lineBreak}")
 
 
 
