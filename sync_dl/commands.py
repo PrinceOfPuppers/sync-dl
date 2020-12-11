@@ -12,7 +12,7 @@ from random import randint
 from sync_dl import noInterrupt
 from sync_dl.ytdlWrappers import getIDs, downloadID
 from sync_dl.plManagement import editPlaylist, correctStateCorruption
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
 import sync_dl.config as cfg
 
 
@@ -29,11 +29,12 @@ def newPlaylist(plPath,url):
     cfg.logger.info(f"Creating New Playlist Named {ntpath.basename(plPath)} from URL: {url}")
 
     ids = getIDs(url)
-    if len(ids) == 0:
+    idsLen = len(ids)
+    if idsLen == 0:
         cfg.logger.error(f"No Videos Found at {url}")
         return
         
-    numDigits = len(str( len(ids) + 1)) #needed for creating starting number for auto ordering ie) 001, 0152
+    numDigits = getNumDigets(idsLen) #needed for creating starting number for auto ordering ie) 001, 0152
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         metaData["url"] = url
@@ -44,14 +45,14 @@ def newPlaylist(plPath,url):
             num = createNumLabel(i,numDigits)
 
             with noInterrupt:
-                cfg.logger.info(f"Dowloading song {i+1}/{len(ids)}, Id {songId}")
+                cfg.logger.info(f"Dowloading song {i+1}/{idsLen}, Id {songId}")
                 if downloadID(songId,plPath,num):
                     metaData["ids"].append(songId)
                     cfg.logger.debug("Download Complete")
                 else:
                     invalidSongs+=1
 
-        cfg.logger.info(f"Downloaded {len(ids)-invalidSongs}/{len(ids)} Songs")
+        cfg.logger.info(f"Downloaded {idsLen-invalidSongs}/{idsLen} Songs")
 
 
 def smartSync(plPath):
@@ -105,7 +106,7 @@ def appendNew(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
         idsLen = len(metaData["ids"])
-        numDigits = len(str( idsLen + 1 ))
+        numDigits = getNumDigets(idsLen)
 
         remoteIds = getIDs(metaData['url'])
 
@@ -129,7 +130,7 @@ def manualAdd(plPath, songPath, posistion):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
         idsLen = len(metaData["ids"])
-        numDigits = len(str( idsLen + 1 ))
+        numDigits = getNumDigets(idsLen)
 
         #clamp posistion
         if posistion > idsLen:
@@ -177,7 +178,7 @@ def swap(plPath, index1, index2):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
         idsLen = len(metaData["ids"])
-        numDigits = len(str( idsLen + 1 ))
+        numDigits = getNumDigets(idsLen)
 
         if index1>=idsLen or index2>=idsLen:
             cfg.logger.error(f"Given Index is Larger than Max {idsLen-1}")
@@ -219,7 +220,7 @@ def move(plPath, currentIndex, newIndex):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
 
         idsLen = len(metaData["ids"])
-        numDigits = len(str( idsLen + 1 ))
+        numDigits = getNumDigets(idsLen)
 
 
         if currentIndex>=idsLen:
@@ -258,6 +259,76 @@ def move(plPath, currentIndex, newIndex):
         relabel(metaData,cfg.logger.debug,plPath,tempName,idsLen,newIndex,numDigits)
         del metaData['ids'][idsLen]
 
+
+def moveRange(plPath, start, end, newStart):
+    '''
+    moves block of songs from start to end indices, to newStart
+    ie) start = 4, end = 6, newStart = 2
+    1 2 3 4 5 6 7 -> 1 4 5 6 2 3
+    '''
+
+    correctStateCorruption(plPath)
+
+    if start == newStart:
+        return
+
+    currentDir = getLocalSongs(plPath)
+
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+
+        idsLen = len(metaData["ids"])
+        numDigits = getNumDigets(idsLen)
+
+
+        if start>=idsLen:
+            cfg.logger.error(f"No song has Index {start}, Largest Index is {idsLen-1}")
+            return
+
+        elif start<0:
+            cfg.logger.error(f"No Song has a Negative Index")
+            return
+            
+        #clamp end index
+        if end>=idsLen or end == -1:
+            end = idsLen-1
+
+        elif end<=start:
+            cfg.logger.error("End Index Must be Greater Than Start Index (or -1)")
+            return
+
+        #clamp newStart
+        if newStart > idsLen:
+            newStart = idsLen
+        elif newStart < 0:
+            newStart = 0
+        
+        # Sanatization over
+
+        # number of elements to move
+        blockSize = end-start+1
+
+        # make room for block
+        for i in reversed(range(newStart,idsLen)):
+            oldName = currentDir[i]
+            newIndex =i+blockSize
+            relabel(metaData,cfg.logger.debug,plPath,oldName,i,newIndex,numDigits)
+        
+
+        #accounts for block of songs being shifted if start>newStart
+        offset = 0
+        if start>newStart:
+            currentDir = getLocalSongs(plPath)
+            offset = blockSize
+        
+        # shift block into gap made
+        for i,oldIndex in enumerate(range(start,end+1)):
+
+            oldName = currentDir[oldIndex]
+            newIndex = i + newStart
+            relabel(metaData,cfg.logger.debug,plPath,oldName,oldIndex+offset,newIndex,numDigits)
+
+    # remove number gap in playlist and remove blanks in metadata
+    correctStateCorruption(plPath)
 
 
 def shuffle(plPath):

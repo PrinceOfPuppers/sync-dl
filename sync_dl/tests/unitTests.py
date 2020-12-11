@@ -6,10 +6,10 @@ import shelve
 import inspect
 
 import sync_dl.config as cfg
-from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
+from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs,getNumDigets
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
-from sync_dl.commands import move, swap, manualAdd
+from sync_dl.commands import move, swap, manualAdd, moveRange
 
 
 def createFakePlaylist(name,songs):
@@ -20,7 +20,7 @@ def createFakePlaylist(name,songs):
         
     os.mkdir(f'{cfg.testPlPath}/{name}')
     
-    numDigets = len(str(len(songs)))
+    numDigets = getNumDigets(len(songs))
 
     with shelve.open(f"{cfg.testPlPath}/{name}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         metaData["url"] = "placeholder"
@@ -379,6 +379,87 @@ class test_manualAdd(unittest.TestCase):
         plPath = f'{cfg.testPlPath}/{name}'
         manualAdd(plPath,songPath,0)
         
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+    
+
+
+class test_moveRange(unittest.TestCase):
+    
+    def test_moveRangeLarger1(self):
+
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [ ('0', '0_A'), ('4','1_E'), ('1','2_B'), ('2','3_C'), ('3','4_D'), ('5','5_F'), ('6','6_G') ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        moveRange(plPath,1,3,5)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+    
+    def test_moveRangeLarger2(self):
+
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [ ('3','0_D'),('4','1_E'), ('5','2_F'), ('6','3_G'),('0', '4_A'), ('1','5_B'), ('2','6_C') ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        moveRange(plPath,0,2,7)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+
+    def test_moveRangeSmaller1(self):
+
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [  ('3','0_D'), ('4','1_E'),('5','2_F'),('0', '3_A'), ('1','4_B'), ('2','5_C') , ('6','6_G') ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        moveRange(plPath,3,5,0)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+
+
+    def test_moveRangeSmaller2(self):
+
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [  ('4','0_E'),('5','1_F'),('6','2_G'),('0', '3_A'), ('1','4_B'), ('2','5_C'), ('3','6_D')  ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        moveRange(plPath,4,-1,0)
+
         result = getPlaylistData(name)
 
         shutil.rmtree(plPath)

@@ -11,7 +11,7 @@ from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
 
-from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData
+from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData, moveRange
     
 #modified version of help formatter which only prints args once in help message
 class ArgsOnce(argparse.HelpFormatter):
@@ -57,6 +57,7 @@ def parseArgs():
     group.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in posistion INDEX')
 
     group.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2 in local playlist')
+    group.add_argument('--moveRange',nargs=3, metavar=('I1','I2','NI'), type = int, help='moves songs in range [I1, I2] to NI in local playlist')
     group.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
     
     
@@ -186,6 +187,9 @@ def cli():
         #moving/swaping songs
         elif args.move:
             move(plPath,args.move[0],args.move[1])
+        
+        elif args.moveRange:
+            moveRange(plPath,args.moveRange[0],args.moveRange[1],args.moveRange[2])
 
         elif args.swap:
             swap(plPath,args.swap[0],args.swap[1])

@@ -6,7 +6,8 @@ from sync_dl import noInterrupt
 import sync_dl.config as cfg
 from sync_dl.ytdlWrappers import downloadID,getIDs
 
-
+def getNumDigets(plLen):
+    return len(str( plLen+1 ))
 
 def rename(metaData, printer, plPath, oldName, newName, index, newId):
     with noInterrupt:
@@ -39,8 +40,12 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
 
         os.rename(f"{plPath}/{oldName}",f"{plPath}/{newName}")
 
-
-        if newIndex >= len(metaData["ids"]):
+        numIds = len(metaData["ids"])
+        if newIndex >= numIds:
+            
+            for _ in range(newIndex-numIds):
+                metaData["ids"].append('')
+            
             metaData["ids"].append(songId)
         else:
             metaData["ids"][newIndex] = songId
@@ -85,7 +90,10 @@ def createNumLabel(n,numDigets):
     n = str(n)
     lenN = len(n)
     if lenN>numDigets:
-        raise Exception(f"Number Label Too large! Expected {numDigets} but got {lenN} digets")
+
+        cfg.logger.warning(f"Number Label Too large! Expected {numDigets} but got {lenN} digets")
+        #raise Exception(f"Number Label Too large! Expected {numDigets} but got {lenN} digets")
+        numDigets+=1
 
     return (numDigets-lenN)*"0"+n
 
