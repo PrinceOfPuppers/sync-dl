@@ -22,19 +22,19 @@ the application does not store any of its metadata in songs, metadata is stored 
 
 # Usage
 ```
-syncdl [options] PLAYLIST
+sync-dl [options] PLAYLIST
 ```
 where playlist is simply the name of the directory you wish to store the playlist in. playlist directory will always be in current working directory unless a music directory is specified using the -l, --local-dir option to hard set a music directory.
 
 To see all options use the command:
 ```
-syncdl -h
+sync-dl -h
 ```
 
 ### Smart Sync:
 The main feature of sync-dl
 ```
-syncdl -s PLAYLIST
+sync-dl -s PLAYLIST
 ```
 Adds new music from remote playlist to local playlist, also takes ordering of remote playlist
 without deleting songs no longer available in remote playlist.
@@ -45,29 +45,29 @@ in the local playlist
 
 # EXAMPLE
 ```
-syncdl -l my/local/music/folder
+sync-dl -l my/local/music/folder
 ```
 Will use my/local/music/folder to store and manipulate playlist in the future.
 ```
-syncdl -n https://www.youtube.com/playlist?list=PL-lQgJ3eJ1HtLvM6xtxOY_1clTLov0qM3 sweetJams
+sync-dl -n https://www.youtube.com/playlist?list=PL-lQgJ3eJ1HtLvM6xtxOY_1clTLov0qM3 sweetJams
 ```
 Will create a new playlist at my/local/music/folder/sweetJams and
 download the playlist at the provided url to it.
 
 ```
-syncdl -m 1 5 sweetJams
+sync-dl -m 1 5 sweetJams
 ```
 Will move song number 1 in the playlist to posistion 5
 ```
-syncdl -a sweetJams
+sync-dl -a sweetJams
 ```
 Will check for any new songs in the remote playlist and append them to the end of sweetJams
 ```
-syncdl -s sweetJams
+sync-dl -s sweetJams
 ```
 Will use smart sync on sweetJams, downloading new songs from the remote playlist and reordering the playlist to match the order of the remote playlist without deleting anysongs that are no longer avalible
 ```
-syncdl -p sweetJams
+sync-dl -p sweetJams
 ```
 Will give you all the urls for the songs in sweetJams
 
