@@ -9,6 +9,8 @@ import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
+from sync_dl.commands import move, swap, manualAdd
+
 
 def createFakePlaylist(name,songs):
     '''creates fake playlist with all songs being as if they where locally added'''
@@ -260,3 +262,124 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
 
+class test_move(unittest.TestCase):
+    
+    def test_moveLarger(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+
+        songs = ['A' ,'B' ,'C' ,'D','E'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [ ('0', '0_A'), ('2','1_C'), ('3','2_D'), ('1','3_B'), ('4','4_E') ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        move(plPath,1,3)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+    
+    def test_moveSmaller(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+
+        songs = ['A' ,'B' ,'C' ,'D','E'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [ ('2', '0_C'), ('0','1_A'), ('1','2_B'), ('3','3_D'), ('4','4_E') ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        move(plPath,2,0)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+
+
+class test_swap(unittest.TestCase):
+    
+    def test_swap1(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [ ('0', '0_A'), ('3','1_D'), ('2','2_C'), ('1','3_B'), ('4','4_E') ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        swap(plPath,1,3)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+    
+    def test_swap2(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E'] 
+
+        createFakePlaylist(name,songs)
+
+        
+        correct = [ ('4', '0_E'), ('1','1_B'), ('2','2_C'), ('3','3_D'), ('0','4_A') ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        swap(plPath,0,4)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+
+
+class test_manualAdd(unittest.TestCase):
+    def test_manualAdd1(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E'] 
+
+        createFakePlaylist(name,songs)
+
+        songPath = f"{cfg.testPlPath}/X"
+        open(songPath,'a').close()
+        
+        
+        correct = [ ('0', '0_A'), ('1','1_B'), ('2','2_C'), ('3','3_D'),(cfg.manualAddId,'4_X'), ('4','5_E') ]
+        plPath = f'{cfg.testPlPath}/{name}'
+        manualAdd(plPath,songPath,4)
+        
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+    
+
+    def test_manualAdd2(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E'] 
+
+        createFakePlaylist(name,songs)
+
+        songPath = f"{cfg.testPlPath}/X"
+        open(songPath,'a').close()
+        
+        
+        correct = [ (cfg.manualAddId,'0_X'), ('0', '1_A'), ('1','2_B'), ('2','3_C'), ('3','4_D'), ('4','5_E') ]
+        plPath = f'{cfg.testPlPath}/{name}'
+        manualAdd(plPath,songPath,0)
+        
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)

@@ -44,7 +44,7 @@ def newPlaylist(plPath,url):
             num = createNumLabel(i,numDigits)
 
             with noInterrupt:
-                cfg.logger.info(f"Dowloading song {i}/{len(ids)}, Id {songId}")
+                cfg.logger.info(f"Dowloading song {i+1}/{len(ids)}, Id {songId}")
                 if downloadID(songId,plPath,num):
                     metaData["ids"].append(songId)
                     cfg.logger.debug("Download Complete")
