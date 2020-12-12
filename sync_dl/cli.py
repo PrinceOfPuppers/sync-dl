@@ -56,8 +56,8 @@ def parseArgs():
 
     group.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in posistion INDEX')
 
-    group.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2 in local playlist')
-    group.add_argument('--moveRange',nargs=3, metavar=('I1','I2','NI'), type = int, help='moves songs in range [I1, I2] to NI in local playlist')
+    group.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2')
+    group.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
     group.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
     
     
@@ -188,8 +188,8 @@ def cli():
         elif args.move:
             move(plPath,args.move[0],args.move[1])
         
-        elif args.moveRange:
-            moveRange(plPath,args.moveRange[0],args.moveRange[1],args.moveRange[2])
+        elif args.move_range:
+            moveRange(plPath,args.move_range[0],args.move_range[1],args.move_range[2])
 
         elif args.swap:
             swap(plPath,args.swap[0],args.swap[1])

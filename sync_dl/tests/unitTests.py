@@ -397,7 +397,7 @@ class test_moveRange(unittest.TestCase):
         createFakePlaylist(name,songs)
 
         
-        correct = [ ('0', '0_A'), ('4','1_E'), ('1','2_B'), ('2','3_C'), ('3','4_D'), ('5','5_F'), ('6','6_G') ]
+        correct = [ ('0', '0_A'), ('4','1_E'), ('5','2_F'), ('1','3_B'), ('2','4_C'), ('3','5_D'), ('6','6_G') ]
 
         plPath = f'{cfg.testPlPath}/{name}'
         moveRange(plPath,1,3,5)
@@ -419,7 +419,7 @@ class test_moveRange(unittest.TestCase):
         correct = [ ('3','0_D'),('4','1_E'), ('5','2_F'), ('6','3_G'),('0', '4_A'), ('1','5_B'), ('2','6_C') ]
 
         plPath = f'{cfg.testPlPath}/{name}'
-        moveRange(plPath,0,2,7)
+        moveRange(plPath,0,2,6)
 
         result = getPlaylistData(name)
 
@@ -438,7 +438,7 @@ class test_moveRange(unittest.TestCase):
         correct = [  ('3','0_D'), ('4','1_E'),('5','2_F'),('0', '3_A'), ('1','4_B'), ('2','5_C') , ('6','6_G') ]
 
         plPath = f'{cfg.testPlPath}/{name}'
-        moveRange(plPath,3,5,0)
+        moveRange(plPath,3,5,-1)
 
         result = getPlaylistData(name)
 
@@ -453,12 +453,11 @@ class test_moveRange(unittest.TestCase):
         songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
 
         createFakePlaylist(name,songs)
-
         
-        correct = [  ('4','0_E'),('5','1_F'),('6','2_G'),('0', '3_A'), ('1','4_B'), ('2','5_C'), ('3','6_D')  ]
+        correct = [  ('0', '0_A'), ('1','1_B'),('4','2_E'),('5','3_F'),('6','4_G'), ('2','5_C'), ('3','6_D')  ]
 
         plPath = f'{cfg.testPlPath}/{name}'
-        moveRange(plPath,4,-1,0)
+        moveRange(plPath,4,-1,1)
 
         result = getPlaylistData(name)
 

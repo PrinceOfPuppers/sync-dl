@@ -264,7 +264,7 @@ def moveRange(plPath, start, end, newStart):
     '''
     moves block of songs from start to end indices, to newStart
     ie) start = 4, end = 6, newStart = 2
-    1 2 3 4 5 6 7 -> 1 4 5 6 2 3
+    0 1 2 3 4 5 6 7 -> 0 1 4 5 6 2 3
     '''
 
     correctStateCorruption(plPath)
@@ -299,8 +299,8 @@ def moveRange(plPath, start, end, newStart):
         #clamp newStart
         if newStart > idsLen:
             newStart = idsLen
-        elif newStart < 0:
-            newStart = 0
+        elif newStart < -1:
+            newStart = -1
         
         # Sanatization over
 
@@ -308,7 +308,7 @@ def moveRange(plPath, start, end, newStart):
         blockSize = end-start+1
 
         # make room for block
-        for i in reversed(range(newStart,idsLen)):
+        for i in reversed(range(newStart+1,idsLen)):
             oldName = currentDir[i]
             newIndex =i+blockSize
             relabel(metaData,cfg.logger.debug,plPath,oldName,i,newIndex,numDigits)
@@ -324,7 +324,7 @@ def moveRange(plPath, start, end, newStart):
         for i,oldIndex in enumerate(range(start,end+1)):
 
             oldName = currentDir[oldIndex]
-            newIndex = i + newStart
+            newIndex = i + newStart+1
             relabel(metaData,cfg.logger.debug,plPath,oldName,oldIndex+offset,newIndex,numDigits)
 
     # remove number gap in playlist and remove blanks in metadata
