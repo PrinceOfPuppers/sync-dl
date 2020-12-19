@@ -59,6 +59,7 @@ def _checkDeletions(plPath):
                             #need to adjust for number already deleted
                             removedAlready = (numDeleted - len(deleted))
                             del metaData["ids"][newIndex - removedAlready]
+                            metaData.sync()
                             del deleted[0]
 
                         cfg.logger.debug("Renaming Complete")
@@ -74,6 +75,7 @@ def _checkDeletions(plPath):
                 with noInterrupt:
                     cfg.logger.debug(f"Removing {metaData['ids'][index - removedAlready]} from metadata")
                     del metaData["ids"][index - removedAlready]
+                    metaData.sync()
                     del deleted[0]
 
 def _checkBlanks(plPath):
@@ -83,6 +85,7 @@ def _checkBlanks(plPath):
             if songId == '':
                 cfg.logger.debug(f'Blank MetaData id Found at Index {i}, removing')
                 del metaData["ids"][i]
+                metaData.sync()
 
 def _removeGaps(plPath):
     currentDir = getLocalSongs(plPath)

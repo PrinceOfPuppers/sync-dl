@@ -18,7 +18,7 @@ def rename(metaData, printer, plPath, oldName, newName, index, newId):
             metaData["ids"].append(newId)
         else:
             metaData["ids"][index] = newId
-
+        metaData.sync()
         printer("Renaming Complete")
 
 def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
@@ -51,7 +51,7 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
             metaData["ids"][newIndex] = songId
 
         metaData['ids'][oldIndex] = ''
-
+        metaData.sync()
         printer("Relabeling Complete")
     return newName
 
@@ -61,6 +61,7 @@ def delete(metaData, plPath, name, index):
         os.remove(f"{plPath}/{name}")
 
         del metaData["ids"][index]
+        metaData.sync()
 
         cfg.logger.debug("Deleting Complete")
 
@@ -81,7 +82,7 @@ def download(metaData,plPath, songId, index,numDigets):
                 metaData["ids"].append(songId)
             else:
                 metaData["ids"][index] = songId
-            
+            metaData.sync()
             cfg.logger.debug("Download Complete")
             return True
     return False
