@@ -33,6 +33,7 @@ def getIdsAndTitles(playlistUrl):
 
     return ids,titles
 
+# TODO switch over to embedded ytdl for faster integration testing (or pool subprocess when testing)
 def getTitle(url):
     '''
     used to check for corrupted metadata in integration tests
@@ -42,7 +43,8 @@ def getTitle(url):
     title = subprocess.getoutput(command)
     return title
 
-def downloadID(videoId, path,numberStr, embedThumbnail=True):
+
+def downloadToTmp(videoId,numberStr):
     url = f"https://www.youtube.com/watch?v={videoId}"
     
     if not os.path.exists(cfg.tmpDownloadPath):
@@ -59,12 +61,13 @@ def downloadID(videoId, path,numberStr, embedThumbnail=True):
 
         try:
             ydl.download([url])
-
-            tmp = os.listdir(path=cfg.tmpDownloadPath) 
-            shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
-
-
             return True
-        except:
+
+        except Exception:
             cfg.logger.info(f"Song No longer avalible at {url}")
             return False
+
+def moveFromTmp(path):
+    tmp = os.listdir(path=cfg.tmpDownloadPath) 
+    shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
+

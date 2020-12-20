@@ -10,7 +10,7 @@ from random import randint
 
 
 from sync_dl import noInterrupt
-from sync_dl.ytdlWrappers import getIDs, downloadID
+from sync_dl.ytdlWrappers import getIDs
 from sync_dl.plManagement import editPlaylist, correctStateCorruption
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
 import sync_dl.config as cfg
@@ -42,16 +42,11 @@ def newPlaylist(plPath,url):
 
         invalidSongs = 0
         for i,songId in enumerate(ids):
-            num = createNumLabel(i,numDigits)
 
-            with noInterrupt:
-                cfg.logger.info(f"Dowloading song {i+1}/{idsLen}, Id {songId}")
-                if downloadID(songId,plPath,num):
-                    metaData["ids"].append(songId)
-                    metaData.sync()
-                    cfg.logger.debug("Download Complete")
-                else:
-                    invalidSongs+=1
+            counter = f'{i+1}/{idsLen}'
+            success = download(metaData,plPath,songId,-1,numDigits,counter)
+            if not success:
+                invalidSongs+=1
 
         cfg.logger.info(f"Downloaded {idsLen-invalidSongs}/{idsLen} Songs")
 
@@ -151,7 +146,6 @@ def manualAdd(plPath, songPath, posistion):
                 rename(metaData,cfg.logger.debug,plPath,oldName,newName,i+1,metaData["ids"][i])
 
                 metaData["ids"][i] = '' #wiped in case of crash, this blank entries can be removed restoring state
-                metaData.sync()
 
 
         newSongName = f"{createNumLabel(posistion,numDigits)}_" + ntpath.basename(songPath)
@@ -163,7 +157,6 @@ def manualAdd(plPath, songPath, posistion):
                 metaData["ids"].append(cfg.manualAddId)
             else:
                 metaData["ids"][posistion] = cfg.manualAddId
-            metaData.sync()
 
 def swap(plPath, index1, index2):
     '''moves song to provided posistion, shifting all below it down'''
@@ -207,7 +200,6 @@ def swap(plPath, index1, index2):
         relabel(metaData,cfg.logger.debug,plPath,oldName,idsLen,index2,numDigits)
 
         del metaData["ids"][idsLen]
-        metaData.sync()
 
 def move(plPath, currentIndex, newIndex):
     if currentIndex==newIndex:
@@ -261,7 +253,6 @@ def move(plPath, currentIndex, newIndex):
         #moves song back
         relabel(metaData,cfg.logger.debug,plPath,tempName,idsLen,newIndex,numDigits)
         del metaData['ids'][idsLen]
-        metaData.sync()
 
 
 def moveRange(plPath, start, end, newStart):

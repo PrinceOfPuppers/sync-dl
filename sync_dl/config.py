@@ -62,7 +62,7 @@ import logging
 logger = logging.getLogger('sync_dl')
 
 
-# youtube-dl params, used in downloadID
+# youtube-dl params, used in downloadToTmp
 params={"quiet": True, "noplaylist": True,
     'format': 'bestaudio', 
     'postprocessors': [
