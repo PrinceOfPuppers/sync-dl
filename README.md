@@ -6,6 +6,7 @@
 <img src="https://img.shields.io/pypi/l/sync-dl">
 <img src="https://img.shields.io/pypi/v/sync-dl">
 <img src="https://img.shields.io/badge/python-%E2%89%A53.6-blue">
+<img src="https://travis-ci.com/PrinceOfPuppers/sync-dl.svg?branch=main">
 
 </p>
 
