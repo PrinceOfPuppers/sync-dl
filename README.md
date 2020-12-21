@@ -1,7 +1,7 @@
 <img align="left" width="80" height="80" src="icon.png">
 
 # sync-dl
-<p align="center">
+<p>
 <img src="https://img.shields.io/pypi/dm/sync-dl">
 <img src="https://img.shields.io/pypi/l/sync-dl">
 <img src="https://img.shields.io/pypi/v/sync-dl">
