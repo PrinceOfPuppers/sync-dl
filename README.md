@@ -1,6 +1,16 @@
-<img src="banner.gif" />
+<img align="left" width="80" height="80" src="icon.png">
 
 # sync-dl
+<p align="center">
+<img src="https://img.shields.io/pypi/dm/sync-dl">
+<img src="https://img.shields.io/pypi/l/sync-dl">
+<img src="https://img.shields.io/pypi/v/sync-dl">
+<img src="https://img.shields.io/badge/python-%E2%89%A53.6-blue">
+
+</p>
+
+
+
 > A tool for downloading and syncing remote playlists to your computer
 - [INSTALLATION](#INSTALLATION)
 - [ABOUT](#ABOUT)
