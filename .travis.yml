@@ -6,6 +6,7 @@ python:
   - 3.8
 
 before_script:
+  - sudo apt-get install ffmpeg
   - pip install -e .
 
 script:

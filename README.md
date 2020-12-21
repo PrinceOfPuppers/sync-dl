@@ -21,6 +21,9 @@
 
 
 # INSTALLATION
+requires ffmpeg or avconv, however one of these comes pre-installed on most machienes. 
+
+install sync-dl via pypi using pip:
 ``` 
 pip install sync-dl
 ```
