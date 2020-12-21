@@ -20,29 +20,44 @@ def getIDs(playlistUrl):
         return []
 
 
-def getIdsAndTitles(playlistUrl):
+
+def getIdsAndTitles(url):
     '''
     used to check for corrupted metadata in integration tests
     Title will differ from what is on youtube because it is sanitized for use in filenames
     '''
-    command = f'youtube-dl --get-filename -o "%(title)s\n%(id)s" {playlistUrl}'
-    idsAndTitles = subprocess.getoutput(command).split('\n')
-    numSongs = int(len(idsAndTitles)/2)
-    titles = [idsAndTitles[2*i] for i in range(numSongs)]
-    ids = [idsAndTitles[2*i+1] for i in range(numSongs)]
+
+    params = {}
+    params['extract_flat'] = True
+    params['quiet'] = True
+    params["outtmpl"] = f'%(title)s'
+    
+    with youtube_dl.YoutubeDL(params) as ydl:
+        
+        entries = ydl.extract_info(url,download=False)['entries']
+
+        ids = [song['id'] for song in entries]
+        titles = [ydl.prepare_filename(song) for song in entries]
 
     return ids,titles
 
-# TODO switch over to embedded ytdl for faster integration testing (or pool subprocess when testing)
 def getTitle(url):
     '''
     used to check for corrupted metadata in integration tests
     Title will differ from what is on youtube because it is sanitized for use in filenames
     '''
-    command = f'youtube-dl --no-playlist --get-filename -o "%(title)s" {url}'
-    title = subprocess.getoutput(command)
-    return title
 
+    params = {}
+    params['extract_flat'] = True
+    params['quiet'] = True
+    params["outtmpl"] = f'%(title)s'
+    
+    with youtube_dl.YoutubeDL(params) as ydl:
+        
+        song = ydl.extract_info(url,download=False)
+
+        title = ydl.prepare_filename(song)
+    return title
 
 def downloadToTmp(videoId,numberStr):
     url = f"https://www.youtube.com/watch?v={videoId}"

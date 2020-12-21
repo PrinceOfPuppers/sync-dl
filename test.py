@@ -63,7 +63,9 @@ if __name__ == "__main__":
         integrationTests.test_integration.PL_URL = args.URL
 
     if runall:
-        unittest.main(unitTests,exit=False)
+        success = unittest.main(unitTests,exit=False).result.wasSuccessful()
+        if not success:
+            sys.exit(1)
         unittest.main(integrationTests)
 
     elif args.unit:
