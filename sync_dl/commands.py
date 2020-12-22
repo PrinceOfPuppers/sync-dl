@@ -31,7 +31,7 @@ def newPlaylist(plPath,url):
     ids = getIDs(url)
     idsLen = len(ids)
     if idsLen == 0:
-        cfg.logger.error(f"No Videos Found at {url}")
+        cfg.logger.error(f"No Songs Found at {url}\n(make sure the playlist is public)")
         return
         
     numDigits = getNumDigets(idsLen) #needed for creating starting number for auto ordering ie) 001, 0152

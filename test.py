@@ -66,10 +66,10 @@ if __name__ == "__main__":
         success = unittest.main(unitTests,exit=False).result.wasSuccessful()
         if not success:
             sys.exit(1)
-        unittest.main(integrationTests)
+        unittest.main(integrationTests,failfast=True)
 
     elif args.unit:
         unittest.main(unitTests)
         
     elif args.integration:
-        unittest.main(integrationTests)
+        unittest.main(integrationTests,failfast=True)

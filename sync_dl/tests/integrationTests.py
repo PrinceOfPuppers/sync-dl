@@ -102,17 +102,21 @@ class test_integration(unittest.TestCase):
     plPath = f'{cfg.testPlPath}/{plName}'
 
     def test_creation(self):
+
         cfg.logger.info("Running test_creation")
-        if not os.path.exists(self.plPath):
-            newPlaylist(self.plPath,self.PL_URL)
 
-            with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-                passed = metaDataMatches(metaData,self.plPath)
+        if os.path.exists(self.plPath):
+            shutil.rmtree(self.plPath)
+
+        newPlaylist(self.plPath,self.PL_URL)
+
+        with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            passed = metaDataMatches(metaData,self.plPath)
 
 
-            self.assertTrue(passed)
-        else:
-            self.skipTest('Integration Testing Playlist Already Downloaded')
+        self.assertTrue(passed)
+
+
     
     def test_smartSyncNoEdit(self):
         cfg.logger.info("Running test_smartSyncNoEdit")

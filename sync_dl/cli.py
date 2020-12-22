@@ -151,7 +151,7 @@ def cli():
 
     if args.new_playlist: 
         newPlaylist(plPath,args.new_playlist)
-
+        sys.exit()
 
     if not playlistExists(plPath):
         sys.exit()
