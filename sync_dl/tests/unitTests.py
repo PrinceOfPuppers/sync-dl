@@ -463,3 +463,50 @@ class test_moveRange(unittest.TestCase):
 
         shutil.rmtree(plPath)
         self.assertEqual(result,correct)
+
+
+
+#################################
+## youtube api submodule tests ##
+#################################
+from sync_dl.yt_api.helpers import getNewRemoteOrder
+
+class test_yt_api_getNewRemoteOrder(unittest.TestCase):
+    def test_insertAndDelete(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        localIds = ['A','1' ,'C','2' ,'D'] 
+        remoteIds = ['A','B','C','D']
+
+        correct = [('A',0) ,('B',1) ,('C',2) ,('D',3)]
+
+
+        result = getNewRemoteOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+    
+    def test_insertDeleteSwap(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+
+
+        localIds = ['C','1','A','2' ,'D'] 
+        remoteIds = ['A','B','C','D']
+
+        correct = [('C',2), ('A',0) ,('B',1) ,('D',3)]
+
+
+        result = getNewRemoteOrder(remoteIds,localIds)
+
+        self.assertEqual(result,correct)
+    
+    def test_3(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        localIds = ['A', '1', 'E','B', 'D', 'C', '2'] 
+        remoteIds = ['A','B','C','D','E','F','G']
+
+
+        correct = [('A',0), ('E',4), ('F',5), ('G',6), ('B',1), ('D',3), ('C',2)]
+
+
+        result = getNewRemoteOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+
+
