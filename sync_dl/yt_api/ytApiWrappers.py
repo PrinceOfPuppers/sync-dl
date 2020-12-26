@@ -54,13 +54,10 @@ def getYTResource():
     return youtube
 
 def getItemIds(youtube,plId):
-    maxResults = 2
-
-    makeRequest = lambda pageToken: youtube.playlistItems().list(part = "contentDetails", playlistId = plId, maxResults=maxResults, pageToken = pageToken)
+    makeRequest = lambda pageToken: youtube.playlistItems().list(part = "contentDetails", playlistId = plId, pageToken = pageToken)
     request = makeRequest('')
+    
     response = request.execute()
-
-    print(response)
 
     ids = [] # contains tuples (songId, plItemId)
     for item in response['items']:
@@ -81,8 +78,8 @@ def getItemIds(youtube,plId):
 
 def moveSong(youtube, plId, songId, plItemId, index):
     '''
-    song and plItem Id corrispond to what is being moved
-    index is the where it is moved
+    song and plItem Id corrispond to what is being moved index is the where it is moved.
+    returns true/false on success/failure
     '''
     # TODO sanitize/ clamp input index 
     request = youtube.playlistItems().update(
@@ -99,10 +96,10 @@ def moveSong(youtube, plId, songId, plItemId, index):
           }
         }
     )
-    response = request.execute()
+    try:
+        _ = request.execute()
+    except:
+        cfg.logger.error(f"Unable to Move song: {songId} to Index: {index} in Playlist: {plId}")
+        return False
 
-    # TODO add successs of failure log based on response
-    # TODO return true or false based on success or faliure 
-    print(response)
-
-    print(request)
+    return True
