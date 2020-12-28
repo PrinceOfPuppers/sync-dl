@@ -5,7 +5,7 @@ import shelve
 import sync_dl.config as cfg
 
 def checkOptDepend():
-    # Ensures optional dependancies are installed
+    '''Ensures optional dependancies are installed'''
     while True:
         try:
             from sync_dl.yt_api.helpers import getNewRemoteOrder,getPlId
@@ -51,15 +51,14 @@ def pushLocalOrder(plPath):
     newOrder = getNewRemoteOrder(remoteIds,localIds) 
 
     # uses playlist itemIds because they are guarenteed to be unique
-    workingOrder = [ plItemIdLookup[remoteId] for remoteId in remoteIds ]
+    workingOrder = remoteIds.copy()
 
     for newIndex in range(len(newOrder)):
 
         songId = newOrder[newIndex][0]
         itemId = plItemIdLookup[songId]
 
-        # TODO optimize by only considering indices at or above newIndex
-        oldIndex = workingOrder.index(itemId)
+        oldIndex = workingOrder.index(songId,newIndex)
 
         if oldIndex != newIndex:
             # move the song
@@ -67,3 +66,48 @@ def pushLocalOrder(plPath):
             if moveSong(youtube,plId,songId,itemId,newIndex):
                 # update workingOrder
                 workingOrder.insert(newIndex,workingOrder.pop(oldIndex))
+
+
+
+
+
+
+
+
+def newPushLocalOrder(plPath):
+    
+    if not checkOptDepend():
+        return
+    from sync_dl.yt_api.helpers import getNewRemoteOrder,getPlId,oldToNewPushOrder
+    from sync_dl.yt_api.ytApiWrappers import getYTResource,getItemIds,moveSong
+    
+    cfg.logger.info("Pushing Local Order to Remote...")
+
+    youtube = getYTResource()
+    
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        url = metaData["url"]
+        localIds = metaData["ids"]
+
+    plId = getPlId(url)
+
+    remoteIdPairs = getItemIds(youtube,plId)
+
+    remoteIds,remoteItemIds = zip(*remoteIdPairs)
+
+    # oldToNew = [(newIndex, itemId),...]
+    oldToNew = oldToNewPushOrder(remoteIds,remoteItemIds,localIds)
+    for e in oldToNew:
+        print(e)
+
+
+    # get LIS and remainders (both with gaps)
+
+    # 
+
+
+#from sync_dl.commands import shuffle
+#
+#plPath='/home/princeofpuppers/Music/test'
+#shuffle(plPath)
+#newPushLocalOrder(plPath)

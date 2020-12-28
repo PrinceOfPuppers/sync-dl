@@ -469,18 +469,77 @@ class test_moveRange(unittest.TestCase):
 #################################
 ## youtube api submodule tests ##
 #################################
-from sync_dl.yt_api.helpers import getNewRemoteOrder
+from sync_dl.yt_api.helpers import longestIncreasingSequence,oldToNewPushOrder
+
+
+class test_yt_api_helpers(unittest.TestCase):
+    def test_longestIncreasingSequence(self):
+
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        
+        def acending(numList):
+            
+            for i in range(1,len(numList)):
+                if numList[i] <= numList[i-1]:
+                    return False
+            return True
+
+        def isSubSequenceInSequence(subSequence, sequence):
+            prevIndex = 0
+            for _,num in enumerate(subSequence):
+                try:
+                    prevIndex = sequence[prevIndex:].index(num) + 1
+                except:
+                    return False
+            return True
+
+        pairs = [
+            ([7, 9, 1, 4, 0, 8, 3, 6, 5, 2],3),
+            ([5, 4, 2, 1, 0, 6, 3, 9, 8, 7],3),
+            ([4, 1, 9, 5, 3, 7, 0, 6, 2, 8],4),
+            ([2, 0, 5, 7, 4, 9, 8, 6, 1, 3],4),
+            ([0, 1, 7, 5, 9, 6, 4, 8, 3, 2],5),
+            ([0, 4, 5, 7, 9, 8, 2, 3, 1, 6],5),
+            ([5, 0, 9, 1, 2, 8, 4, 3, 7, 6],5),
+            ([5, 4, 6, 0, 2, 8, 3, 9, 1, 7],4),
+            ([5, 2, 1, 4, 0, 8, 9, 6, 7, 3],4),
+            ([2, 0, 3, 8, 5, 6, 4, 7, 9, 1],6),
+            ([1, 3, 5, 9, 4, 8, 2, 0, 6, 7],5),
+            ([9, 2, 6, 4, 3, 5, 7, 0, 8, 1],5),
+            ([7, 1, 2, 8, 9, 0, 5, 3, 4, 6],5),
+            ([3, 4, 8, 1, 9, 5, 6, 2, 0, 7],5),
+            ([4, 1, 2, 8, 7, 0, 9, 3, 5, 6],5),
+            ([1, 4, 2, 0, 7, 9, 3, 6, 5, 8],5),
+            ([6, 0, 2, 3, 8, 9, 1, 4, 5, 7],6),
+            ([4, 1, 5, 2, 8, 0, 9, 3, 6, 7],5),
+            ([4, 8, 0, 2, 9, 7, 6, 1, 3, 5],4),
+        ]
+
+        for pair in pairs:
+            numList,correctLen = pair
+            ans = longestIncreasingSequence(numList)
+
+            if not acending(ans):
+                self.fail(f'Answer is not acending! \nanswer: {ans} \ninput: {numList}')
+            if len(ans)!=correctLen:
+                self.fail(f'Answer has Length {len(ans)}, correct Length is {correctLen}. \nanswer: {ans} \ninput: {numList}')
+                
+            if not isSubSequenceInSequence(ans,numList):
+                self.fail(f'Answer Subsequence is not in Input Sequence. \nanswer: {ans} \ninput: {numList}')
+
+
 
 class test_yt_api_getNewRemoteOrder(unittest.TestCase):
     def test_insertAndDelete(self):
         cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
         localIds = ['A','1' ,'C','2' ,'D'] 
         remoteIds = ['A','B','C','D']
+        
 
-        correct = [('A',0) ,('B',1) ,('C',2) ,('D',3)]
+        correct = [0, 1 ,2 ,3]
 
 
-        result = getNewRemoteOrder(remoteIds,localIds)
+        result = oldToNewPushOrder(remoteIds,localIds)
         self.assertEqual(result,correct)
     
     def test_insertDeleteSwap(self):
@@ -490,23 +549,51 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
         localIds = ['C','1','A','2' ,'D'] 
         remoteIds = ['A','B','C','D']
 
-        correct = [('C',2), ('A',0) ,('B',1) ,('D',3)]
+        correct = [1,2,0,3]
 
 
-        result = getNewRemoteOrder(remoteIds,localIds)
+        result = oldToNewPushOrder(remoteIds,localIds)
 
         self.assertEqual(result,correct)
-    
+
     def test_3(self):
         cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
-        localIds = ['A', '1', 'E','B', 'D', 'C', '2'] 
+        localIds =  ['A', '1', 'E','B', 'D', 'C', '2'] 
         remoteIds = ['A','B','C','D','E','F','G']
+        correct =   [ 0,  4,  6,  5,  1,  2,  3 ]
 
 
-        correct = [('A',0), ('E',4), ('F',5), ('G',6), ('B',1), ('D',3), ('C',2)]
-
-
-        result = getNewRemoteOrder(remoteIds,localIds)
+        result = oldToNewPushOrder(remoteIds,localIds)
         self.assertEqual(result,correct)
 
 
+    def test_4(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        localIds =  ['1', 'E', 'D', 'C', '2'] 
+        remoteIds = ['A','B','C','D','E','F','G']
+        correct =   [ 0,  1,  6,  5,  2,  3,  4 ]
+
+
+        result = oldToNewPushOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+    
+    def test_5(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        localIds =  [] 
+        remoteIds = ['A','B','C','D','E','F','G']
+        correct =   [ 0,  1,  2,  3,  4,  5,  6 ]
+
+
+        result = oldToNewPushOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+    
+        
+    def test_6(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        localIds =  ['A','B','C','D','E','F','G']
+        remoteIds = []
+        correct =   []
+
+
+        result = oldToNewPushOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
