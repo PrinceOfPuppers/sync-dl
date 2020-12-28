@@ -97,6 +97,66 @@ def longestIncreasingSequence(numList):
             maximum = len(candidate)
     return longest
 
+#def pushOrderMoves(remoteIds,remoteItemIds,localIds):
+#    oldToNew = oldToNewPushOrder(remoteIds, localIds)
+#
+#    # songs in the longest increasing subsequence of oldToNew are left untouched
+#    dontMove = longestIncreasingSequence(oldToNew)
+#
+#    # moves = [ (newIndex, remoteId, remoteItemId), ... ]
+#    
+#    workingOrder = []
+#    for i in range(len(oldToNew)):
+#
+#        workingOrder.append( (oldToNew[i],remoteIds[i],remoteItemIds[i]) )
+#
+#
+#
+#    moves = []
+#
+#    prevNewIndex = -1
+#
+#
+#    i = 0
+#    while i<len(dontMove):
+#        newIndex = dontMove[i]
+#        
+#        if newIndex-prevNewIndex > 1:
+#            # somthing must be shoved in between prevNewIndex and newIndex
+#
+#            # issue with things being moved up in list 
+#            betweenNewIndex = prevNewIndex + 1 
+#            betweenOldIndex = oldToNew.index(betweenNewIndex) #newToOld[betweenNewIndex]
+#            
+#            remoteId = remoteIds[betweenOldIndex] 
+#            itemId = remoteItemIds[betweenOldIndex] 
+#    
+#            move = (betweenNewIndex,remoteId,itemId)
+#            moves.append(move)
+#
+#            prevNewIndex = betweenNewIndex
+#            continue
+#            
+#            # TODO issue with last element not being updated if its misplaced
+#
+#        prevNewIndex = newIndex
+#        i+=1
+#    
+#    # last Elements
+#    for i in range(dontMove[-1]+1,len(remoteIds)):
+#
+#        oldIndex = oldToNew.index(i) #newToOld[betweenNewIndex]
+#        
+#        remoteId = remoteIds[oldIndex] 
+#        itemId = remoteItemIds[oldIndex] 
+#
+#        move = (len(remoteIds)-1,remoteId,itemId)
+#        moves.append(move)
+#
+#    return moves
+
+
+
 def pushOrderMoves(remoteIds,remoteItemIds,localIds):
     oldToNew = oldToNewPushOrder(remoteIds, localIds)
 
@@ -104,32 +164,50 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
     dontMove = longestIncreasingSequence(oldToNew)
 
     # moves = [ (newIndex, remoteId, remoteItemId), ... ]
+    
+    groups = [] #current working order to new order
+    for i in range(len(oldToNew)):
+        num = oldToNew[i]
+        groups.append( (num,remoteIds[i],remoteItemIds[i]) )
+
+    def getGroupIndex(groups,newIndex):
+        for currentIndex,group in enumerate(groups):
+            if group[0]==newIndex:
+                return currentIndex
+        
+        #return None
+        raise Exception('item not in group')
+
+
+
     moves = []
 
-    prevNewIndex = -1
+    #TODO fix problem if 0th element was moved
 
-    i = 0
-    while i<len(dontMove):
-        newIndex = dontMove[i]
-        
-        if newIndex-prevNewIndex > 1:
-            # somthing must be shoved in between prevNewIndex and newIndex
+    # prepend -1 to dontMove?
+    for newIndex in range(len(groups)):
 
-            betweenNewIndex = prevNewIndex + 1
-            betweenOldIndex = oldToNew.index(betweenNewIndex) #newToOld[betweenNewIndex]
-            
-            remoteId = remoteIds[betweenOldIndex] 
-            itemId = remoteItemIds[betweenOldIndex] 
-
-            move = (betweenNewIndex,remoteId,itemId)
-            moves.append(move)
-
-            prevNewIndex = betweenNewIndex
+        i = getGroupIndex(groups,newIndex)
+        newIndex,remoteId,remoteItemId = groups[i]
+        if newIndex in dontMove:
+            i+=1
             continue
-            
-            # TODO issue with last element not being updated if its misplaced
+        
+        j=0
+        compIndex = groups[j][0]
+        while newIndex != compIndex+1:
+            j+=1
+            compIndex = groups[j][0]
+        
+        if j>=i:
+            moveIndex=j
+        else:
+            moveIndex=j+1
 
-        prevNewIndex = newIndex
-        i+=1
-    
+        
+        moves.append( (moveIndex,remoteId,remoteItemId) )
+        groups.insert(moveIndex,groups.pop(i))
+
+        
+
     return moves

@@ -99,9 +99,14 @@ def moveSong(youtube, plId, songId, plItemId, index):
     try:
         from time import sleep
         r = request.execute()
-        print(r)
-    except:
+        title = r['snippet']['title']
+        #print(f'Moved Song: {title} to Index: {index}')
+        cfg.logger.info(f'Moved Song: {title} to Index: {index}')
+        #print(r)
+    except Exception as e:
         cfg.logger.error(f"Unable to Move song: {songId} to Index: {index} in Playlist: {plId}")
+        #TODO detect exception type and replace with custom message (ie 403/quota exceeding)
+        cfg.logger.debug(f'Response {e}')
         return False
 
     return True
