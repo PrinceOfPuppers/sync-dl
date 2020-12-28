@@ -15,8 +15,8 @@ def oldToNewPushOrder(remoteIds, localIds):
 
     
     blankingStr = ''
-    localIds = localIds.copy()
-    remoteIds = remoteIds.copy()
+    localIds = [localId for localId in localIds]
+    remoteIds = [remoteId for remoteId in remoteIds]
 
 
     # Removes all localIds which arent in remoteIds (we arent going to upload songs)
@@ -96,3 +96,40 @@ def longestIncreasingSequence(numList):
             longest = candidate
             maximum = len(candidate)
     return longest
+
+def pushOrderMoves(remoteIds,remoteItemIds,localIds):
+    oldToNew = oldToNewPushOrder(remoteIds, localIds)
+
+    # songs in the longest increasing subsequence of oldToNew are left untouched
+    dontMove = longestIncreasingSequence(oldToNew)
+
+    # moves = [ (newIndex, remoteId, remoteItemId), ... ]
+    moves = []
+
+    prevNewIndex = -1
+
+    i = 0
+    while i<len(dontMove):
+        newIndex = dontMove[i]
+        
+        if newIndex-prevNewIndex > 1:
+            # somthing must be shoved in between prevNewIndex and newIndex
+
+            betweenNewIndex = prevNewIndex + 1
+            betweenOldIndex = oldToNew.index(betweenNewIndex) #newToOld[betweenNewIndex]
+            
+            remoteId = remoteIds[betweenOldIndex] 
+            itemId = remoteItemIds[betweenOldIndex] 
+
+            move = (betweenNewIndex,remoteId,itemId)
+            moves.append(move)
+
+            prevNewIndex = betweenNewIndex
+            continue
+            
+            # TODO issue with last element not being updated if its misplaced
+
+        prevNewIndex = newIndex
+        i+=1
+    
+    return moves

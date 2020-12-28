@@ -597,3 +597,64 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
 
         result = oldToNewPushOrder(remoteIds,localIds)
         self.assertEqual(result,correct)
+    
+
+    def test_7(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        localIds = [
+            'NigPr2mmENA',#0
+            'DzoYNerl4P8',#1
+            '6WYsoeVNEDY',#2
+            '0Wc2Og4vr2I',#3
+            'jhFDyDgMVUI',#4
+            'MfB3l3PHEFQ',#5
+            'I3EEhcLlKdo',#6
+            'bYwnf8r92G0',#7
+            'HiLKVdNJt_o',#8
+            'irIxkjXOp5M',#9
+            '8Yuorb-rB9A',#
+            'lUYZJRlOHyw',#10
+            'p1cymwvDf0w',#11
+            '4TAGhEVNCFc',#12
+            'RkMzJGAV7Vs',#13
+            'BhEfvGZM6jw',#14
+        ]
+        remoteIds = [
+            'MfB3l3PHEFQ',#5
+            'DzoYNerl4P8',#1
+            '6WYsoeVNEDY',#2
+            '0Wc2Og4vr2I',#3
+            'jhFDyDgMVUI',#4
+            'I3EEhcLlKdo',#6
+            'bYwnf8r92G0',#7
+            'HiLKVdNJt_o',#8
+            'irIxkjXOp5M',#9
+            'lUYZJRlOHyw',#10
+            'p1cymwvDf0w',#11
+            '4TAGhEVNCFc',#12
+            'RkMzJGAV7Vs',#13
+            'BhEfvGZM6jw',#14
+            'NigPr2mmENA',#0
+        ]
+
+        correct = [5,1,2,3,4,6,7,8,9,10,11,12,13,14,0]
+
+
+        result = oldToNewPushOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

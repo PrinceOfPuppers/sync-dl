@@ -8,7 +8,7 @@ def checkOptDepend():
     '''Ensures optional dependancies are installed'''
     while True:
         try:
-            from sync_dl.yt_api.helpers import getNewRemoteOrder,getPlId
+            from sync_dl.yt_api.helpers import getPlId,pushOrderMoves
             from sync_dl.yt_api.ytApiWrappers import getYTResource,getItemIds,moveSong
             break
         except:
@@ -22,63 +22,13 @@ def checkOptDepend():
     return True
 
 
+
+
 def pushLocalOrder(plPath):
-    '''
-    Acts like smart sync but in reverse, setting remote order to local order.
-    Ignores songs not in remote, and keeps songs not in local after the song they are currently after.
-    '''
-
-    if not checkOptDepend():
-        return
-    from sync_dl.yt_api.helpers import getNewRemoteOrder,getPlId
-    from sync_dl.yt_api.ytApiWrappers import getYTResource,getItemIds,moveSong
-    
-    cfg.logger.info("Pushing Local Order to Remote...")
-
-    youtube = getYTResource()
-    
-    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-        url = metaData["url"]
-        localIds = metaData["ids"]
-
-    plId = getPlId(url)
-
-    remoteIdPairs = getItemIds(youtube,plId)
-    remoteIds = [pair[0] for pair in remoteIdPairs]
-    plItemIdLookup = {remoteIdPair[0]:remoteIdPair[1] for remoteIdPair in remoteIdPairs}
-
-
-    newOrder = getNewRemoteOrder(remoteIds,localIds) 
-
-    # uses playlist itemIds because they are guarenteed to be unique
-    workingOrder = remoteIds.copy()
-
-    for newIndex in range(len(newOrder)):
-
-        songId = newOrder[newIndex][0]
-        itemId = plItemIdLookup[songId]
-
-        oldIndex = workingOrder.index(songId,newIndex)
-
-        if oldIndex != newIndex:
-            # move the song
-            cfg.logger.info(f"Moving song: {songId} from {oldIndex} to {newIndex}")
-            if moveSong(youtube,plId,songId,itemId,newIndex):
-                # update workingOrder
-                workingOrder.insert(newIndex,workingOrder.pop(oldIndex))
-
-
-
-
-
-
-
-
-def newPushLocalOrder(plPath):
     
     if not checkOptDepend():
         return
-    from sync_dl.yt_api.helpers import getNewRemoteOrder,getPlId,oldToNewPushOrder
+    from sync_dl.yt_api.helpers import getPlId,pushOrderMoves
     from sync_dl.yt_api.ytApiWrappers import getYTResource,getItemIds,moveSong
     
     cfg.logger.info("Pushing Local Order to Remote...")
@@ -95,19 +45,31 @@ def newPushLocalOrder(plPath):
 
     remoteIds,remoteItemIds = zip(*remoteIdPairs)
 
-    # oldToNew = [(newIndex, itemId),...]
-    oldToNew = oldToNewPushOrder(remoteIds,remoteItemIds,localIds)
-    for e in oldToNew:
-        print(e)
+    moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+
+    import time 
+
+    lastMoved = 0
+    waitTime = 10
+
+    for move in moves:
+        #cfg.logger.info(f"Moving song: {songId} from {oldIndex} to {newIndex}")
+        newIndex, songId,itemId = move
+
+        #deltaTime = time.time()-lastMoved
+        #if deltaTime < waitTime:
+        #    time.sleep(waitTime-deltaTime)
+
+        #oldIndex = remoteItemIds.index(itemId)
+        moveSong(youtube,plId,songId,itemId,newIndex)
+        lastMoved = time.time()
+        print(songId,newIndex)
 
 
-    # get LIS and remainders (both with gaps)
 
-    # 
-
-
-#from sync_dl.commands import shuffle
-#
-#plPath='/home/princeofpuppers/Music/test'
-#shuffle(plPath)
-#newPushLocalOrder(plPath)
+if __name__ == "__main__":
+    #from sync_dl.commands import shuffle
+    #
+    plPath='/home/princeofpuppers/Music/test'
+    #shuffle(plPath)
+    pushLocalOrder(plPath)

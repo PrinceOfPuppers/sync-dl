@@ -97,7 +97,9 @@ def moveSong(youtube, plId, songId, plItemId, index):
         }
     )
     try:
-        _ = request.execute()
+        from time import sleep
+        r = request.execute()
+        print(r)
     except:
         cfg.logger.error(f"Unable to Move song: {songId} to Index: {index} in Playlist: {plId}")
         return False
