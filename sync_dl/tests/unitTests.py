@@ -469,7 +469,7 @@ class test_moveRange(unittest.TestCase):
 #################################
 ## youtube api submodule tests ##
 #################################
-from sync_dl.yt_api.helpers import longestIncreasingSequence,oldToNewPushOrder
+from sync_dl.yt_api.helpers import longestIncreasingSequence,oldToNewPushOrder,pushOrderMoves
 
 
 class test_yt_api_helpers(unittest.TestCase):
@@ -645,16 +645,92 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
 
 
 
+# Helpers for test_yt_api_pushOrderMoves
+def simulateMove(remoteIds,remoteItemIds,move):
+    newIndex,_,remoteItemId = move
+    oldIndex = remoteItemIds.index(remoteItemId)
+
+    remoteIds.insert(newIndex,remoteIds.pop(oldIndex))
+    remoteItemIds.insert(newIndex,remoteItemIds.pop(oldIndex))
+
+def compareLocalAndRemote(remoteIds, localIds):
+    remoteIndex = 0
+    localIndex = 0
+    while True:
+        if remoteIndex>=len(remoteIds) or localIndex>=len(localIds):
+            break
+
+        remoteId = remoteIds[remoteIndex]
+        localId = localIds[localIndex]
+        if remoteId not in localIds:
+            remoteIndex+=1
+            continue
+            
+        if localId not in remoteIds:
+            localIndex+=1
+            continue
+        
+        if remoteId!=localId:
+            return False
+        
+        remoteIndex+=1
+        localIndex+=1
+
+    return True
+
+def remoteCorrectOrder(remoteIds,localIds):
+    ''' any id not in local must remain after the id that came before it before moving '''
+
+
+    alphaToNum = lambda char: ord(char.lower()) - 96
+
+    for i in range(1,len(remoteIds)):
+        currentId = remoteIds[i]
+        prevId = remoteIds[i-1]
+
+        if currentId not in localIds:
+            if alphaToNum(currentId)!= alphaToNum(prevId)+1:
+                return False
+
+    return True
 
 
 
+class test_yt_api_pushOrderMoves(unittest.TestCase):
+    def test_1(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
 
+        localIds =  ['A','1','B','C'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
 
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+    
+    def test_2(self):
+        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
 
-
-
-
-
-
-
-
+        localIds =  ['1','B','E','A','C'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
+        [(0, 'B', 'B'), (4, 'A', 'A'), (5, 'C', 'C'), (6, 'D', 'D')]
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')

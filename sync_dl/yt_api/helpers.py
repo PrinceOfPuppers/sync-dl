@@ -12,7 +12,6 @@ def oldToNewPushOrder(remoteIds, localIds):
     '''
     Used in pushLocalOrder
     '''
-
     
     blankingStr = ''
     localIds = [localId for localId in localIds]
@@ -97,75 +96,19 @@ def longestIncreasingSequence(numList):
             maximum = len(candidate)
     return longest
 
-#def pushOrderMoves(remoteIds,remoteItemIds,localIds):
-#    oldToNew = oldToNewPushOrder(remoteIds, localIds)
-#
-#    # songs in the longest increasing subsequence of oldToNew are left untouched
-#    dontMove = longestIncreasingSequence(oldToNew)
-#
-#    # moves = [ (newIndex, remoteId, remoteItemId), ... ]
-#    
-#    workingOrder = []
-#    for i in range(len(oldToNew)):
-#
-#        workingOrder.append( (oldToNew[i],remoteIds[i],remoteItemIds[i]) )
-#
-#
-#
-#    moves = []
-#
-#    prevNewIndex = -1
-#
-#
-#    i = 0
-#    while i<len(dontMove):
-#        newIndex = dontMove[i]
-#        
-#        if newIndex-prevNewIndex > 1:
-#            # somthing must be shoved in between prevNewIndex and newIndex
-#
-#            # issue with things being moved up in list 
-#            betweenNewIndex = prevNewIndex + 1 
-#            betweenOldIndex = oldToNew.index(betweenNewIndex) #newToOld[betweenNewIndex]
-#            
-#            remoteId = remoteIds[betweenOldIndex] 
-#            itemId = remoteItemIds[betweenOldIndex] 
-#    
-#            move = (betweenNewIndex,remoteId,itemId)
-#            moves.append(move)
-#
-#            prevNewIndex = betweenNewIndex
-#            continue
-#            
-#            # TODO issue with last element not being updated if its misplaced
-#
-#        prevNewIndex = newIndex
-#        i+=1
-#    
-#    # last Elements
-#    for i in range(dontMove[-1]+1,len(remoteIds)):
-#
-#        oldIndex = oldToNew.index(i) #newToOld[betweenNewIndex]
-#        
-#        remoteId = remoteIds[oldIndex] 
-#        itemId = remoteItemIds[oldIndex] 
-#
-#        move = (len(remoteIds)-1,remoteId,itemId)
-#        moves.append(move)
-#
-#    return moves
-
 
 
 def pushOrderMoves(remoteIds,remoteItemIds,localIds):
     oldToNew = oldToNewPushOrder(remoteIds, localIds)
 
-    # songs in the longest increasing subsequence of oldToNew are left untouched
+    # songs in the longest increasing subsequence of oldToNew are left untouched (ensures most efficent
+    # usage of the api)
     dontMove = longestIncreasingSequence(oldToNew)
 
-    # moves = [ (newIndex, remoteId, remoteItemId), ... ]
-    
-    groups = [] #current working order to new order, sorting this while moving 
+
+    # moves = [ (finalIndex, remoteId, remoteItemId), ... ]
+    groups = [] # current working order to new order, sorting this while recording the moves
+                # is how we determine the moves needed to sort the playlist
     for i in range(len(oldToNew)):
         num = oldToNew[i]
         groups.append( (num,remoteIds[i],remoteItemIds[i]) )
@@ -175,19 +118,18 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
             if group[0]==newIndex:
                 return currentIndex
         
-        #return None
-        raise Exception('item not in group')
+
+        raise Exception(f'newIndex {newIndex} Not in Group')
 
     
 
-
+    # moves = [ (moveIndex, remoteId, remoteItemId), ... ]
     moves = []
-    def addMove(moveIndex,oldIndex):
-        group = groups.pop(i)
-        moves.append( group )
-        groups.insert(moveIndex,group)
 
-    #TODO fix problem if 0th element was moved
+    def addMove(moveIndex,oldIndex):
+        group = groups.pop(oldIndex)
+        moves.append( (moveIndex,group[1],group[2]) )
+        groups.insert(moveIndex,group)
 
 
     if groups[0][0] != 0:
@@ -216,9 +158,8 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
             moveIndex=j+1
 
         addMove(moveIndex,i)
-        #moves.append( (moveIndex,remoteId,remoteItemId) )
-        #groups.insert(moveIndex,groups.pop(i))
 
         
-
+    cfg.logger.debug(f'Moves To Push: \n{moves}')
+    cfg.logger.debug(f'Groups Post Sort: \n{groups}')
     return moves
