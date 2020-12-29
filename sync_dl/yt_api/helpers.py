@@ -106,9 +106,10 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
     dontMove = longestIncreasingSequence(oldToNew)
 
 
-    # moves = [ (finalIndex, remoteId, remoteItemId), ... ]
+    # groups = [ (finalIndex, remoteId, remoteItemId), ... ]
     groups = [] # current working order to new order, sorting this while recording the moves
                 # is how we determine the moves needed to sort the playlist
+                
     for i in range(len(oldToNew)):
         num = oldToNew[i]
         groups.append( (num,remoteIds[i],remoteItemIds[i]) )
@@ -140,7 +141,7 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
     for newIndex in range(1,len(groups)):
 
         i = getGroupIndex(groups,newIndex)
-        newIndex,remoteId,remoteItemId = groups[i]
+        newIndex,_,_ = groups[i]
         if newIndex in dontMove:
             i+=1
             continue
@@ -159,7 +160,6 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
 
         addMove(moveIndex,i)
 
-        
-    cfg.logger.debug(f'Moves To Push: \n{moves}')
-    cfg.logger.debug(f'Groups Post Sort: \n{groups}')
+    cfg.logger.debug('Moves To Push: \n'+'\n'.join( [str(move) for move in moves ] ))
+    cfg.logger.debug('Groups Post Sort: \n'+'\n'.join([str(group) for group in groups ]))
     return moves

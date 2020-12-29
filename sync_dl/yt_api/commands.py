@@ -43,32 +43,16 @@ def pushLocalOrder(plPath):
 
     remoteIdPairs = getItemIds(youtube,plId)
 
-    
-
     remoteIds,remoteItemIds = zip(*remoteIdPairs)
 
-    cfg.logger.debug(f"Order Before Push: \n{remoteIds}")
+    cfg.logger.debug(f'Order Before Push: \n'+'\n'.join( [f'{i}: {str(remoteId)}' for i,remoteId in enumerate(remoteIds) ] ))
 
     moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
 
 
 
     for move in moves:
-        #cfg.logger.info(f"Moving song: {songId} from {oldIndex} to {newIndex}")
         newIndex, songId,itemId = move
 
         moveSong(youtube,plId,songId,itemId,newIndex)
 
-
-
-if __name__ == "__main__":
-    import logging
-    stream = logging.StreamHandler()
-    cfg.logger.setLevel(logging.DEBUG)
-    stream.setFormatter(logging.Formatter("%(message)s"))
-    cfg.logger.addHandler(stream)
-    #from sync_dl.commands import shuffle
-    #
-    plPath='/home/princeofpuppers/Music/test'
-    #shuffle(plPath)
-    pushLocalOrder(plPath)
