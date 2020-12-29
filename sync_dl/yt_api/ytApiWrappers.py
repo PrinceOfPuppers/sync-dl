@@ -69,6 +69,7 @@ def getItemIds(youtube,plId):
     
     numPages = ceil(plLen/pageLen) - 1
     for _ in range(numPages):
+        # TODO Try catch block for quota exceeding
         request = makeRequest(response['nextPageToken'])
         response = request.execute()
         for item in response['items']:

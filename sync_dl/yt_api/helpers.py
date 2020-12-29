@@ -165,7 +165,7 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
 
     # moves = [ (newIndex, remoteId, remoteItemId), ... ]
     
-    groups = [] #current working order to new order
+    groups = [] #current working order to new order, sorting this while moving 
     for i in range(len(oldToNew)):
         num = oldToNew[i]
         groups.append( (num,remoteIds[i],remoteItemIds[i]) )
@@ -178,20 +178,31 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
         #return None
         raise Exception('item not in group')
 
+    
 
 
     moves = []
+    def addMove(moveIndex,oldIndex):
+        group = groups.pop(i)
+        moves.append( group )
+        groups.insert(moveIndex,group)
 
     #TODO fix problem if 0th element was moved
 
-    # prepend -1 to dontMove?
-    for newIndex in range(len(groups)):
+
+    if groups[0][0] != 0:
+        i = getGroupIndex(groups,0)
+        addMove(0,i)
+
+
+    for newIndex in range(1,len(groups)):
 
         i = getGroupIndex(groups,newIndex)
         newIndex,remoteId,remoteItemId = groups[i]
         if newIndex in dontMove:
             i+=1
             continue
+
         
         j=0
         compIndex = groups[j][0]
@@ -204,9 +215,9 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
         else:
             moveIndex=j+1
 
-        
-        moves.append( (moveIndex,remoteId,remoteItemId) )
-        groups.insert(moveIndex,groups.pop(i))
+        addMove(moveIndex,i)
+        #moves.append( (moveIndex,remoteId,remoteItemId) )
+        #groups.insert(moveIndex,groups.pop(i))
 
         
 

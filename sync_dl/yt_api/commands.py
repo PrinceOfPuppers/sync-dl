@@ -61,7 +61,7 @@ def pushLocalOrder(plPath):
         #    time.sleep(waitTime-deltaTime)
 
         #oldIndex = remoteItemIds.index(itemId)
-        moveSong(youtube,plId,songId,itemId,newIndex)
+        #moveSong(youtube,plId,songId,itemId,newIndex)
         lastMoved = time.time()
         print(songId,newIndex)
 
