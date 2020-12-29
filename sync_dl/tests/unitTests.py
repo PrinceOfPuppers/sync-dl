@@ -45,7 +45,7 @@ def getPlaylistData(name):
 class test_correctStateCorruption(unittest.TestCase):
 
     def test_removedSongs(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         name = 'RemovedSongs'
 
         songs = ['A' ,'B' ,'C' ,'D', 'E'] 
@@ -69,7 +69,7 @@ class test_correctStateCorruption(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_blankMetaData(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         name = 'blankMetaData'
 
         songs = ['A' ,'B' ,'C' ,'D'] 
@@ -95,7 +95,7 @@ class test_correctStateCorruption(unittest.TestCase):
 class test_editPlaylist(unittest.TestCase):
     
     def test_1(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         name = 'editPl1'
 
         songs = ['A' ,'B' ,'C' ,'D'] 
@@ -116,7 +116,7 @@ class test_editPlaylist(unittest.TestCase):
 
 
     def test_2(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         name = 'editPl2'
 
         songs = ['A' ,'B' ,'C' ,'D','E','F'] 
@@ -136,7 +136,7 @@ class test_editPlaylist(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_3(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         name = 'editPl3'
 
         songs = ['A' ,'B' ,'C'] 
@@ -156,7 +156,7 @@ class test_editPlaylist(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_4(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         name = 'editPl3'
 
         songs = ['A' ,'B' ,'C' ,'D', 'E', 'F', 'G'] 
@@ -177,7 +177,7 @@ class test_editPlaylist(unittest.TestCase):
 class test_smartSyncNewOrder(unittest.TestCase):
 
     def test_insertAndDelete(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = ['A' ,'B' ,'C' ,'D'] 
         remoteIds = ['A' ,'1' ,'B' ,'C' ,'2']
 
@@ -188,7 +188,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_insertDeleteSwap(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = ['A' ,'B' ,'C' ,'D'] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2']
 
@@ -200,7 +200,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_3(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E', 'F','G'] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2','F']
 
@@ -213,7 +213,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
 
 
     def test_LocalDeleteAll(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = [] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2','F']
 
@@ -225,7 +225,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_RemoteDeleteAll(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E', 'F','G'] 
         remoteIds = []
 
@@ -237,7 +237,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_Reversal(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E'] 
         remoteIds = ['E','D','C','B','A']
 
@@ -250,7 +250,7 @@ class test_smartSyncNewOrder(unittest.TestCase):
 
 
     def test_7(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = ['A' ,'B' ,'C' ,'D', 'E'] 
         remoteIds = ['E','1','D','2','B','A']
 
@@ -469,44 +469,349 @@ class test_moveRange(unittest.TestCase):
 #################################
 ## youtube api submodule tests ##
 #################################
-from sync_dl.yt_api.helpers import getNewRemoteOrder
+from sync_dl.yt_api.helpers import longestIncreasingSequence,oldToNewPushOrder,pushOrderMoves
+
+
+class test_yt_api_helpers(unittest.TestCase):
+    def test_longestIncreasingSequence(self):
+
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        
+        def acending(numList):
+            
+            for i in range(1,len(numList)):
+                if numList[i] <= numList[i-1]:
+                    return False
+            return True
+
+        def isSubSequenceInSequence(subSequence, sequence):
+            prevIndex = 0
+            for _,num in enumerate(subSequence):
+                try:
+                    prevIndex = sequence[prevIndex:].index(num) + 1
+                except:
+                    return False
+            return True
+
+        pairs = [
+            ([7, 9, 1, 4, 0, 8, 3, 6, 5, 2],3),
+            ([5, 4, 2, 1, 0, 6, 3, 9, 8, 7],3),
+            ([4, 1, 9, 5, 3, 7, 0, 6, 2, 8],4),
+            ([2, 0, 5, 7, 4, 9, 8, 6, 1, 3],4),
+            ([0, 1, 7, 5, 9, 6, 4, 8, 3, 2],5),
+            ([0, 4, 5, 7, 9, 8, 2, 3, 1, 6],5),
+            ([5, 0, 9, 1, 2, 8, 4, 3, 7, 6],5),
+            ([5, 4, 6, 0, 2, 8, 3, 9, 1, 7],4),
+            ([5, 2, 1, 4, 0, 8, 9, 6, 7, 3],4),
+            ([2, 0, 3, 8, 5, 6, 4, 7, 9, 1],6),
+            ([1, 3, 5, 9, 4, 8, 2, 0, 6, 7],5),
+            ([9, 2, 6, 4, 3, 5, 7, 0, 8, 1],5),
+            ([7, 1, 2, 8, 9, 0, 5, 3, 4, 6],5),
+            ([3, 4, 8, 1, 9, 5, 6, 2, 0, 7],5),
+            ([4, 1, 2, 8, 7, 0, 9, 3, 5, 6],5),
+            ([1, 4, 2, 0, 7, 9, 3, 6, 5, 8],5),
+            ([6, 0, 2, 3, 8, 9, 1, 4, 5, 7],6),
+            ([4, 1, 5, 2, 8, 0, 9, 3, 6, 7],5),
+            ([4, 8, 0, 2, 9, 7, 6, 1, 3, 5],4),
+        ]
+
+        for pair in pairs:
+            numList,correctLen = pair
+            ans = longestIncreasingSequence(numList)
+
+            if not acending(ans):
+                self.fail(f'Answer is not acending! \nanswer: {ans} \ninput: {numList}')
+            if len(ans)!=correctLen:
+                self.fail(f'Answer has Length {len(ans)}, correct Length is {correctLen}. \nanswer: {ans} \ninput: {numList}')
+                
+            if not isSubSequenceInSequence(ans,numList):
+                self.fail(f'Answer Subsequence is not in Input Sequence. \nanswer: {ans} \ninput: {numList}')
+
+
 
 class test_yt_api_getNewRemoteOrder(unittest.TestCase):
     def test_insertAndDelete(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         localIds = ['A','1' ,'C','2' ,'D'] 
         remoteIds = ['A','B','C','D']
+        
 
-        correct = [('A',0) ,('B',1) ,('C',2) ,('D',3)]
+        correct = [0, 1 ,2 ,3]
 
 
-        result = getNewRemoteOrder(remoteIds,localIds)
+        result = oldToNewPushOrder(remoteIds,localIds)
         self.assertEqual(result,correct)
     
     def test_insertDeleteSwap(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
 
 
         localIds = ['C','1','A','2' ,'D'] 
         remoteIds = ['A','B','C','D']
 
-        correct = [('C',2), ('A',0) ,('B',1) ,('D',3)]
+        correct = [1,2,0,3]
 
 
-        result = getNewRemoteOrder(remoteIds,localIds)
+        result = oldToNewPushOrder(remoteIds,localIds)
 
+        self.assertEqual(result,correct)
+
+    def test_3(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        localIds =  ['A', '1', 'E','B', 'D', 'C', '2'] 
+        remoteIds = ['A','B','C','D','E','F','G']
+        correct =   [ 0,  4,  6,  5,  1,  2,  3 ]
+
+
+        result = oldToNewPushOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+
+
+    def test_4(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        localIds =  ['1', 'E', 'D', 'C', '2'] 
+        remoteIds = ['A','B','C','D','E','F','G']
+        correct =   [ 0,  1,  6,  5,  2,  3,  4 ]
+
+
+        result = oldToNewPushOrder(remoteIds,localIds)
         self.assertEqual(result,correct)
     
-    def test_3(self):
-        cfg.logger.info(f"Running {inspect.currentframe().f_code.co_name}")
-        localIds = ['A', '1', 'E','B', 'D', 'C', '2'] 
+    def test_5(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        localIds =  [] 
         remoteIds = ['A','B','C','D','E','F','G']
+        correct =   [ 0,  1,  2,  3,  4,  5,  6 ]
 
 
-        correct = [('A',0), ('E',4), ('F',5), ('G',6), ('B',1), ('D',3), ('C',2)]
+        result = oldToNewPushOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+    
+        
+    def test_6(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        localIds =  ['A','B','C','D','E','F','G']
+        remoteIds = []
+        correct =   []
 
 
-        result = getNewRemoteOrder(remoteIds,localIds)
+        result = oldToNewPushOrder(remoteIds,localIds)
+        self.assertEqual(result,correct)
+    
+
+    def test_7(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        localIds = [
+            'NigPr2mmENA',#0
+            'DzoYNerl4P8',#1
+            '6WYsoeVNEDY',#2
+            '0Wc2Og4vr2I',#3
+            'jhFDyDgMVUI',#4
+            'MfB3l3PHEFQ',#5
+            'I3EEhcLlKdo',#6
+            'bYwnf8r92G0',#7
+            'HiLKVdNJt_o',#8
+            'irIxkjXOp5M',#9
+            '8Yuorb-rB9A',#
+            'lUYZJRlOHyw',#10
+            'p1cymwvDf0w',#11
+            '4TAGhEVNCFc',#12
+            'RkMzJGAV7Vs',#13
+            'BhEfvGZM6jw',#14
+        ]
+        remoteIds = [
+            'MfB3l3PHEFQ',#5
+            'DzoYNerl4P8',#1
+            '6WYsoeVNEDY',#2
+            '0Wc2Og4vr2I',#3
+            'jhFDyDgMVUI',#4
+            'I3EEhcLlKdo',#6
+            'bYwnf8r92G0',#7
+            'HiLKVdNJt_o',#8
+            'irIxkjXOp5M',#9
+            'lUYZJRlOHyw',#10
+            'p1cymwvDf0w',#11
+            '4TAGhEVNCFc',#12
+            'RkMzJGAV7Vs',#13
+            'BhEfvGZM6jw',#14
+            'NigPr2mmENA',#0
+        ]
+
+        correct = [5,1,2,3,4,6,7,8,9,10,11,12,13,14,0]
+
+
+        result = oldToNewPushOrder(remoteIds,localIds)
         self.assertEqual(result,correct)
 
 
+
+# Helpers for test_yt_api_pushOrderMoves
+def simulateMove(remoteIds,remoteItemIds,move):
+    newIndex,_,remoteItemId = move
+    oldIndex = remoteItemIds.index(remoteItemId)
+
+    remoteIds.insert(newIndex,remoteIds.pop(oldIndex))
+    remoteItemIds.insert(newIndex,remoteItemIds.pop(oldIndex))
+
+def compareLocalAndRemote(remoteIds, localIds):
+    remoteIndex = 0
+    localIndex = 0
+    while True:
+        if remoteIndex>=len(remoteIds) or localIndex>=len(localIds):
+            break
+
+        remoteId = remoteIds[remoteIndex]
+        localId = localIds[localIndex]
+        if remoteId not in localIds:
+            remoteIndex+=1
+            continue
+            
+        if localId not in remoteIds:
+            localIndex+=1
+            continue
+        
+        if remoteId!=localId:
+            return False
+        
+        remoteIndex+=1
+        localIndex+=1
+
+    return True
+
+def remoteCorrectOrder(remoteIds,localIds):
+    ''' any id not in local must remain after the id that came before it before moving '''
+
+
+    alphaToNum = lambda char: ord(char.lower()) - 96
+
+    for i in range(1,len(remoteIds)):
+        currentId = remoteIds[i]
+        prevId = remoteIds[i-1]
+
+        if currentId not in localIds:
+            if alphaToNum(currentId)!= alphaToNum(prevId)+1:
+                return False
+
+    return True
+
+
+
+class test_yt_api_pushOrderMoves(unittest.TestCase):
+    def test_1(self):
+
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+
+        localIds =  ['A','1','B','C'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
+
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+    
+    def test_2(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+
+        localIds =  ['1','B','E','A','C'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
+
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+
+    def test_3(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+
+        localIds =  ['1','F','B','A','C'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
+
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+
+    def test_reversal(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+
+        localIds =  ['G','F','E','D','C','B','A'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
+
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+
+
+    def test_partialReversal(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+
+        localIds =  ['F','E','C','B'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
+
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+
+
+
+    def test_firstLastSwap(self):
+        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+
+        localIds =  ['G','1','B','E','C','A'] 
+        remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
+        remoteItemIds = ['A','B','C','D','E','F','G']
+
+        moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
+        for move in moves:
+            simulateMove(remoteIds,remoteItemIds,move)
+        
+        # Checks if remote ids have taken on localIds order
+        if not compareLocalAndRemote(remoteIds,localIds):
+            self.fail(f'RemoteIds Do Not Match LocalIds After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+        
+        # Checks if any remoteIds not in localIds stayed after the correct Id
+        if not remoteCorrectOrder(remoteIds,localIds):
+            self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+            

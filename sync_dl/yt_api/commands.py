@@ -5,10 +5,10 @@ import shelve
 import sync_dl.config as cfg
 
 def checkOptDepend():
-    # Ensures optional dependancies are installed
+    '''Ensures optional dependancies are installed'''
     while True:
         try:
-            from sync_dl.yt_api.helpers import getNewRemoteOrder,getPlId
+            from sync_dl.yt_api.helpers import getPlId,pushOrderMoves
             from sync_dl.yt_api.ytApiWrappers import getYTResource,getItemIds,moveSong
             break
         except:
@@ -22,15 +22,13 @@ def checkOptDepend():
     return True
 
 
-def pushLocalOrder(plPath):
-    '''
-    Acts like smart sync but in reverse, setting remote order to local order.
-    Ignores songs not in remote, and keeps songs not in local after the song they are currently after.
-    '''
 
+
+def pushLocalOrder(plPath):
+    
     if not checkOptDepend():
         return
-    from sync_dl.yt_api.helpers import getNewRemoteOrder,getPlId
+    from sync_dl.yt_api.helpers import getPlId,pushOrderMoves
     from sync_dl.yt_api.ytApiWrappers import getYTResource,getItemIds,moveSong
     
     cfg.logger.info("Pushing Local Order to Remote...")
@@ -44,26 +42,17 @@ def pushLocalOrder(plPath):
     plId = getPlId(url)
 
     remoteIdPairs = getItemIds(youtube,plId)
-    remoteIds = [pair[0] for pair in remoteIdPairs]
-    plItemIdLookup = {remoteIdPair[0]:remoteIdPair[1] for remoteIdPair in remoteIdPairs}
+
+    remoteIds,remoteItemIds = zip(*remoteIdPairs)
+
+    cfg.logger.debug(f'Order Before Push: \n'+'\n'.join( [f'{i}: {str(remoteId)}' for i,remoteId in enumerate(remoteIds) ] ))
+
+    moves = pushOrderMoves(remoteIds,remoteItemIds,localIds)
 
 
-    newOrder = getNewRemoteOrder(remoteIds,localIds) 
 
-    # uses playlist itemIds because they are guarenteed to be unique
-    workingOrder = [ plItemIdLookup[remoteId] for remoteId in remoteIds ]
+    for move in moves:
+        newIndex, songId,itemId = move
 
-    for newIndex in range(len(newOrder)):
+        moveSong(youtube,plId,songId,itemId,newIndex)
 
-        songId = newOrder[newIndex][0]
-        itemId = plItemIdLookup[songId]
-
-        # TODO optimize by only considering indices at or above newIndex
-        oldIndex = workingOrder.index(itemId)
-
-        if oldIndex != newIndex:
-            # move the song
-            cfg.logger.info(f"Moving song: {songId} from {oldIndex} to {newIndex}")
-            if moveSong(youtube,plId,songId,itemId,newIndex):
-                # update workingOrder
-                workingOrder.insert(newIndex,workingOrder.pop(oldIndex))

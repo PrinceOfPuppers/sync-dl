@@ -7,67 +7,159 @@ def getPlId(plUrl):
     match = re.search(cfg.plIdRe,plUrl)
     return match.group()[5:]
     
-def getNewRemoteOrder(remoteIds, localIds):
-    '''
-    Acts Like SmartSyncOrder but in reverse.
-    
-    '''
-    # to avoid mutating localIds
-    localIds = localIds.copy()
 
-    newOrder = []
-    remoteIdPairs = [(remoteIds[index],index) for index in range(len(remoteIds))] 
+def oldToNewPushOrder(remoteIds, localIds):
+    '''
+    Used in pushLocalOrder
+    '''
+    
+    blankingStr = ''
+    localIds = [localId for localId in localIds]
+    remoteIds = [remoteId for remoteId in remoteIds]
+
 
     # Removes all localIds which arent in remoteIds (we arent going to upload songs)
     for i,localId in enumerate(localIds):
         if localId not in remoteIds:
             del localIds[i]
 
+    lenRemote = len(remoteIds)
+    oldToNew=[-1]*lenRemote
+
+    prevOldIndex = -1
+    newIndex = 0
 
     while True:
 
-        # all songs in remote have been moved
-        # note these to len==0 statements are likley redundant
-        if len(remoteIdPairs)==0:
+        while prevOldIndex+1 != lenRemote and remoteIds[prevOldIndex+1] not in localIds and remoteIds[prevOldIndex+1] != blankingStr:
+            oldToNew[prevOldIndex+1] = newIndex
+            prevOldIndex+=1
+            newIndex+=1
+
+            continue
+
+        if newIndex == lenRemote:
             break
+
+        localId = localIds.pop(0)
+
+        oldIndex = remoteIds.index(localId)
+        remoteIds[oldIndex] = blankingStr
+
+        oldToNew[oldIndex] = newIndex
+
+        prevOldIndex = oldIndex
+        newIndex+=1
+    return oldToNew
+
+
+
+
+def longestIncreasingSequence(numList):
+    '''
+    returns indices of longest increasing sequence
+    '''
+
+    candidates = []
+
+    candidates.append([numList[0]])
+    
+    new = []
+    
+    for i in range(1,len(numList)):
+        num = numList[i]
+
+        new.clear()
+        prevAppended = -1
         
-        if len(localIds)==0:
-            newOrder.extend( remoteIdPairs )
-            break
+        for j,candidate in enumerate(candidates):
+            if num > candidate[-1]:
+                if prevAppended == -1 or len(candidates[prevAppended]) < len(candidate)+1:
+                    new.append(candidate.copy())
+                    candidate.append(num)
+                    prevAppended = j
+                    
+        if prevAppended == -1:
+            candidates.append([num])
+            continue
+
+        candidates.extend(new)
 
 
-        localId=localIds[0]
+    # find longest candidate
+    maximum = 0
+    longest = None
 
-        remoteId,remoteIndex = remoteIdPairs[0]
+    for candidate in candidates:
+        if len(candidate)>maximum:
+            longest = candidate
+            maximum = len(candidate)
+    return longest
 
-        if localId==remoteId:
-            # remote song is in correct posistion
-            newOrder.append( remoteIdPairs.pop(0) )
 
-            localId = localIds.pop(0) #must also remove this remote element
 
-        elif remoteId not in localIds:
-            # current remote song is not in local playlist, it must remain in current order
-            newOrder.append( remoteIdPairs.pop(0) )
+def pushOrderMoves(remoteIds,remoteItemIds,localIds):
+    oldToNew = oldToNewPushOrder(remoteIds, localIds)
+
+    # songs in the longest increasing subsequence of oldToNew are left untouched (ensures most efficent
+    # usage of the api)
+    dontMove = longestIncreasingSequence(oldToNew)
+
+
+    # groups = [ (finalIndex, remoteId, remoteItemId), ... ]
+    groups = [] # current working order to new order, sorting this while recording the moves
+                # is how we determine the moves needed to sort the playlist
+                
+    for i in range(len(oldToNew)):
+        num = oldToNew[i]
+        groups.append( (num,remoteIds[i],remoteItemIds[i]) )
+
+    def getGroupIndex(groups,newIndex):
+        for currentIndex,group in enumerate(groups):
+            if group[0]==newIndex:
+                return currentIndex
         
+
+        raise Exception(f'newIndex {newIndex} Not in Group')
+
+    
+
+    # moves = [ (moveIndex, remoteId, remoteItemId), ... ]
+    moves = []
+
+    def addMove(moveIndex,oldIndex):
+        group = groups.pop(oldIndex)
+        moves.append( (moveIndex,group[1],group[2]) )
+        groups.insert(moveIndex,group)
+
+
+    if groups[0][0] != 0:
+        i = getGroupIndex(groups,0)
+        addMove(0,i)
+
+
+    for newIndex in range(1,len(groups)):
+
+        i = getGroupIndex(groups,newIndex)
+        newIndex,_,_ = groups[i]
+        if newIndex in dontMove:
+            i+=1
+            continue
+
         
-        # at this point the current remote song and local song arent the same, but the current remote
-        # song still exists locally, hence we can insert the local song into the current posistion
+        j=0
+        compIndex = groups[j][0]
+        while newIndex != compIndex+1:
+            j+=1
+            compIndex = groups[j][0]
+        
+        if j>=i:
+            moveIndex=j
         else:
-            # local song exists in remote but in wrong place
+            moveIndex=j+1
 
-            index = remoteIds[remoteIndex+1:].index(localId)+remoteIndex+1
-            for i,_ in enumerate(remoteIdPairs):
-                if remoteIdPairs[i][1]==index:
-                    j = i
-                    break
+        addMove(moveIndex,i)
 
-            newOrder.append( remoteIdPairs.pop(j) )
-            localId = localIds.pop(0) #must also remove this local element
-            
-            #checks if songs after the moved song are not in local, if so they must be moved with it
-            while j<len(remoteIdPairs) and (remoteIdPairs[j][0] not in localIds):
-                newOrder.append( remoteIdPairs.pop(j) )
-
-
-    return newOrder
+    cfg.logger.debug('Moves To Push: \n'+'\n'.join( [str(move) for move in moves ] ))
+    cfg.logger.debug('Groups Post Sort: \n'+'\n'.join([str(group) for group in groups ]))
+    return moves

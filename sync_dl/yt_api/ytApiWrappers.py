@@ -69,6 +69,7 @@ def getItemIds(youtube,plId):
     
     numPages = ceil(plLen/pageLen) - 1
     for _ in range(numPages):
+        # TODO Try catch block for quota exceeding
         request = makeRequest(response['nextPageToken'])
         response = request.execute()
         for item in response['items']:
@@ -97,9 +98,16 @@ def moveSong(youtube, plId, songId, plItemId, index):
         }
     )
     try:
-        _ = request.execute()
-    except:
+        from time import sleep
+        r = request.execute()
+        title = r['snippet']['title']
+        #print(f'Moved Song: {title} to Index: {index}')
+        cfg.logger.info(f'Moved Song: {title} to Index: {index}')
+        #print(r)
+    except Exception as e:
         cfg.logger.error(f"Unable to Move song: {songId} to Index: {index} in Playlist: {plId}")
+        #TODO detect exception type and replace with custom message (ie 403/quota exceeding)
+        cfg.logger.debug(f'Response {e}')
         return False
 
     return True
