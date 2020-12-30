@@ -46,6 +46,7 @@ section = parser['CONFIG']
 
 # global config variables
 filePrependRE = compile(r'\d+_')
+plIdRe = compile(r'list=.{34}')
 
 metaDataName = section['metaDataName']
 

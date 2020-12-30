@@ -10,3 +10,4 @@ sync_dl.egg-info
 
 build
 dist
+sync_dl/yt_api/credentials.pickle

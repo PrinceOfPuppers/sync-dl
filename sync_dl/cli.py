@@ -12,7 +12,8 @@ import sync_dl.config as cfg
 
 
 from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData, moveRange
-    
+from sync_dl.yt_api.commands import pushLocalOrder
+
 #modified version of help formatter which only prints args once in help message
 class ArgsOnce(argparse.HelpFormatter):
     def __init__(self,prog):
@@ -59,7 +60,9 @@ def parseArgs():
     group.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2')
     group.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
     group.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
-    
+
+    #changing remote
+    group.add_argument('--push-order', action='store_true', help='(experimental) changes remote order to match local order')
     
     # the '\n' are used as defaults so they dont get confused with actual paths
     parser.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
@@ -73,6 +76,8 @@ def parseArgs():
 
     version = pkg_resources.require("sync_dl")[0].version
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
+
+
 
     args = parser.parse_args()
     return args
@@ -193,6 +198,9 @@ def cli():
 
         elif args.swap:
             swap(plPath,args.swap[0],args.swap[1])
+        
+        elif args.push_order:
+            pushLocalOrder(plPath)
 
     #fixing metadata corruption in event of crash
     except Exception as e:

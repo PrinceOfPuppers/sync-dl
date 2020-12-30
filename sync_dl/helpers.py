@@ -136,7 +136,7 @@ def getLocalSongs(plPath):
 
 def smartSyncNewOrder(localIds,remoteIds):
     '''
-    used by smartSync, localIds will not be mutated but remtoeIds will
+    used by smartSync, localIds will not be mutated but remoteIds will
     output is newOrder, a list of tuples ( Id of song, where to find it )
     the "where to find it" is the number in the old ordering (None if song is to be downloaded)
     '''
