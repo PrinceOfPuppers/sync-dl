@@ -135,7 +135,9 @@ def pushOrderMoves(remoteIds,remoteItemIds,localIds):
 
     if groups[0][0] != 0:
         i = getGroupIndex(groups,0)
-        addMove(0,i)
+        newIndex,_,_ = groups[i]
+        if newIndex not in dontMove:
+            addMove(0,i)
 
 
     for newIndex in range(1,len(groups)):
