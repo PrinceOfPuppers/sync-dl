@@ -10,7 +10,7 @@ import sync_dl.config as cfg
 
 
 def _newCredentials(scopes,credPath):
-    flow = InstalledAppFlow.from_client_secrets_file(f'{cfg.modulePath}/yt_api/api_test.py',scopes=scopes)
+    flow = InstalledAppFlow.from_client_secrets_file(f'{cfg.modulePath}/yt_api/client_secrets.json',scopes=scopes)
 
     # start local server on localhost, port 8080
     flow.run_local_server(prompt = 'consent', authorization_prompt_message='')
