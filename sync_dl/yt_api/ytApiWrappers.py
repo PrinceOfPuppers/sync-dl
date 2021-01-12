@@ -7,23 +7,23 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 import sync_dl.config as cfg
+from sync_dl.yt_api.newCredentials import newCredentials
 
-
-def _newCredentials(scopes,credPath):
-    flow = InstalledAppFlow.from_client_secrets_file(f'{cfg.modulePath}/yt_api/client_secrets.json',scopes=scopes)
-
-    # start local server on localhost, port 8080
-    flow.run_local_server(prompt = 'consent', authorization_prompt_message='')
-
-
-    credentials = flow.credentials
-
-    if os.path.exists(credPath):
-        os.remove(credPath)
-    with open(credPath,"wb") as f:
-        pickle.dump(credentials,f)
-
-    return credentials
+#def _newCredentials(scopes,credPath):
+#    flow = InstalledAppFlow.from_client_secrets_file(f'{cfg.modulePath}/yt_api/client_secrets.json',scopes=scopes)
+#
+#    # start local server on localhost, port 8080
+#    flow.run_local_server(prompt = 'consent', authorization_prompt_message='')
+#
+#
+#    credentials = flow.credentials
+#
+#    if os.path.exists(credPath):
+#        os.remove(credPath)
+#    with open(credPath,"wb") as f:
+#        pickle.dump(credentials,f)
+#
+#    return credentials
 
 def getCredentials():
 
@@ -40,10 +40,10 @@ def getCredentials():
             if credentials.expired:
                 credentials.refresh(Request())
         else:
-            credentials = _newCredentials(scopes,credPath)
+            credentials = newCredentials(scopes,credPath)
 
     else:
-        credentials=_newCredentials(scopes,credPath)
+        credentials=newCredentials(scopes,credPath)
     
     return credentials
 
