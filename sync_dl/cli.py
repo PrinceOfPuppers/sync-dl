@@ -46,7 +46,7 @@ def parseArgs():
 
     parser = argparse.ArgumentParser(description=description,formatter_class=ArgsOnce)
 
-    #posistional
+    #positional
     parser.add_argument('PLAYLIST',nargs='?', type=str, help='the name of the directory for the playlist')
 
     #playlist managing
@@ -55,7 +55,7 @@ def parseArgs():
     group.add_argument('-s','--smart-sync', action='store_true', help='apply smart sync local playlist with remote playlist')
     group.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
 
-    group.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in posistion INDEX')
+    group.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in position INDEX')
 
     group.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2')
     group.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')

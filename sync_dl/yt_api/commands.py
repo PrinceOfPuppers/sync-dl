@@ -17,7 +17,7 @@ def checkOptDepend():
                 return False
 
             import subprocess
-            subprocess.call(["pip",'install','google-auth','google-auth-oauthlib','google-api-python-client'])
+            subprocess.call(["pip",'install','google-auth','google-auth-oauthlib','google-api-python-client','cryptography'])
 
     return True
 

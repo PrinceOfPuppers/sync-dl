@@ -21,9 +21,9 @@
 
 
 # INSTALLATION
-requires ffmpeg or avconv, however one of these comes pre-installed on most machines. 
+Requires ffmpeg or avconv, however one of these comes pre-installed on most machines. 
 
-install sync-dl via pypi using pip:
+Install sync-dl via pypi using pip:
 ``` 
 pip install sync-dl
 ```
@@ -31,14 +31,14 @@ pip install sync-dl
 # ABOUT
 Created to avoid having music deleted but still have the convenience of browsing, adding and reordering new music using remote services such as youtube.
 
-the application does not store any of its metadata in songs, metadata is stored next to them in a .metadata file, the music files are managed through numbering, allowing them to be played alphanumerically using any playback service (such as VLC)
+The application does not store any of its metadata in songs, metadata is stored next to them in a .metadata file, the music files are managed through numbering, allowing them to be played alphanumerically using any playback service (such as VLC)
 
 
 # Usage
 ```
 sync-dl [options] PLAYLIST
 ```
-where playlist is simply the name of the directory you wish to store the playlist in. playlist directory will always be in current working directory unless a music directory is specified using the -l, --local-dir option to hard set a music directory.
+Where playlist is simply the name of the directory you wish to store the playlist in. playlist directory will always be in current working directory unless a music directory is specified using the -l, --local-dir option to hard set a music directory.
 
 To see all options use the command:
 ```
@@ -53,7 +53,7 @@ sync-dl -s PLAYLIST
 Adds new music from remote playlist to local playlist, also takes ordering of remote playlist
 without deleting songs no longer available in remote playlist.
 
-songs that are no longer available in remote, will remain after the song they are currently after
+Songs that are no longer available in remote, will remain after the song they are currently after
 in the local playlist
 
 
@@ -71,7 +71,7 @@ download the playlist at the provided url to it.
 ```
 sync-dl -m 1 5 sweetJams
 ```
-Will move song number 1 in the playlist to posistion 5
+Will move song number 1 in the playlist to position 5
 ```
 sync-dl -a sweetJams
 ```
@@ -79,7 +79,7 @@ Will check for any new songs in the remote playlist and append them to the end o
 ```
 sync-dl -s sweetJams
 ```
-Will use smart sync on sweetJams, downloading new songs from the remote playlist and reordering the playlist to match the order of the remote playlist without deleting anysongs that are no longer avalible
+Will use smart sync on sweetJams, downloading new songs from the remote playlist and reordering the playlist to match the order of the remote playlist without deleting any songs that are no longer available
 ```
 sync-dl -p sweetJams
 ```
