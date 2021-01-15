@@ -38,4 +38,5 @@ def newCredentials(scopes,credPath):
     with open(credPath,"wb") as f:
         pickle.dump(credentials,f)
 
+    cfg.logger.info("Authentification Completed!")
     return credentials
