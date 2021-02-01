@@ -40,11 +40,8 @@ The entry point for the code is in `__init__.py` which calls the main function o
 
 `__init__.py` also holds a singleton called noInturrupt, which is used as a handler for SIGINT, it can also be used to simulate a SIGINT through code (used for canceling in the android app).
 
-## client_secrets.json
-This is used for the parts of the app which interface with the youtube api ie) --push-order
-
-
-The client_secrets.json included in the repository is exclusivly for devlopment, to work with it contact me and I will whitelist your google account to use it.
+## encrypted/
+This holds the encrypted oauth api key along with the obfuscated code needed to decrypt it, this is only used for the --push-order command. any modifications made to newCredentials.py will cause the decryption to fail (by design)
 
 # PULL REQUESTS
 Before all else be sure all changes pass the unit and integration tests
