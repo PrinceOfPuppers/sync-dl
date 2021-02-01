@@ -11,7 +11,7 @@ from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
 
-from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData, moveRange
+from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData, moveRange, peek
 from sync_dl.yt_api.commands import pushLocalOrder
 
 #modified version of help formatter which only prints args once in help message
@@ -62,7 +62,8 @@ def parseArgs():
     group.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
 
     #changing remote
-    group.add_argument('--push-order', action='store_true', help='(experimental) changes remote order to match local order')
+    # TODO uncomment out --push-order once google completes oauth verification process (also uncomment out elif args.push_order in arg switch)
+    #group.add_argument('--push-order', action='store_true', help='(experimental) changes remote order to match local order')
     
     # the '\n' are used as defaults so they dont get confused with actual paths
     parser.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
@@ -73,6 +74,7 @@ def parseArgs():
     #info 
     parser.add_argument('-p','--print',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
     parser.add_argument('-d','--view-metadata',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
+    parser.add_argument('--peek',nargs="+",metavar=("URL","FMT"), type=str, help='prints playlist at URL without downloading, optional FMT string containing any of the following: {id}, {url}, {title}, {duration}')
 
     version = pkg_resources.require("sync_dl")[0].version
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
@@ -145,6 +147,16 @@ def cli():
 
     cwd = getCwd(args)
 
+    #peek command runs without PLAYLIST posistional argument
+    if args.peek:
+        url = args.peek[0]
+        if len(args.peek)<2:
+            peek(url)
+            sys.exit()
+        fmt = args.peek[1]
+
+        peek(url,fmt)
+        sys.exit()
 
     # if no playlist was provided all further functions cannot run
     if args.PLAYLIST:
@@ -199,8 +211,9 @@ def cli():
         elif args.swap:
             swap(plPath,args.swap[0],args.swap[1])
         
-        elif args.push_order:
-            pushLocalOrder(plPath)
+        # TODO uncomment out --push-order once google completes oauth verification process
+        #elif args.push_order:
+        #    pushLocalOrder(plPath)
 
     #fixing metadata corruption in event of crash
     except Exception as e:

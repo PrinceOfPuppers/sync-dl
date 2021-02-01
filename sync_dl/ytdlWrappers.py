@@ -86,3 +86,13 @@ def moveFromTmp(path):
     tmp = os.listdir(path=cfg.tmpDownloadPath) 
     shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
 
+def getJsonPlData(url):
+    '''returns list of dicts of data for each video in playlist at url (order is playlist order)'''
+    params = {}
+    params['extract_flat'] = True
+
+    params['quiet'] = True
+    with youtube_dl.YoutubeDL(params) as ydl:
+
+        entries = ydl.extract_info(url,download=False,extra_info={'uploader':True})['entries']
+    return entries

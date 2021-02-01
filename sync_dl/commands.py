@@ -10,7 +10,7 @@ from random import randint
 
 
 from sync_dl import noInterrupt
-from sync_dl.ytdlWrappers import getIDs
+from sync_dl.ytdlWrappers import getIDs,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
 import sync_dl.config as cfg
@@ -325,7 +325,7 @@ def moveRange(plPath, start, end, newStart):
     # remove number gap in playlist and remove blanks in metadata
     correctStateCorruption(plPath)
 
-
+# TODO not yet added to CLI
 def shuffle(plPath):
     '''randomizes playlist order'''
     cfg.logger.info("Shuffling Playlist")
@@ -386,3 +386,22 @@ def compareMetaData(plPath):
             if remoteId not in localIds:
 
                 cfg.logger.critical(f" :             -> {j}: {remoteId}")
+
+def peek(url,fmt="{index}: {url} {title}"):
+    '''
+    prints out data about the playlist without downloading it, fmt parameters include:
+        - id
+        - url
+        - title
+        - description (currently bugged in youtube-dl, will always be none)
+        - duration
+        - view_count (currently bugged in youtube-dl, will always be none), 
+        - uploader (currently bugged in youtube-dl, will always be none)
+    '''
+    plData = getJsonPlData(url)
+
+    for i,songData in enumerate(plData):
+
+        songData["url"] = "https://www.youtube.com/watch?v="+songData["url"]
+        songStr = fmt.format(index = i,**songData)
+        cfg.logger.critical(songStr)
