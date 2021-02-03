@@ -142,9 +142,14 @@ def playlistExists(plPath):
         cfg.logger.error(f"Directory {plPath} Doesnt Exist")
         return False
     
-    if not os.path.exists(f'{plPath}/{cfg.metaDataName}'):
+    try:
+        shelve.open(f'{plPath}/{cfg.metaDataName}').close()
+    except:
         cfg.logger.error(f"No Playlist Exists at {plPath}, Could not Find Metadata")
         return False
+    #if not os.path.exists(f'{plPath}/{cfg.metaDataName}'):
+    #    cfg.logger.error(f"No Playlist Exists at {plPath}, Could not Find Metadata")
+    #    return False
     return True
 
 

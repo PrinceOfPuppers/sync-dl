@@ -8,7 +8,13 @@ from shutil import copyfile
 contains all global variables, also parses config into global variables
 '''
 
-
+def testFfmpeg():
+    try:
+        import subprocess
+        subprocess.check_output(['ffmpeg', '-version'])
+    except:
+        return False
+    return True
 
 def createDefaultConfig(parser):
     defaultConfig = {
@@ -69,9 +75,19 @@ logger = logging.getLogger('sync_dl')
 # youtube-dl params, used in downloadToTmp
 params={"quiet": True, "noplaylist": True,
     'format': 'bestaudio', 
-    'postprocessors': [
+}
+
+
+#checks if ffmpeg is installed once and updates config file
+try:
+    ffmpegInstalled = bool(section['ffmpegInstalled'])
+except:
+    ffmpegInstalled = testFfmpeg()
+    writeToConfig('ffmpegInstalled',str(ffmpegInstalled))
+
+if ffmpegInstalled:
+    params['postprocessors'] =  [
         {'key': 'FFmpegExtractAudio'},
         #{'key': 'EmbedThumbnail'},
         {'key': 'FFmpegMetadata'}
         ],
-}
