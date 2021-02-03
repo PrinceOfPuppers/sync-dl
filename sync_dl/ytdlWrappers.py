@@ -89,10 +89,13 @@ def moveFromTmp(path):
 def getJsonPlData(url):
     '''returns list of dicts of data for each video in playlist at url (order is playlist order)'''
     params = {}
-    params['extract_flat'] = True
+    params['extract_flat'] = True 
 
     params['quiet'] = True
     with youtube_dl.YoutubeDL(params) as ydl:
-
-        entries = ydl.extract_info(url,download=False,extra_info={'uploader':True})['entries']
+        try:
+            entries = ydl.extract_info(url,download=False)['entries']
+        except:
+            cfg.logger.error(f"No Playlist At URL: {url}")
+            entries = []
     return entries

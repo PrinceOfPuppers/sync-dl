@@ -49,35 +49,46 @@ def parseArgs():
     #positional
     parser.add_argument('PLAYLIST',nargs='?', type=str, help='the name of the directory for the playlist')
 
+    plManagmentGroup = parser.add_argument_group("playlist management")
+    plManagmentGroup = plManagmentGroup.add_mutually_exclusive_group() #makes plManagement mutually exclusive
     #playlist managing
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-n','--new-playlist', metavar='URL', type=str, help='downloads new playlist from URL with name PLAYLIST')
-    group.add_argument('-s','--smart-sync', action='store_true', help='apply smart sync local playlist with remote playlist')
-    group.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
+    
+    #group = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in position INDEX')
+    plManagmentGroup.add_argument('-n','--new-playlist', metavar='URL', type=str, help='downloads new playlist from URL with name PLAYLIST')
+    plManagmentGroup.add_argument('-s','--smart-sync', action='store_true', help='apply smart sync local playlist with remote playlist')
+    plManagmentGroup.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
 
-    group.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2')
-    group.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
-    group.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
+    plManagmentGroup.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in position INDEX')
+
+    plManagmentGroup.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2')
+    plManagmentGroup.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
+    plManagmentGroup.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
 
     #changing remote
-    # TODO uncomment out --push-order once google completes oauth verification process (also uncomment out elif args.push_order in arg switch)
-    #group.add_argument('--push-order', action='store_true', help='(experimental) changes remote order to match local order')
+    apiGroup = parser.add_argument_group("youtube api")
+    apiGroup.add_argument('--push-order', action='store_true', help='(experimental) changes remote order to match local order')
     
+
+    configGroup = parser.add_argument_group("configuration")
     # the '\n' are used as defaults so they dont get confused with actual paths
-    parser.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
+    configGroup.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
     
-    parser.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
-    parser.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
+    #info
+    infoGroup = parser.add_argument_group("info")
+    infoGroup.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
+    infoGroup.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
 
-    #info 
-    parser.add_argument('-p','--print',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
-    parser.add_argument('-d','--view-metadata',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
-    parser.add_argument('--peek',nargs="+",metavar=("URL","FMT"), type=str, help='prints playlist at URL without downloading, optional FMT string containing any of the following: {id}, {url}, {title}, {duration}')
 
+    infoGroup.add_argument('-p','--print',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
+    infoGroup.add_argument('-d','--view-metadata',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
+    
     version = pkg_resources.require("sync_dl")[0].version
-    parser.add_argument('--version', action='version', version='%(prog)s ' + version)
+    infoGroup.add_argument('--version', action='version', version='%(prog)s ' + version)
+
+    infoGroup.add_argument('-P','--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
+
+
 
 
 
@@ -149,11 +160,17 @@ def cli():
 
     #peek command runs without PLAYLIST posistional argument
     if args.peek:
-        url = args.peek[0]
-        if len(args.peek)<2:
-            peek(url)
-            sys.exit()
-        fmt = args.peek[1]
+        if not args.PLAYLIST:
+
+            if args.peek != cfg.defualtPeekFmt: #removes the need to have posistional args before empty nargs='?' option
+                url = args.peek
+                fmt = cfg.defualtPeekFmt
+            else:
+                cfg.logger.error("Playlist URL Required")
+                sys.exit()
+        else:
+            url = args.PLAYLIST
+            fmt = args.peek
 
         peek(url,fmt)
         sys.exit()
@@ -211,9 +228,8 @@ def cli():
         elif args.swap:
             swap(plPath,args.swap[0],args.swap[1])
         
-        # TODO uncomment out --push-order once google completes oauth verification process
-        #elif args.push_order:
-        #    pushLocalOrder(plPath)
+        elif args.push_order:
+            pushLocalOrder(plPath)
 
     #fixing metadata corruption in event of crash
     except Exception as e:

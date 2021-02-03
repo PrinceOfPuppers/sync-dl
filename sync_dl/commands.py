@@ -31,7 +31,7 @@ def newPlaylist(plPath,url):
     ids = getIDs(url)
     idsLen = len(ids)
     if idsLen == 0:
-        cfg.logger.error(f"No Songs Found at {url}\n(make sure the playlist is public)")
+        cfg.logger.error(f"No Songs Found at {url}\nMake Sure the Playlist is Public!")
         return
         
     numDigits = getNumDigets(idsLen) #needed for creating starting number for auto ordering ie) 001, 0152
@@ -398,7 +398,9 @@ def peek(url,fmt="{index}: {url} {title}"):
         - view_count (currently bugged in youtube-dl, will always be none), 
         - uploader (currently bugged in youtube-dl, will always be none)
     '''
+    
     plData = getJsonPlData(url)
+
 
     for i,songData in enumerate(plData):
 

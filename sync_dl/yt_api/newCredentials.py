@@ -26,7 +26,7 @@ def newCredentials(scopes,credPath):
 
     flow = InstalledAppFlow.from_client_config(clientConfig,scopes=scopes)
 
-    prompt = '\nMake sure you are using sync-dl which you Installed via pip.\nIf not, then this api key may be stolen! \n\nAuthentificate at:\n{url}'
+    prompt = '\nMake sure you are using sync-dl which you Installed via pip.\nIf not, then this api key may be stolen!\nPrivacy Policy can be found here: http://sync-dl.com/privacy-policy/\n\n Authentificate at:\n{url}'
     # start local server on localhost, port 8080
     flow.run_local_server(prompt = 'consent', authorization_prompt_message=prompt,open_browser=False)
 

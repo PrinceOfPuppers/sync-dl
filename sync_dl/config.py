@@ -58,6 +58,9 @@ tmpDownloadPath = f"{modulePath}/{section['tmpDownloadPath']}"
 
 musicDir = section['musicDir']
 
+#TODO move add to ini
+defualtPeekFmt='{index}: {url} {title}'
+
 # logger
 import logging
 logger = logging.getLogger('sync_dl')
