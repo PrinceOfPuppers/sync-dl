@@ -86,7 +86,7 @@ def parseArgs():
     version = pkg_resources.require("sync_dl")[0].version
     infoGroup.add_argument('--version', action='version', version='%(prog)s ' + version)
 
-    infoGroup.add_argument('-P','--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
+    infoGroup.add_argument('--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
 
 
 

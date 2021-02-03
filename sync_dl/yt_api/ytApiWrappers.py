@@ -1,57 +1,10 @@
 import os
 import pickle
 from math import ceil
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request 
-
-from googleapiclient.discovery import build
 
 import sync_dl.config as cfg
-from sync_dl.yt_api.newCredentials import newCredentials
+from sync_dl.yt_api.newCredentials import getYTResource
 
-#def _newCredentials(scopes,credPath):
-#    flow = InstalledAppFlow.from_client_secrets_file(f'{cfg.modulePath}/yt_api/client_secrets.json',scopes=scopes)
-#
-#    # start local server on localhost, port 8080
-#    flow.run_local_server(prompt = 'consent', authorization_prompt_message='')
-#
-#
-#    credentials = flow.credentials
-#
-#    if os.path.exists(credPath):
-#        os.remove(credPath)
-#    with open(credPath,"wb") as f:
-#        pickle.dump(credentials,f)
-#
-#    return credentials
-
-def getCredentials():
-
-    credPath = f'{cfg.modulePath}/yt_api/credentials.pickle'
-    scopes = ['https://www.googleapis.com/auth/youtubepartner']
-
-    
-    if os.path.exists(credPath):
-        with open(credPath, 'rb') as f:
-            credentials = pickle.load(f)
-        
-
-        if credentials.refresh_token:
-            if credentials.expired:
-                credentials.refresh(Request())
-        else:
-            credentials = newCredentials(scopes,credPath)
-
-    else:
-        credentials=newCredentials(scopes,credPath)
-    
-    return credentials
-
-def getYTResource():
-    credentials = getCredentials()
-    youtube = build('youtube', 'v3', credentials=credentials)
-
-    return youtube
 
 def getItemIds(youtube,plId):
     makeRequest = lambda pageToken: youtube.playlistItems().list(part = "contentDetails", playlistId = plId, pageToken = pageToken)

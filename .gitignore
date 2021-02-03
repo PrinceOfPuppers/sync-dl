@@ -10,7 +10,8 @@ sync_dl.egg-info
 
 build
 dist
-sync_dl/yt_api/credentials.pickle
-unEncrypted
-encrypted_unobfucated
-encryptAndMove.py
+sync_dl/yt_api/encrypted/credentials
+
+sync-dl-obfuscation
+
+sync_dl/yt_api/encrypted_old
