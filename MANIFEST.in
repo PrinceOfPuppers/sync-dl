@@ -1,1 +1,3 @@
-recursive-include sync_dl/yt_api/encrypted *
+graft sync_dl/yt_api/encrypted
+prune sync_dl/yt_api/encrypted/__pycache__
+prune sync_dl/yt_api/encrypted/pytransform/__pycache__

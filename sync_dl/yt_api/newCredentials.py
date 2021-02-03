@@ -51,7 +51,7 @@ def getCredentials():
         #debugger is on, not getting flow
         return None
 
-    credPath = f'{cfg.modulePath}/yt_api/encrypted/credentials'
+    credPath = f'{cfg.modulePath}/yt_api/credentials'
     scopes = ['https://www.googleapis.com/auth/youtubepartner']
 
     
