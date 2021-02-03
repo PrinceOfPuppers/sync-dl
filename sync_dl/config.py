@@ -90,4 +90,4 @@ if ffmpegInstalled:
         {'key': 'FFmpegExtractAudio'},
         #{'key': 'EmbedThumbnail'},
         {'key': 'FFmpegMetadata'}
-        ],
+        ]
