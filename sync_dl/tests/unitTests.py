@@ -2,7 +2,7 @@ import unittest
 import os
 import shutil
 import shelve
-
+import sys
 import inspect
 
 import sync_dl.config as cfg
@@ -11,6 +11,11 @@ from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
 from sync_dl.commands import move, swap, manualAdd, moveRange
 
+try:
+    from sync_dl_ytapi.helpers import longestIncreasingSequence,oldToNewPushOrder,pushOrderMoves
+except:
+    cfg.logger.error("Please Install sync_dl_ytapi to Run Unittests")
+    sys.exit(1)
 
 def createFakePlaylist(name,songs):
     '''creates fake playlist with all songs being as if they where locally added'''
@@ -469,8 +474,6 @@ class test_moveRange(unittest.TestCase):
 #################################
 ## youtube api submodule tests ##
 #################################
-from sync_dl.yt_api.helpers import longestIncreasingSequence,oldToNewPushOrder,pushOrderMoves
-
 
 class test_yt_api_helpers(unittest.TestCase):
     def test_longestIncreasingSequence(self):

@@ -11,6 +11,7 @@ branches:
 
 before_script:
   - sudo apt-get install ffmpeg
+  - pip install sync_dl_ytapi
   - pip install -e .
 
 script:

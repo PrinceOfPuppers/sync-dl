@@ -51,7 +51,6 @@ if __name__ == "__main__":
 
     setLogging(args)
 
-
     runall = not (args.unit or args.integration)
 
     #checks if integration test has to run (whenever -i is used, or if all tests are run)
