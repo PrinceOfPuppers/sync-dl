@@ -12,7 +12,38 @@ import sync_dl.config as cfg
 
 
 from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData, moveRange, peek
-from sync_dl.yt_api.commands import pushLocalOrder
+
+# import optional modules, otherwise replace commands with stubs
+try:
+    from sync_dl_ytapi.commands import pushLocalOrder
+
+except:
+    def promptInstall():
+        answer = input("Missing Optional Dependancies For This Command.\nWould You Like to Install Them? (y/n): ").lower()
+        if answer!='y':
+            return False
+
+        try:
+            import subprocess
+            subprocess.run(["pip","install",'sync-dl-ytapi'],check=True)
+        except:
+            cfg.logger.error("Unable to Install Optional Dependancies")
+            return False
+        cfg.logger.info("Optional Dependancies Installed")
+        return True
+    
+    #stubs 
+    def pushLocalOrder(plPath):
+
+        installed = promptInstall()
+
+        if not installed:
+            return 
+        from sync_dl_ytapi.commands import pushLocalOrder
+        cfg.logger.info("----------------------------------")
+        pushLocalOrder(plPath)
+
+
 
 #modified version of help formatter which only prints args once in help message
 class ArgsOnce(argparse.HelpFormatter):

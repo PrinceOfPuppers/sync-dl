@@ -1,4 +1,0 @@
-graft sync_dl/yt_api/encrypted
-prune sync_dl/yt_api/encrypted/__pycache__
-prune sync_dl/yt_api/encrypted/pytransform/__pycache__
-prune sync_dl/sync-dl-obfuscation

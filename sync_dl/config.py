@@ -81,6 +81,7 @@ params={"quiet": True, "noplaylist": True,
 #checks if ffmpeg is installed once and updates config file
 try:
     ffmpegInstalled = bool(section['ffmpegInstalled'])
+
 except:
     ffmpegInstalled = testFfmpeg()
     writeToConfig('ffmpegInstalled',str(ffmpegInstalled))
