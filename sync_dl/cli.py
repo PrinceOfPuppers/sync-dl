@@ -15,7 +15,7 @@ from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap
 
 # import optional modules, otherwise replace commands with stubs
 try:
-    from sync_dl_ytapi.commands import pushLocalOrder
+    from sync_dl_ytapi.commands import pushLocalOrder,logout
 
 except:
     def promptInstall():
@@ -43,7 +43,14 @@ except:
         cfg.logger.info("----------------------------------")
         pushLocalOrder(plPath)
 
+    def logout():
+        installed = promptInstall()
 
+        if not installed:
+            return 
+        from sync_dl_ytapi.commands import logout
+        cfg.logger.info("----------------------------------")
+        logout()
 
 #modified version of help formatter which only prints args once in help message
 class ArgsOnce(argparse.HelpFormatter):
@@ -98,8 +105,10 @@ def parseArgs():
 
     #changing remote
     apiGroup = parser.add_argument_group("youtube api")
+    apiGroup = apiGroup.add_mutually_exclusive_group() #makes apiGroup mutually exclusive
+
     apiGroup.add_argument('--push-order', action='store_true', help='(experimental) changes remote order to match local order')
-    
+    apiGroup.add_argument('--logout', action='store_true', help='(experimental) revokes youtube oauth access tokens and deletes them')
 
     configGroup = parser.add_argument_group("configuration")
     # the '\n' are used as defaults so they dont get confused with actual paths
@@ -194,7 +203,7 @@ def cli():
 
     cwd = getCwd(args)
 
-    #peek command runs without PLAYLIST posistional argument
+    #peek command uses PLAYLIST posistional argument as the playlist url
     if args.peek:
         if not args.PLAYLIST:
 
@@ -210,7 +219,11 @@ def cli():
 
         peek(url,fmt)
         sys.exit()
-
+    
+    if args.logout:
+        logout()
+        sys.exit()
+    
     # if no playlist was provided all further functions cannot run
     if args.PLAYLIST:
         plPath = f"{cwd}/{args.PLAYLIST}"
