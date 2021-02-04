@@ -79,7 +79,7 @@ def downloadToTmp(videoId,numberStr):
             return True
 
         except Exception:
-            cfg.logger.info(f"Song No longer avalible at {url}")
+            cfg.logger.info(f"Unable to Download Song at {url}")
             return False
 
 def moveFromTmp(path):
