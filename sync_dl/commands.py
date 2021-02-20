@@ -1,12 +1,10 @@
 import os
 
-
 import argparse
 
 import shelve
 import re
 import ntpath
-from random import randint
 
 
 from sync_dl import noInterrupt
@@ -317,17 +315,31 @@ def moveRange(plPath, start, end, newStart):
         
         # shift block into gap made
         for i,oldIndex in enumerate(range(start,end+1)):
-
+            
             oldName = currentDir[oldIndex]
+            
             newIndex = i + newStart+1
             relabel(metaData,cfg.logger.debug,plPath,oldName,oldIndex+offset,newIndex,numDigits)
 
     # remove number gap in playlist and remove blanks in metadata
     correctStateCorruption(plPath)
+    
+    # logged changes
+    startSong = re.sub(cfg.filePrependRE,"",currentDir[start])
+    endSong = re.sub(cfg.filePrependRE,"",currentDir[end])
+    leaderSong = re.sub(cfg.filePrependRE,"",currentDir[newStart]) # the name of the song the range will come after
 
-# TODO not yet added to CLI
+    cfg.logger.info(f"Moved Songs in Range [{start}, {end}] to After {newStart}")
+    
+    cfg.logger.info(f"Start Range:   {startSong}")
+    cfg.logger.info(f"End Range:     {endSong}")
+    cfg.logger.info(f"Are Now After: {leaderSong}")
+
+# TODO not yet added to CLI (doesnt seem useful)
 def shuffle(plPath):
     '''randomizes playlist order'''
+    from random import randint
+
     cfg.logger.info("Shuffling Playlist")
     correctStateCorruption(plPath)
 
@@ -387,23 +399,34 @@ def compareMetaData(plPath):
 
                 cfg.logger.critical(f" :             -> {j}: {remoteId}")
 
-def peek(url,fmt="{index}: {url} {title}"):
+def peek(urlOrPlName,fmt="{index}: {url} {title}"):
     '''
     prints out data about the playlist without downloading it, fmt parameters include:
         - id
         - url
         - title
-        - description (currently bugged in youtube-dl, will always be none)
         - duration
-        - view_count (currently bugged in youtube-dl, will always be none), 
-        - uploader (currently bugged in youtube-dl, will always be none)
+        - view_count (currently bugged in youtube-dl, will always be none)
+        - uploader (soon to be fixed in youtube-dl)
     '''
     
-    plData = getJsonPlData(url)
+    # check if urlOrPlName is playlist name
+    if not cfg.musicDir:
+        musicPath = os.getcwd()
+    else:
+        musicPath = cfg.musicDir
 
+    musicDir = os.listdir(path= musicPath) 
+
+    if urlOrPlName in musicDir:
+        with shelve.open(f"{musicPath}/{urlOrPlName}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            urlOrPlName = metaData['url']
+
+
+    # at this point urlOrPlName is a url
+    plData = getJsonPlData(urlOrPlName)
 
     for i,songData in enumerate(plData):
-
         songData["url"] = "https://www.youtube.com/watch?v="+songData["url"]
         songStr = fmt.format(index = i,**songData)
         cfg.logger.critical(songStr)

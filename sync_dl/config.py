@@ -8,14 +8,6 @@ from shutil import copyfile
 contains all global variables, also parses config into global variables
 '''
 
-def testFfmpeg():
-    try:
-        import subprocess
-        subprocess.check_output(['ffmpeg', '-version'])
-    except:
-        return False
-    return True
-
 def createDefaultConfig(parser):
     defaultConfig = {
         'metaDataName' : '.metaData',
@@ -78,14 +70,16 @@ params={"quiet": True, "noplaylist": True,
 }
 
 
-#checks if ffmpeg is installed once and updates config file
-try:
-    ffmpegInstalled = int(section['ffmpegInstalled'])
-except:
-    ffmpegInstalled = int(testFfmpeg())
-    writeToConfig('ffmpegInstalled',str(ffmpegInstalled))
+def testFfmpeg():
+    try:
+        import subprocess
+        subprocess.check_output(['ffmpeg', '-version'])
+    except:
+        return False
+    return True
 
-if ffmpegInstalled:
+
+if testFfmpeg(): # used to embed metadata
     params['postprocessors'] =  [
         {'key': 'FFmpegExtractAudio'},
         #{'key': 'EmbedThumbnail'},

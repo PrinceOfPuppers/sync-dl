@@ -1,7 +1,6 @@
 import youtube_dl
 import os
 
-import subprocess
 import shutil
 
 import sync_dl.config as cfg
@@ -78,7 +77,8 @@ def downloadToTmp(videoId,numberStr):
             ydl.download([url])
             return True
 
-        except Exception:
+        except Exception as e:
+            cfg.logger.debug(e)
             cfg.logger.info(f"Unable to Download Song at {url}")
             return False
 

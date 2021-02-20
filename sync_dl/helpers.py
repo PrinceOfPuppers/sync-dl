@@ -1,5 +1,4 @@
 import os
-import json
 import re
 
 from sync_dl import noInterrupt

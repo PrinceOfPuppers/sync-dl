@@ -3,10 +3,9 @@ import sys
 import logging
 
 import argparse
-import pkg_resources
 import shelve
 
-
+from sync_dl import __version__
 from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
@@ -107,8 +106,8 @@ def parseArgs():
     apiGroup = parser.add_argument_group("youtube api")
     apiGroup = apiGroup.add_mutually_exclusive_group() #makes apiGroup mutually exclusive
 
-    apiGroup.add_argument('--push-order', action='store_true', help='(experimental) changes remote order to match local order')
-    apiGroup.add_argument('--logout', action='store_true', help='(experimental) revokes youtube oauth access tokens and deletes them')
+    apiGroup.add_argument('--push-order', action='store_true', help='changes remote order to match local order (requires sign in with google)')
+    apiGroup.add_argument('--logout', action='store_true', help='revokes youtube oauth access tokens and deletes them')
 
     configGroup = parser.add_argument_group("configuration")
     # the '\n' are used as defaults so they dont get confused with actual paths
@@ -123,13 +122,9 @@ def parseArgs():
     infoGroup.add_argument('-p','--print',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
     infoGroup.add_argument('-d','--view-metadata',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
     
-    version = pkg_resources.require("sync_dl")[0].version
-    infoGroup.add_argument('--version', action='version', version='%(prog)s ' + version)
+    infoGroup.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
-    infoGroup.add_argument('--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
-
-
-
+    infoGroup.add_argument('--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url or name) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
 
 
     args = parser.parse_args()

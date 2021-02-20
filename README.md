@@ -29,9 +29,9 @@ pip install sync-dl
 ```
 
 # ABOUT
-Created to avoid having music deleted but still have the convenience of browsing, adding and reordering new music using remote services such as youtube.
+Created to avoid having music deleted but still have the convenience of browsing, adding and reordering new music using youtube.
 
-The application does not store any of its metadata in songs, metadata is stored next to them in a .metadata file, the music files are managed through numbering, allowing them to be played alphanumerically using any playback service (such as VLC)
+The application does not store any of its metadata in songs, metadata is stored next to them in a .metadata file, the music files are managed through numbering, allowing them to be played alphanumerically using any playback service (such as VLC).
 
 
 # Usage
@@ -45,7 +45,7 @@ To see all options use the command:
 sync-dl -h
 ```
 
-### Smart Sync:
+## Smart Sync:
 The main feature of sync-dl
 ```
 sync-dl -s PLAYLIST
@@ -54,8 +54,15 @@ Adds new music from remote playlist to local playlist, also takes ordering of re
 without deleting songs no longer available in remote playlist.
 
 Songs that are no longer available in remote, will remain after the song they are currently after
-in the local playlist
+in the local playlist.
 
+## Push Order:
+sync-dl has a submodule which uses the youtube api the preform the reverse of Smart Sync called Push Order. sync-dl will prompt you to install the submodule if you use any of its options ie) --push-order. you must also sign in with google (so sync-dl can edit the order of your playlist)
+
+For more information see https://github.com/PrinceOfPuppers/sync-dl-ytapi
+
+## Many More!
+Includes tools for managing the order of songs which work well for large playlists, ie) --move-range, which allows a user to move a block of songs to a different posistion. doing so on youtube would require moving each song individually using clunky drag and drop tools.
 
 # EXAMPLE
 ```
@@ -71,19 +78,27 @@ download the playlist at the provided url to it.
 ```
 sync-dl -m 1 5 sweetJams
 ```
-Will move song number 1 in the playlist to position 5
+Will move song number 1 in the playlist to position 5.
 ```
 sync-dl -a sweetJams
 ```
-Will check for any new songs in the remote playlist and append them to the end of sweetJams
+Will check for any new songs in the remote playlist and append them to the end of sweetJams.
 ```
 sync-dl -s sweetJams
 ```
-Will use smart sync on sweetJams, downloading new songs from the remote playlist and reordering the playlist to match the order of the remote playlist without deleting any songs that are no longer available
+Will use smart sync on sweetJams, downloading new songs from the remote playlist and reordering the playlist to match the order of the remote playlist without deleting any songs that are no longer available.
+```
+sync-dl --move-range 0 4 8 sweetJams
+```
+Will move all songs from 0 to 4 to after song 8
 ```
 sync-dl -p sweetJams
 ```
-Will give you all the urls for the songs in sweetJams
+Will give you all the urls for the songs in sweetJams.
+```
+sync-dl --push-order sweetJams
+```
+Will prompt you to install sync-dl-ytapi and sign in with google (if you havent already), after doing so it will push the local order of the playlist to youtube.
 
 
 # DEVLOPMENT
@@ -95,10 +110,12 @@ cd sync-dl
 
 pip install -e .
 ```
-This will build and install sync-dl in place, allowing you to work on the code without having to reinstall after changes
+This will build and install sync-dl in place, allowing you to work on the code without having to reinstall after changes.
 
-### Automated Testing
+## Automated Testing
 ```
 python test.py [options] TEST_PLAYLIST_URL
 ```
-will run all unit and integration tests, for the integration tests it will use the playlist TEST_PLAYLIST_URL
+Will run all unit and integration tests, for the integration tests it will use the playlist TEST_PLAYLIST_URL, options are -u and -i to only run the unit/integration tests respectively.
+
+Testing requires sync-dl-ytapi to be installed aswell, and will test its helper functions.
