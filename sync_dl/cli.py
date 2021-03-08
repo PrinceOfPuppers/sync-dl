@@ -112,7 +112,8 @@ def parseArgs():
     configGroup = parser.add_argument_group("configuration")
     # the '\n' are used as defaults so they dont get confused with actual paths
     configGroup.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
-    
+    configGroup.add_argument('-f','--force-m4a', action='store_true', help='Will only download m4a, rather than seeking for best audio' )
+
     #info
     infoGroup = parser.add_argument_group("info")
     infoGroup.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
@@ -226,6 +227,9 @@ def cli():
         if not args.local_dir: #only option which can run without playlist
             cfg.logger.error("Playlist Name Required")
         sys.exit()
+
+    if args.force_m4a:
+        cfg.params["format"] = 'm4a'
 
     if args.new_playlist: 
         newPlaylist(plPath,args.new_playlist)
