@@ -152,9 +152,9 @@ def getCwd(args):
     if args.local_dir:
         if args.local_dir == '\n':
             if cfg.musicDir=='':
-                cfg.logger.critical("Music Directory Not Set, Set With: sync-dl -l PATH")
+                cfg.logger.error("Music Directory Not Set, Set With: sync-dl -l PATH")
             else:
-                cfg.logger.critical(cfg.musicDir)
+                cfg.logger.info(cfg.musicDir)
             sys.exit()
         if not os.path.exists(args.local_dir):
             cfg.logger.error("Provided Music Directory Does not Exist")

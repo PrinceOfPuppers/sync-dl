@@ -16,11 +16,13 @@ import sync_dl.config as cfg
 
 
 def newPlaylist(plPath,url):
+    dirMade = False # if sync-dl cant download any songs, it will delete the directory only if it made it
     if not os.path.exists(plPath):
+        dirMade = True
         os.makedirs(plPath)
 
     elif len(os.listdir(path=plPath))!=0:
-        cfg.logger.error(f"Directory Is Not Empty, Cannot Make Playlist in {plPath}")
+        cfg.logger.error(f"Directory Exists and is Not Empty, Cannot Make Playlist in {plPath}")
         return
     
 
@@ -47,6 +49,10 @@ def newPlaylist(plPath,url):
                 invalidSongs+=1
 
         cfg.logger.info(f"Downloaded {idsLen-invalidSongs}/{idsLen} Songs")
+    
+    if (idsLen-invalidSongs == 0) and dirMade:
+        cfg.logger.error(f"Unable to Download any Songs from {url}")
+        os.rmdir(plPath)
 
 
 def smartSync(plPath):
@@ -327,13 +333,17 @@ def moveRange(plPath, start, end, newStart):
     # logged changes
     startSong = re.sub(cfg.filePrependRE,"",currentDir[start])
     endSong = re.sub(cfg.filePrependRE,"",currentDir[end])
-    leaderSong = re.sub(cfg.filePrependRE,"",currentDir[newStart]) # the name of the song the range will come after
 
     cfg.logger.info(f"Moved Songs in Range [{start}, {end}] to After {newStart}")
     
     cfg.logger.info(f"Start Range:   {startSong}")
     cfg.logger.info(f"End Range:     {endSong}")
-    cfg.logger.info(f"Are Now After: {leaderSong}")
+
+    if newStart != -1: 
+        leaderSong = re.sub(cfg.filePrependRE,"",currentDir[newStart]) # the name of the song the range will come after
+        cfg.logger.info(f"Are Now After: {leaderSong}")
+    else:
+        cfg.logger.info(f"Are Now First in the Playlist")
 
 # TODO not yet added to CLI (doesnt seem useful)
 def shuffle(plPath):
@@ -364,17 +374,17 @@ def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/w
     urlWithoutId is added if you wish to print out all full urls
     '''
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-        cfg.logger.critical(f"Playlist URL: {metaData['url']}")
+        cfg.logger.info(f"Playlist URL: {metaData['url']}")
 
         currentDir = getLocalSongs(plPath)
 
         if urlWithoutId != None:
             spacer=' '*(len(urlWithoutId)+11)
 
-            cfg.logger.critical(f"i: ID{spacer}{lineBreak}->   Local Title{lineBreak}")
+            cfg.logger.info(f"i: ID{spacer}{lineBreak}->   Local Title{lineBreak}")
             for i,songId in enumerate(metaData['ids']):
                 url = f"{urlWithoutId}{songId}"
-                cfg.logger.critical(f"{i}: {url}{lineBreak}  ->  {currentDir[i]}{lineBreak}")
+                cfg.logger.info(f"{i}: {url}{lineBreak}  ->  {currentDir[i]}{lineBreak}")
 
 
 
@@ -383,21 +393,21 @@ def compareMetaData(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         remoteIds = getIDs(metaData["url"])
         localIds = metaData["ids"]
-        cfg.logger.critical(f"i: Local ID    -> j: Remote ID")
+        cfg.logger.info(f"i: Local ID    -> j: Remote ID")
 
         for i,localId in enumerate(localIds):
             if localId in remoteIds:
                 j = remoteIds.index(localId)
-                cfg.logger.critical(f"{i}: {localId} -> {j}: {localId}")
+                cfg.logger.info(f"{i}: {localId} -> {j}: {localId}")
 
             else:
-                cfg.logger.critical(f"{i}: {localId} ->  : ")
+                cfg.logger.info(f"{i}: {localId} ->  : ")
 
 
         for j, remoteId in enumerate(remoteIds):
             if remoteId not in localIds:
 
-                cfg.logger.critical(f" :             -> {j}: {remoteId}")
+                cfg.logger.info(f" :             -> {j}: {remoteId}")
 
 def peek(urlOrPlName,fmt="{index}: {url} {title}"):
     '''
@@ -429,4 +439,4 @@ def peek(urlOrPlName,fmt="{index}: {url} {title}"):
     for i,songData in enumerate(plData):
         songData["url"] = "https://www.youtube.com/watch?v="+songData["url"]
         songStr = fmt.format(index = i,**songData)
-        cfg.logger.critical(songStr)
+        cfg.logger.info(songStr)
