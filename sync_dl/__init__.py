@@ -4,7 +4,7 @@ from sync_dl import config as cfg
 from signal import signal,SIGINT,SIGABRT,SIGTERM,Signals
 import sys
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 class _NoInterrupt:
     inNoInterrupt = False

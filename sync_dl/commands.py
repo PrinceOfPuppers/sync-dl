@@ -205,6 +205,10 @@ def swap(plPath, index1, index2):
 
         del metaData["ids"][idsLen]
 
+
+# move is no longer used in CLI, functionality has been merged with moveRange to be more consistant
+# move is still used in integration tests to reorder playlists before testing smart sync
+
 def move(plPath, currentIndex, newIndex):
     if currentIndex==newIndex:
         cfg.logger.info("Indexes Are the Same")
@@ -291,8 +295,8 @@ def moveRange(plPath, start, end, newStart):
         if end>=idsLen or end == -1:
             end = idsLen-1
 
-        elif end<=start:
-            cfg.logger.error("End Index Must be Greater Than Start Index (or -1)")
+        elif end<start:
+            cfg.logger.error("End Index Must be Greater Than or Equal To Start Index (or -1)")
             return
 
         #clamp newStart
@@ -333,7 +337,21 @@ def moveRange(plPath, start, end, newStart):
     # logged changes
     startSong = re.sub(cfg.filePrependRE,"",currentDir[start])
     endSong = re.sub(cfg.filePrependRE,"",currentDir[end])
+    leaderSong = re.sub(cfg.filePrependRE,"",currentDir[newStart]) # the name of the song the range will come after
 
+    ######## Single song moved ##########
+    if start==end:
+        cfg.logger.info(f"Song {start}: {startSong}")        
+        if newStart == -1:
+            cfg.logger.info(f"Is Now First in The Playlist")        
+        else:
+            cfg.logger.info(f"Is Now After Song {newStart}: {leaderSong}")       
+
+        return 
+    #####################################
+
+
+    ####### Multiple Songs Moved ########
     cfg.logger.info(f"Moved Songs in Range [{start}, {end}] to After {newStart}")
     
     cfg.logger.info(f"Start Range:   {startSong}")
@@ -344,6 +362,10 @@ def moveRange(plPath, start, end, newStart):
         cfg.logger.info(f"Are Now After: {leaderSong}")
     else:
         cfg.logger.info(f"Are Now First in the Playlist")
+    
+    ######################################
+
+
 
 # TODO not yet added to CLI (doesnt seem useful)
 def shuffle(plPath):

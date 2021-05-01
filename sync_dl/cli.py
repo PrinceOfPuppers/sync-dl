@@ -10,7 +10,7 @@ from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
 
-from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,move,swap, showPlaylist, compareMetaData, moveRange, peek
+from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek
 
 # import optional modules, otherwise replace commands with stubs
 try:
@@ -98,7 +98,7 @@ def parseArgs():
 
     plManagmentGroup.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in position INDEX')
 
-    plManagmentGroup.add_argument('-m','--move',nargs=2, metavar=('I1','I2'), type = int, help='moves song index I1 to I2')
+    plManagmentGroup.add_argument('-m','--move',nargs=2, metavar=('I1','NI'), type = int, help='makes song index I1 come after NI (NI=-1 will move to start)')
     plManagmentGroup.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
     plManagmentGroup.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
 
@@ -268,7 +268,7 @@ def cli():
 
         #moving/swaping songs
         elif args.move:
-            move(plPath,args.move[0],args.move[1])
+            moveRange(plPath,args.move[0],args.move[0],args.move[1])
         
         elif args.move_range:
             moveRange(plPath,args.move_range[0],args.move_range[1],args.move_range[2])

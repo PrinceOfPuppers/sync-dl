@@ -469,7 +469,41 @@ class test_moveRange(unittest.TestCase):
         shutil.rmtree(plPath)
         self.assertEqual(result,correct)
 
+    def test_moveRangeSingleSmaller(self):
 
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
+
+        createFakePlaylist(name,songs)
+        
+        correct = [  ('0', '0_A'), ('1','1_B'),('4','2_E'), ('2','3_C'), ('3','4_D'),('5','5_F'),('6','6_G')  ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        moveRange(plPath,4,4,1)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+
+    def test_moveRangeSingleLarger(self):
+
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+        songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
+
+        createFakePlaylist(name,songs)
+        
+        correct = [  ('0', '0_A'), ('1','1_B'), ('2','2_C'),('4','3_E'),('5','4_F'), ('3','5_D'),('6','6_G')  ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        moveRange(plPath,3,3,5)
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
 
 #################################
 ## youtube api submodule tests ##
