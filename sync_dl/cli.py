@@ -238,6 +238,7 @@ def cli():
     if not playlistExists(plPath):
         sys.exit()
 
+    #TODO Add toggle prepends to this point in cli logic flow
 
     #viewing playlist     
     if args.print:
@@ -282,9 +283,11 @@ def cli():
     #fixing metadata corruption in event of crash
     except Exception as e:
         cfg.logger.exception(e)
-        correctStateCorruption(plPath)
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            correctStateCorruption(plPath,metaData)
         cfg.logger.info("State Recovered")
 
     except: #sys.exit calls
-        correctStateCorruption(plPath)
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            correctStateCorruption(plPath,metaData)
         cfg.logger.info("State Recovered")

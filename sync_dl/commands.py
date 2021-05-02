@@ -9,7 +9,7 @@ import ntpath
 
 from sync_dl import noInterrupt
 from sync_dl.ytdlWrappers import getIDs,getJsonPlData
-from sync_dl.plManagement import editPlaylist, correctStateCorruption
+from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
 import sync_dl.config as cfg
 
@@ -78,10 +78,11 @@ def smartSync(plPath):
     see test_smartSyncNewOrder in tests.py for more examples
     '''
     cfg.logger.info("Smart Syncing...")
-    correctStateCorruption(plPath)
+
 
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
         url = metaData["url"]
         localIds = metaData["ids"]
 
@@ -101,10 +102,10 @@ def appendNew(plPath):
 
     cfg.logger.info("Appending New Songs...")
 
-    correctStateCorruption(plPath)
+    
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-
+        correctStateCorruption(plPath,metaData)
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
 
@@ -123,11 +124,12 @@ def manualAdd(plPath, songPath, posistion):
         cfg.logger.error(f'{songPath} Does Not Exist')
         return
 
-    correctStateCorruption(plPath)
+    
 
     currentDir = getLocalSongs(plPath)
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
 
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
@@ -167,14 +169,14 @@ def swap(plPath, index1, index2):
     if index1 == index2:
         cfg.logger.info(f"Given Index are the Same")
 
-
-    correctStateCorruption(plPath)
+    
 
     currentDir = getLocalSongs(plPath)
 
 
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
 
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
@@ -215,12 +217,12 @@ def move(plPath, currentIndex, newIndex):
         return
 
 
-    correctStateCorruption(plPath)
 
     currentDir = getLocalSongs(plPath)
 
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
 
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
@@ -270,7 +272,7 @@ def moveRange(plPath, start, end, newStart):
     0 1 2 3 4 5 6 7 -> 0 1 4 5 6 2 3
     '''
 
-    correctStateCorruption(plPath)
+    
 
     if start == newStart:
         return
@@ -278,6 +280,7 @@ def moveRange(plPath, start, end, newStart):
     currentDir = getLocalSongs(plPath)
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
 
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
@@ -331,8 +334,8 @@ def moveRange(plPath, start, end, newStart):
             newIndex = i + newStart+1
             relabel(metaData,cfg.logger.debug,plPath,oldName,oldIndex+offset,newIndex,numDigits)
 
-    # remove number gap in playlist and remove blanks in metadata
-    correctStateCorruption(plPath)
+        # remove number gap in playlist and remove blanks in metadata
+        correctStateCorruption(plPath,metaData)
     
     # logged changes
     startSong = re.sub(cfg.filePrependRE,"",currentDir[start])
@@ -373,9 +376,10 @@ def shuffle(plPath):
     from random import randint
 
     cfg.logger.info("Shuffling Playlist")
-    correctStateCorruption(plPath)
+    
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
 
         plLen = len(metaData["ids"])
         ids = metaData["ids"]
@@ -462,3 +466,15 @@ def peek(urlOrPlName,fmt="{index}: {url} {title}"):
         songData["url"] = "https://www.youtube.com/watch?v="+songData["url"]
         songStr = fmt.format(index = i,**songData)
         cfg.logger.info(songStr)
+
+
+
+
+def togglePrepend(plPath):
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        if "removePrependOrder" in metaData:
+            # prepends where removed, hence we must add them
+            correctStateCorruption(plPath,metaData) # part of correcting state corruption is re-adding prepends 
+            return
+        removePrepend(plPath,metaData)
+

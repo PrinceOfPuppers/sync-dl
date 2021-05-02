@@ -9,7 +9,7 @@ import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs,getNumDigets
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
-from sync_dl.commands import move, swap, manualAdd, moveRange
+from sync_dl.commands import move, swap, manualAdd, moveRange,togglePrepend
 
 try:
     from sync_dl_ytapi.helpers import longestIncreasingSequence,oldToNewPushOrder,pushOrderMoves
@@ -55,15 +55,16 @@ class test_correctStateCorruption(unittest.TestCase):
 
         songs = ['A' ,'B' ,'C' ,'D', 'E'] 
 
-
+        plPath = f'{cfg.testPlPath}/{name}'
 
         createFakePlaylist(name,songs)
 
-        os.remove(f'{cfg.testPlPath}/{name}/0_A')
-        os.remove(f'{cfg.testPlPath}/{name}/4_E')
-        os.remove(f'{cfg.testPlPath}/{name}/2_C')
+        os.remove(f'{plPath}/0_A')
+        os.remove(f'{plPath}/4_E')
+        os.remove(f'{plPath}/2_C')
         
-        correctStateCorruption(f'{cfg.testPlPath}/{name}')
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            correctStateCorruption(f'{cfg.testPlPath}/{name}',metaData)
 
         correct = [ ('1', '0_B'), ('3','1_D') ]
 
@@ -76,18 +77,17 @@ class test_correctStateCorruption(unittest.TestCase):
     def test_blankMetaData(self):
         cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
         name = 'blankMetaData'
-
+        
+        plPath = f'{cfg.testPlPath}/{name}'
+        
         songs = ['A' ,'B' ,'C' ,'D'] 
-
-
 
         createFakePlaylist(name,songs)
 
-
-        with shelve.open(f"{cfg.testPlPath}/{name}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
             metaData['ids'].insert(2,'')
         
-        correctStateCorruption(f'{cfg.testPlPath}/{name}')
+            correctStateCorruption(plPath,metaData)
 
         correct = [ ('0', '0_A'), ('1', '1_B'), ('2','2_C'), ('3','3_D') ]
 
@@ -96,6 +96,75 @@ class test_correctStateCorruption(unittest.TestCase):
 
         shutil.rmtree(f'{cfg.testPlPath}/{name}')
         self.assertEqual(result,correct)
+
+
+    def test_removePrepend(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+
+        songs = ['A' ,'B' ,'C' ,'D'] 
+        createFakePlaylist(name,songs)
+
+        correct = [  ('0', '0_A'), ('1','1_B'), ('2','2_C'), ('3','3_D')  ]
+
+        plPath = f'{cfg.testPlPath}/{name}'
+        
+        togglePrepend(plPath)
+
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            correctStateCorruption(plPath,metaData)
+        
+        result = getPlaylistData(name)
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+    
+    def test_removeSongsAndPrepend(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+
+        songs = ['A' ,'B' ,'C' ,'D', 'E'] 
+
+        createFakePlaylist(name,songs)
+
+        plPath = f'{cfg.testPlPath}/{name}'
+
+        os.remove(f'{plPath}/0_A')
+        os.remove(f'{plPath}/4_E')
+        os.remove(f'{plPath}/2_C')
+        togglePrepend(plPath)
+        
+
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            correctStateCorruption(plPath,metaData)
+
+        correct = [ ('1', '0_B'), ('3','1_D') ]
+
+
+        result = getPlaylistData(name)
+
+        shutil.rmtree(f'{cfg.testPlPath}/{name}')
+        self.assertEqual(result,correct)
+
+class test_togglePrepend(unittest.TestCase):
+    def test_togglePrepend1(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {name}")
+
+        songs = ['A' ,'B' ,'C' ,'D'] 
+        plPath = f'{cfg.testPlPath}/{name}'
+        
+        createFakePlaylist(name,songs)
+        
+        togglePrepend(plPath)
+        togglePrepend(plPath)
+        
+        correct = [  ('0', '0_A'), ('1','1_B'), ('2','2_C'), ('3','3_D')  ]
+        
+        result = getPlaylistData(name)
+        shutil.rmtree(plPath)
+        self.assertEqual(result,correct)
+
+
 
 class test_editPlaylist(unittest.TestCase):
     
@@ -851,4 +920,7 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
         # Checks if any remoteIds not in localIds stayed after the correct Id
         if not remoteCorrectOrder(remoteIds,localIds):
             self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
-            
+
+
+if __name__ == "__main__":
+    success = unittest.main(exit=False)

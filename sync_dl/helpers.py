@@ -105,7 +105,7 @@ def createNumLabel(n,numDigets):
     return (numDigets-lenN)*"0"+n
 
 
-def _sortByNum(element):
+def getSongNum(element):
     '''
     returns the number in front of each song file
     '''
@@ -130,7 +130,7 @@ def getLocalSongs(plPath):
     returns sanatized list of all songs in local playlist, in order
     '''
     currentDir = os.listdir(path=plPath) 
-    currentDir = sorted(filter(_filterFunc,currentDir), key= _sortByNum) #sorted and sanitized dir
+    currentDir = sorted(filter(_filterFunc,currentDir), key= getSongNum) #sorted and sanitized dir
     return currentDir
 
 def smartSyncNewOrder(localIds,remoteIds):
