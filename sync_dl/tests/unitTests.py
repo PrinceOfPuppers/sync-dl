@@ -9,7 +9,7 @@ import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs,getNumDigets
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
-from sync_dl.commands import move, swap, manualAdd, moveRange,togglePrepend
+from sync_dl.commands import move, swap, manualAdd, moveRange,togglePrepends
 
 try:
     from sync_dl_ytapi.helpers import longestIncreasingSequence,oldToNewPushOrder,pushOrderMoves
@@ -50,8 +50,8 @@ def getPlaylistData(name):
 class test_correctStateCorruption(unittest.TestCase):
 
     def test_removedSongs(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
-        name = 'RemovedSongs'
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D', 'E'] 
 
@@ -75,8 +75,8 @@ class test_correctStateCorruption(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_blankMetaData(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
-        name = 'blankMetaData'
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         
         plPath = f'{cfg.testPlPath}/{name}'
         
@@ -100,7 +100,7 @@ class test_correctStateCorruption(unittest.TestCase):
 
     def test_removePrepend(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D'] 
         createFakePlaylist(name,songs)
@@ -109,7 +109,7 @@ class test_correctStateCorruption(unittest.TestCase):
 
         plPath = f'{cfg.testPlPath}/{name}'
         
-        togglePrepend(plPath)
+        togglePrepends(plPath)
 
         with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
             correctStateCorruption(plPath,metaData)
@@ -118,9 +118,9 @@ class test_correctStateCorruption(unittest.TestCase):
         shutil.rmtree(plPath)
         self.assertEqual(result,correct)
     
-    def test_removeSongsAndPrepend(self):
+    def test_removeSongsAndPrepends(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D', 'E'] 
 
@@ -131,7 +131,7 @@ class test_correctStateCorruption(unittest.TestCase):
         os.remove(f'{plPath}/0_A')
         os.remove(f'{plPath}/4_E')
         os.remove(f'{plPath}/2_C')
-        togglePrepend(plPath)
+        togglePrepends(plPath)
         
 
         with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -145,18 +145,18 @@ class test_correctStateCorruption(unittest.TestCase):
         shutil.rmtree(f'{cfg.testPlPath}/{name}')
         self.assertEqual(result,correct)
 
-class test_togglePrepend(unittest.TestCase):
-    def test_togglePrepend1(self):
+class test_togglePrepends(unittest.TestCase):
+    def test_togglePrepends1(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D'] 
         plPath = f'{cfg.testPlPath}/{name}'
         
         createFakePlaylist(name,songs)
         
-        togglePrepend(plPath)
-        togglePrepend(plPath)
+        togglePrepends(plPath)
+        togglePrepends(plPath)
         
         correct = [  ('0', '0_A'), ('1','1_B'), ('2','2_C'), ('3','3_D')  ]
         
@@ -168,9 +168,9 @@ class test_togglePrepend(unittest.TestCase):
 
 class test_editPlaylist(unittest.TestCase):
     
-    def test_1(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
-        name = 'editPl1'
+    def test_editPl1(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D'] 
 
@@ -189,9 +189,9 @@ class test_editPlaylist(unittest.TestCase):
         self.assertEqual(result,correct)
 
 
-    def test_2(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
-        name = 'editPl2'
+    def test_editPl2(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D','E','F'] 
 
@@ -209,9 +209,9 @@ class test_editPlaylist(unittest.TestCase):
         shutil.rmtree(f'{cfg.testPlPath}/{name}')
         self.assertEqual(result,correct)
 
-    def test_3(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
-        name = 'editPl3'
+    def test_editPl3(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C'] 
 
@@ -229,9 +229,9 @@ class test_editPlaylist(unittest.TestCase):
         shutil.rmtree(f'{cfg.testPlPath}/{name}')
         self.assertEqual(result,correct)
     
-    def test_4(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
-        name = 'editPl3'
+    def test_editPl4(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D', 'E', 'F', 'G'] 
 
@@ -251,7 +251,9 @@ class test_editPlaylist(unittest.TestCase):
 class test_smartSyncNewOrder(unittest.TestCase):
 
     def test_insertAndDelete(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds = ['A' ,'B' ,'C' ,'D'] 
         remoteIds = ['A' ,'1' ,'B' ,'C' ,'2']
 
@@ -262,7 +264,8 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_insertDeleteSwap(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         localIds = ['A' ,'B' ,'C' ,'D'] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2']
 
@@ -274,7 +277,9 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_3(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds = ['A' ,'B' ,'C' ,'D', 'E', 'F','G'] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2','F']
 
@@ -287,7 +292,9 @@ class test_smartSyncNewOrder(unittest.TestCase):
 
 
     def test_LocalDeleteAll(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds = [] 
         remoteIds = ['A' ,'1' ,'C' ,'B' ,'2','F']
 
@@ -299,7 +306,9 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_RemoteDeleteAll(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds = ['A' ,'B' ,'C' ,'D', 'E', 'F','G'] 
         remoteIds = []
 
@@ -311,7 +320,9 @@ class test_smartSyncNewOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_Reversal(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+        
         localIds = ['A' ,'B' ,'C' ,'D', 'E'] 
         remoteIds = ['E','D','C','B','A']
 
@@ -324,7 +335,9 @@ class test_smartSyncNewOrder(unittest.TestCase):
 
 
     def test_7(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds = ['A' ,'B' ,'C' ,'D', 'E'] 
         remoteIds = ['E','1','D','2','B','A']
 
@@ -340,7 +353,7 @@ class test_move(unittest.TestCase):
     
     def test_moveLarger(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D','E'] 
 
@@ -359,7 +372,7 @@ class test_move(unittest.TestCase):
     
     def test_moveSmaller(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         songs = ['A' ,'B' ,'C' ,'D','E'] 
 
@@ -381,7 +394,7 @@ class test_swap(unittest.TestCase):
     
     def test_swap1(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E'] 
 
         createFakePlaylist(name,songs)
@@ -399,7 +412,7 @@ class test_swap(unittest.TestCase):
     
     def test_swap2(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E'] 
 
         createFakePlaylist(name,songs)
@@ -419,7 +432,7 @@ class test_swap(unittest.TestCase):
 class test_manualAdd(unittest.TestCase):
     def test_manualAdd1(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E'] 
 
         createFakePlaylist(name,songs)
@@ -440,7 +453,7 @@ class test_manualAdd(unittest.TestCase):
 
     def test_manualAdd2(self):
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E'] 
 
         createFakePlaylist(name,songs)
@@ -465,7 +478,7 @@ class test_moveRange(unittest.TestCase):
     def test_moveRangeLarger1(self):
 
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
 
         createFakePlaylist(name,songs)
@@ -484,7 +497,7 @@ class test_moveRange(unittest.TestCase):
     def test_moveRangeLarger2(self):
 
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
 
         createFakePlaylist(name,songs)
@@ -503,7 +516,7 @@ class test_moveRange(unittest.TestCase):
     def test_moveRangeSmaller1(self):
 
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
 
         createFakePlaylist(name,songs)
@@ -523,7 +536,7 @@ class test_moveRange(unittest.TestCase):
     def test_moveRangeSmaller2(self):
 
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
 
         createFakePlaylist(name,songs)
@@ -541,7 +554,7 @@ class test_moveRange(unittest.TestCase):
     def test_moveRangeSingleSmaller(self):
 
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
 
         createFakePlaylist(name,songs)
@@ -559,7 +572,7 @@ class test_moveRange(unittest.TestCase):
     def test_moveRangeSingleLarger(self):
 
         name = inspect.currentframe().f_code.co_name
-        cfg.logger.info(f"Running {name}")
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         songs = ['A' ,'B' ,'C' ,'D','E','F','G'] 
 
         createFakePlaylist(name,songs)
@@ -580,8 +593,8 @@ class test_moveRange(unittest.TestCase):
 
 class test_yt_api_helpers(unittest.TestCase):
     def test_longestIncreasingSequence(self):
-
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
         
         def acending(numList):
             
@@ -637,7 +650,9 @@ class test_yt_api_helpers(unittest.TestCase):
 
 class test_yt_api_getNewRemoteOrder(unittest.TestCase):
     def test_insertAndDelete(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds = ['A','1' ,'C','2' ,'D'] 
         remoteIds = ['A','B','C','D']
         
@@ -649,8 +664,8 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_insertDeleteSwap(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
-
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         localIds = ['C','1','A','2' ,'D'] 
         remoteIds = ['A','B','C','D']
@@ -663,7 +678,9 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
         self.assertEqual(result,correct)
 
     def test_3(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds =  ['A', '1', 'E','B', 'D', 'C', '2'] 
         remoteIds = ['A','B','C','D','E','F','G']
         correct =   [ 0,  4,  6,  5,  1,  2,  3 ]
@@ -674,7 +691,9 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
 
 
     def test_4(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds =  ['1', 'E', 'D', 'C', '2'] 
         remoteIds = ['A','B','C','D','E','F','G']
         correct =   [ 0,  1,  6,  5,  2,  3,  4 ]
@@ -684,7 +703,9 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
         self.assertEqual(result,correct)
     
     def test_5(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds =  [] 
         remoteIds = ['A','B','C','D','E','F','G']
         correct =   [ 0,  1,  2,  3,  4,  5,  6 ]
@@ -695,7 +716,9 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
     
         
     def test_6(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds =  ['A','B','C','D','E','F','G']
         remoteIds = []
         correct =   []
@@ -706,7 +729,9 @@ class test_yt_api_getNewRemoteOrder(unittest.TestCase):
     
 
     def test_7(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
         localIds = [
             'NigPr2mmENA',#0
             'DzoYNerl4P8',#1
@@ -804,8 +829,8 @@ def remoteCorrectOrder(remoteIds,localIds):
 
 class test_yt_api_pushOrderMoves(unittest.TestCase):
     def test_1(self):
-
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         localIds =  ['A','1','B','C'] 
         remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
@@ -824,7 +849,8 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
             self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
     
     def test_2(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         localIds =  ['1','B','E','A','C'] 
         remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
@@ -843,7 +869,8 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
             self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
 
     def test_3(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         localIds =  ['1','F','B','A','C'] 
         remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
@@ -862,7 +889,8 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
             self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
 
     def test_reversal(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         localIds =  ['G','F','E','D','C','B','A'] 
         remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
@@ -882,7 +910,8 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
 
 
     def test_partialReversal(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         localIds =  ['F','E','C','B'] 
         remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
@@ -903,7 +932,8 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
 
 
     def test_firstLastSwap(self):
-        cfg.logger.info(f"Running {self.__class__.__name__}: {self._testMethodName}")
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
 
         localIds =  ['G','1','B','E','C','A'] 
         remoteIds = ['A','B','C','D','E','F','G'] # must be in alphabetical order for remoteCorrectOrder
@@ -920,7 +950,3 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
         # Checks if any remoteIds not in localIds stayed after the correct Id
         if not remoteCorrectOrder(remoteIds,localIds):
             self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
-
-
-if __name__ == "__main__":
-    success = unittest.main(exit=False)

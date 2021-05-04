@@ -102,10 +102,10 @@ def appendNew(plPath):
 
     cfg.logger.info("Appending New Songs...")
 
-    
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
+
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
 
@@ -124,12 +124,10 @@ def manualAdd(plPath, songPath, posistion):
         cfg.logger.error(f'{songPath} Does Not Exist')
         return
 
-    
-
-    currentDir = getLocalSongs(plPath)
-
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
+
+        currentDir = getLocalSongs(plPath)
 
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
@@ -169,14 +167,11 @@ def swap(plPath, index1, index2):
     if index1 == index2:
         cfg.logger.info(f"Given Index are the Same")
 
-    
-
-    currentDir = getLocalSongs(plPath)
-
-
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
+
+        currentDir = getLocalSongs(plPath)
 
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
@@ -217,12 +212,10 @@ def move(plPath, currentIndex, newIndex):
         return
 
 
-
-    currentDir = getLocalSongs(plPath)
-
-
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
+
+        currentDir = getLocalSongs(plPath)
 
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
@@ -270,18 +263,17 @@ def moveRange(plPath, start, end, newStart):
     moves block of songs from start to end indices, to newStart
     ie) start = 4, end = 6, newStart = 2
     0 1 2 3 4 5 6 7 -> 0 1 4 5 6 2 3
-    '''
-
-    
+    '''    
 
     if start == newStart:
         return
 
-    currentDir = getLocalSongs(plPath)
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
 
+        currentDir = getLocalSongs(plPath)
+        
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
 
@@ -402,6 +394,8 @@ def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/w
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         cfg.logger.info(f"Playlist URL: {metaData['url']}")
 
+        correctStateCorruption(plPath,metaData)
+        
         currentDir = getLocalSongs(plPath)
 
         if urlWithoutId != None:
@@ -417,6 +411,8 @@ def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/w
 def compareMetaData(plPath):
     '''Tool for comparing ids held in metadata and their order compared to remote playlist ids'''
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath, metaData)
+        
         remoteIds = getIDs(metaData["url"])
         localIds = metaData["ids"]
         cfg.logger.info(f"i: Local ID    -> j: Remote ID")
@@ -470,11 +466,13 @@ def peek(urlOrPlName,fmt="{index}: {url} {title}"):
 
 
 
-def togglePrepend(plPath):
+def togglePrepends(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         if "removePrependOrder" in metaData:
             # prepends where removed, hence we must add them
             correctStateCorruption(plPath,metaData) # part of correcting state corruption is re-adding prepends 
+            cfg.logger.info("Prepends Added")
             return
         removePrepend(plPath,metaData)
+        cfg.logger.info("Prepends Removed")
 
