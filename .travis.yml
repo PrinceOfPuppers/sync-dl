@@ -5,6 +5,8 @@ python:
   - 3.7
   - 3.8
   - 3.9
+  - 3.10
+  - 3.11
 
 branches:
   - main
@@ -15,4 +17,4 @@ before_script:
   - pip install -e .
 
 script:
-  - python3 test.py https://www.youtube.com/playlist\?list\=PLbg8uA1JzGJD56Lfl7aYK4iW2vJHDo0DE
+  - python3 test.py https://www.youtube.com/playlist\?list=PLbg8uA1JzGJD56Lfl7aYK4iW2vJHDo0DE
