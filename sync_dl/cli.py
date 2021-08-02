@@ -10,7 +10,7 @@ from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
 
-from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek
+from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek, togglePrepends
 
 # import optional modules, otherwise replace commands with stubs
 try:
@@ -101,6 +101,8 @@ def parseArgs():
     plManagmentGroup.add_argument('-m','--move',nargs=2, metavar=('I1','NI'), type = int, help='makes song index I1 come after NI (NI=-1 will move to start)')
     plManagmentGroup.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
     plManagmentGroup.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
+
+    plManagmentGroup.add_argument('-T','--toggle-prepends', action='store_true', help='toggles number prepends on/off')
 
     #changing remote
     apiGroup = parser.add_argument_group("youtube api")
@@ -238,6 +240,10 @@ def cli():
     if not playlistExists(plPath):
         sys.exit()
 
+    #TODO Add toggle prepends to this point in cli logic flow
+    if args.toggle_prepends:
+        togglePrepends(plPath)
+        sys.exit()
 
     #viewing playlist     
     if args.print:
@@ -282,9 +288,11 @@ def cli():
     #fixing metadata corruption in event of crash
     except Exception as e:
         cfg.logger.exception(e)
-        correctStateCorruption(plPath)
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            correctStateCorruption(plPath,metaData)
         cfg.logger.info("State Recovered")
 
     except: #sys.exit calls
-        correctStateCorruption(plPath)
+        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+            correctStateCorruption(plPath,metaData)
         cfg.logger.info("State Recovered")
