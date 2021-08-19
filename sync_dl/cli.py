@@ -93,7 +93,7 @@ def parseArgs():
     #group = parser.add_mutually_exclusive_group()
 
     plManagmentGroup.add_argument('-n','--new-playlist', metavar='URL', type=str, help='downloads new playlist from URL with name PLAYLIST')
-    plManagmentGroup.add_argument('-s','--smart-sync', action='store_true', help='apply smart sync local playlist with remote playlist')
+    plManagmentGroup.add_argument('-s','--smart-sync', action='store_true', help='smart sync local playlist with remote playlist')
     plManagmentGroup.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
 
     plManagmentGroup.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in position INDEX')
@@ -122,8 +122,8 @@ def parseArgs():
     infoGroup.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
 
 
-    infoGroup.add_argument('-p','--print',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
-    infoGroup.add_argument('-d','--view-metadata',action='store_true', help='prints out playlist metadata information compared to remote playlist information' )
+    infoGroup.add_argument('-p','--print',action='store_true', help='shows song titles and urls for local playlist' )
+    infoGroup.add_argument('-d','--diff',action='store_true', help='shows differences between local and remote playlists' )
     
     infoGroup.add_argument('--version', action='version', version='%(prog)s ' + __version__)
 
@@ -249,7 +249,7 @@ def cli():
     if args.print:
         showPlaylist(plPath)
 
-    if args.view_metadata:
+    if args.diff:
         compareMetaData(plPath)
 
 

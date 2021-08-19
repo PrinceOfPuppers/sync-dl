@@ -6,9 +6,8 @@ import shelve
 import re
 import ntpath
 
-
 from sync_dl import noInterrupt
-from sync_dl.ytdlWrappers import getIDs,getJsonPlData
+from sync_dl.ytdlWrappers import getIDs, getIdsAndTitles,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
 import sync_dl.config as cfg
@@ -387,7 +386,6 @@ def shuffle(plPath):
 
 def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/watch?v="):
     '''
-    printer can be print or some level of cfg.logger
     lineBreak can be set to newline if you wish to format for small screens
     urlWithoutId is added if you wish to print out all full urls
     '''
@@ -398,13 +396,17 @@ def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/w
         
         currentDir = getLocalSongs(plPath)
 
+        maxNum = len(currentDir)
+        numDigits = len(str(maxNum))
+
         if urlWithoutId != None:
             spacer=' '*(len(urlWithoutId)+11)
 
-            cfg.logger.info(f"i: ID{spacer}{lineBreak}->   Local Title{lineBreak}")
+            cfg.logger.info(f"{' '*numDigits}: URL{spacer}{lineBreak}-> Local Title{lineBreak}")
             for i,songId in enumerate(metaData['ids']):
                 url = f"{urlWithoutId}{songId}"
-                cfg.logger.info(f"{i}: {url}{lineBreak}  ->  {currentDir[i]}{lineBreak}")
+                title = re.sub(cfg.filePrependRE, '' , currentDir[i])
+                cfg.logger.info(f"{str(i).zfill(numDigits)}: {url}{lineBreak}  ->  {title}{lineBreak}")
 
 
 
@@ -413,23 +415,48 @@ def compareMetaData(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath, metaData)
         
-        remoteIds = getIDs(metaData["url"])
+        remoteIds, remoteTitles = getIdsAndTitles(metaData["url"])
         localIds = metaData["ids"]
-        cfg.logger.info(f"i: Local ID    -> j: Remote ID")
+        currentDir = getLocalSongs(plPath)
 
+        maxNum = max(len(localIds), len(remoteIds))
+        numDigits = len(str(maxNum))
+        
+
+
+        cfg.logger.info(f"\n==================[Playlist Data]==================")
+        cfg.logger.info(f"{' '*numDigits}: Local ID    -> {' '*numDigits}: Remote ID   : Title")
+
+        inLocalNotRemote = []
         for i,localId in enumerate(localIds):
+            title = re.sub(cfg.filePrependRE, '' , currentDir[i])
             if localId in remoteIds:
                 j = remoteIds.index(localId)
-                cfg.logger.info(f"{i}: {localId} -> {j}: {localId}")
+                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} -> {str(j).zfill(numDigits)}: {localId} : {title}")
 
             else:
-                cfg.logger.info(f"{i}: {localId} ->  : ")
+                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} -> {' '*numDigits}:             : {title}")
+                inLocalNotRemote.append((i,localId,title))
 
 
-        for j, remoteId in enumerate(remoteIds):
+        inRemoteNotLocal = [(i,remoteId,remoteTitles[i]) for i,remoteId in enumerate(remoteIds) if remoteId not in localIds]
+
+        for j, remoteId, title in inRemoteNotLocal:
             if remoteId not in localIds:
+                cfg.logger.info(f"{' '*numDigits}:             -> {str(j).zfill(numDigits)}: {remoteId} : {title}")
 
-                cfg.logger.info(f" :             -> {j}: {remoteId}")
+        # summery
+        cfg.logger.info(f"\n=====================[Summery]=====================")
+        cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
+        cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
+        for i, localId, title in inLocalNotRemote:
+                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}")
+
+        cfg.logger.info(f"\n------------[In Remote But Not In Local]-----------")
+        cfg.logger.info(f"{' '*numDigits}: Remote ID   : Remote Title")
+        for j, remoteId, title in inRemoteNotLocal:
+                cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}")
+         
 
 def peek(urlOrPlName,fmt="{index}: {url} {title}"):
     '''

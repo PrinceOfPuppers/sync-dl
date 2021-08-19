@@ -25,20 +25,18 @@ def getIdsAndTitles(url):
     used to check for corrupted metadata in integration tests
     Title will differ from what is on youtube because it is sanitized for use in filenames
     '''
-
-    params = {}
-    params['extract_flat'] = True
-    params['quiet'] = True
-    params["outtmpl"] = f'%(title)s'
-    
-    with youtube_dl.YoutubeDL(params) as ydl:
-        
-        entries = ydl.extract_info(url,download=False)['entries']
-
-        ids = [song['id'] for song in entries]
-        titles = [ydl.prepare_filename(song) for song in entries]
-
-    return ids,titles
+    try:
+        params={"extract_flat": True, "quiet": True, "outtmpl": f'%(title)s'}
+        with youtube_dl.YoutubeDL(params) as ydl:
+            result = ydl.extract_info(url,download=False)
+            ids = []
+            titles = []
+            for videoData in result['entries']:
+                ids.append(videoData["id"])
+                titles.append(ydl.prepare_filename(videoData))
+        return ids, titles
+    except:
+        return []
 
 def getTitle(url):
     '''
