@@ -446,7 +446,7 @@ def compareMetaData(plPath):
                 cfg.logger.info(f"{' '*numDigits}:             -> {str(j).zfill(numDigits)}: {remoteId} : {title}")
 
         # summery
-        cfg.logger.info(f"\n=====================[Summery]=====================")
+        cfg.logger.info(f"\n=====================[Summary]=====================")
         cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
         cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
         for i, localId, title in inLocalNotRemote:
