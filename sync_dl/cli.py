@@ -75,64 +75,6 @@ class ArgsOnce(argparse.HelpFormatter):
             return ', '.join(parts)
 
 
-def parseArgs():
-    description = ("A tool for downloading and syncing remote playlists to your computer. Created to avoid having\n"
-                    "music deleted but still have the convenience of browsing and adding and reordering new music using\n"
-                    "remote services such as youtube.")
-
-
-    parser = argparse.ArgumentParser(description=description,formatter_class=ArgsOnce)
-
-    #positional
-    parser.add_argument('PLAYLIST',nargs='?', type=str, help='the name of the directory for the playlist')
-
-    plManagmentGroup = parser.add_argument_group("playlist management")
-    plManagmentGroup = plManagmentGroup.add_mutually_exclusive_group() #makes plManagement mutually exclusive
-    #playlist managing
-    
-    #group = parser.add_mutually_exclusive_group()
-
-    plManagmentGroup.add_argument('-n','--new-playlist', metavar='URL', type=str, help='downloads new playlist from URL with name PLAYLIST')
-    plManagmentGroup.add_argument('-s','--smart-sync', action='store_true', help='smart sync local playlist with remote playlist')
-    plManagmentGroup.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
-
-    plManagmentGroup.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in position INDEX')
-
-    plManagmentGroup.add_argument('-m','--move',nargs=2, metavar=('I1','NI'), type = int, help='makes song index I1 come after NI (NI=-1 will move to start)')
-    plManagmentGroup.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
-    plManagmentGroup.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
-
-    plManagmentGroup.add_argument('-T','--toggle-prepends', action='store_true', help='toggles number prepends on/off')
-
-    #changing remote
-    apiGroup = parser.add_argument_group("youtube api")
-    apiGroup = apiGroup.add_mutually_exclusive_group() #makes apiGroup mutually exclusive
-
-    apiGroup.add_argument('--push-order', action='store_true', help='changes remote order to match local order (requires sign in with google)')
-    apiGroup.add_argument('--logout', action='store_true', help='revokes youtube oauth access tokens and deletes them')
-
-    configGroup = parser.add_argument_group("configuration")
-    # the '\n' are used as defaults so they dont get confused with actual paths
-    configGroup.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
-    configGroup.add_argument('-f','--force-m4a', action='store_true', help='Will only download m4a, rather than seeking for best audio' )
-
-    #info
-    infoGroup = parser.add_argument_group("info")
-    infoGroup.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
-    infoGroup.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
-
-
-    infoGroup.add_argument('-p','--print',action='store_true', help='shows song titles and urls for local playlist' )
-    infoGroup.add_argument('-d','--diff',action='store_true', help='shows differences between local and remote playlists' )
-    
-    infoGroup.add_argument('--version', action='version', version='%(prog)s ' + __version__)
-
-    infoGroup.add_argument('--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url or name) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
-
-
-    args = parser.parse_args()
-    return args
-
 def setupLogger(args):
     '''sets cfg.logger level based on verbosity'''
     #verbosity
@@ -149,24 +91,7 @@ def setupLogger(args):
         stream.setFormatter(logging.Formatter("%(message)s"))
     cfg.logger.addHandler(stream)
 
-def getCwd(args):
-    #setting and getting cwd
-    if args.local_dir:
-        if args.local_dir == '\n':
-            if cfg.musicDir=='':
-                cfg.logger.error("Music Directory Not Set, Set With: sync-dl -l PATH")
-            else:
-                cfg.logger.info(cfg.musicDir)
-            sys.exit()
-        if not os.path.exists(args.local_dir):
-            cfg.logger.error("Provided Music Directory Does not Exist")
-            sys.exit()
-        #saves args.local_dir to config
-        music = os.path.abspath(args.local_dir)
-
-        cfg.writeToConfig('musicDir',music)
-        cfg.musicDir = music
-
+def getCwd():
     if cfg.musicDir == '':
         return os.getcwd()
     else:
@@ -190,60 +115,170 @@ def playlistExists(plPath):
     #    return False
     return True
 
+def getPlPath(playlist):
+    cwd = getCwd()
 
-def cli():
-    '''
-    Runs command line application, talking in args and running commands
-    '''
-    args = parseArgs()
+    plPath = f"{cwd}/{playlist}"
 
-    setupLogger(args)
+    if not playlistExists(plPath):
+        sys.exit()
+    return plPath
 
-    cwd = getCwd(args)
 
-    #peek command uses PLAYLIST posistional argument as the playlist url
+def setupParsers():
+    description = ("A tool for downloading and syncing remote playlists to your computer. Created to avoid having\n"
+                    "music deleted but still have the convenience of browsing and adding and reordering new music using\n"
+                    "remote services such as youtube.")
+
+    parser = argparse.ArgumentParser(description=description,formatter_class=ArgsOnce)
+    parser.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
+    parser.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
+    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('-f','--force-m4a', action='store_true', help='Will only download m4a, rather than seeking for best audio' )
+
+    subparsers = parser.add_subparsers()
+    tracks = subparsers.add_parser('tracks', help='detect, add and remove tracks from songs', formatter_class=ArgsOnce)
+    tracks.add_argument('-g', nargs=1, metavar='I', type=int, help='detect tracks in pinned/top comments for song index I')
+    tracks.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    tracks.set_defaults(func=tracksHandler)
+    
+    new = subparsers.add_parser('new', help='downloads new playlist from URL with name PLAYLIST', formatter_class=ArgsOnce)
+    new.add_argument('URL', nargs=1, type=str, help='playlist URL')
+    new.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    new.set_defaults(func=newHandler)
+
+    sync = subparsers.add_parser("sync", help='smart sync playlist, unless options are added', formatter_class=ArgsOnce)
+    sync.add_argument('-s','--smart-sync', action='store_true', help='smart sync local playlist with remote playlist')
+    sync.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
+    sync.set_defaults(func=syncHandler)
+
+
+    edit = subparsers.add_parser("edit", help='change order of local playlist', formatter_class=ArgsOnce)
+    edit.add_argument('-M','--manual-add',nargs=2, metavar=('PATH','INDEX'), type=str, help = 'manually add song at PATH to playlist in position INDEX')
+    edit.add_argument('-m','--move',nargs=2, metavar=('I1','NI'), type = int, help='makes song index I1 come after NI (NI=-1 will move to start)')
+    edit.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
+    edit.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
+    edit.add_argument('-T','--toggle-prepends', action='store_true', help='toggles number prepends on/off')
+    edit.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    edit.set_defaults(func=editHandler)
+
+    #changing remote
+    ytapi = subparsers.add_parser("ytapi", help='push local playlist order to youtube playlist', formatter_class=ArgsOnce)
+    ytapi.add_argument('--push-order', action='store_true', help='changes remote order to match local order (requires sign in with google)')
+    ytapi.add_argument('--logout', action='store_true', help='revokes youtube oauth access tokens and deletes them')
+    ytapi.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    ytapi.set_defaults(func=ytapiHandler)
+
+    config = subparsers.add_parser("config", help='change configuration', formatter_class=ArgsOnce)
+    # the '\n' are used as defaults so they dont get confused with actual paths
+    config.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
+    config.set_defaults(func=configHandler)
+
+    #info
+    info = subparsers.add_parser("info", help='get info about playlist', formatter_class=ArgsOnce)
+    info.add_argument('-p','--print',action='store_true', help='shows song titles and urls for local playlist' )
+    info.add_argument('-d','--diff',action='store_true', help='shows differences between local and remote playlists' )
+    info.add_argument('--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url or name) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
+    info.add_argument('PLAYLIST',nargs='?', type=str, help='the name of the directory for the playlist')
+    info.set_defaults(func=infoHandler)
+
+    args = parser.parse_args()
+    return args
+
+
+def newHandler(args):
+    plPath = getPlPath(args.PLAYLIST)
+    newPlaylist(plPath,args.new_playlist)
+
+
+
+def syncHandler(args):
+    plPath = getPlPath(args.PLAYLIST)
+    #smart syncing
+    if args.smart_sync:
+        smartSync(plPath)
+
+    #appending
+    elif args.append_new:
+        appendNew(plPath)
+
+
+
+def configHandler(args):
+    if args.local_dir:
+        if args.local_dir == '\n':
+            if cfg.musicDir=='':
+                cfg.logger.error("Music Directory Not Set, Set With: sync-dl config -l PATH")
+            else:
+                cfg.logger.info(cfg.musicDir)
+            return
+        if not os.path.exists(args.local_dir):
+            cfg.logger.error("Provided Music Directory Does not Exist")
+            return
+        #saves args.local_dir to config
+        music = os.path.abspath(args.local_dir)
+
+        cfg.writeToConfig('musicDir',music)
+        cfg.musicDir = music
+
+
+
+def editHandler(args): 
+
+    plPath = getPlPath(args.PLAYLIST)
+
+    if args.move:
+        moveRange(plPath,args.move[0],args.move[0],args.move[1])
+    
+    elif args.move_range:
+        moveRange(plPath,args.move_range[0],args.move_range[1],args.move_range[2])
+
+    elif args.swap:
+        swap(plPath,args.swap[0],args.swap[1])
+
+    elif args.manual_add:
+        if not args.manual_add[1].isdigit():
+            cfg.logger.error("Index must be positive Integer")
+        else:
+            manualAdd(plPath,args.manual_add[0],int(args.manual_add[1]))
+
+    if args.toggle_prepends:
+        togglePrepends(plPath)
+
+
+def ytapiHandler(args):
+    if args.logout:
+        logout()
+        return
+
+    plPath = getPlPath(args.PLAYLIST)
+
+    if args.push_order:
+        pushLocalOrder(plPath)
+
+
+def infoHandler(args):
     if args.peek:
         if not args.PLAYLIST:
-
             if args.peek != cfg.defualtPeekFmt: #removes the need to have posistional args before empty nargs='?' option
                 url = args.peek
                 fmt = cfg.defualtPeekFmt
             else:
                 cfg.logger.error("Playlist URL Required")
-                sys.exit()
+                return
         else:
             url = args.PLAYLIST
             fmt = args.peek
 
         peek(url,fmt)
-        sys.exit()
-    
-    if args.logout:
-        logout()
-        sys.exit()
-    
+        return
+
     # if no playlist was provided all further functions cannot run
-    if args.PLAYLIST:
-        plPath = f"{cwd}/{args.PLAYLIST}"
-    else:
-        if not args.local_dir: #only option which can run without playlist
-            cfg.logger.error("Playlist Name Required")
-        sys.exit()
+    if not args.PLAYLIST:
+        cfg.logger.error("Playlist Name Required")
+        return
 
-    if args.force_m4a:
-        cfg.params["format"] = 'm4a'
-
-    if args.new_playlist: 
-        newPlaylist(plPath,args.new_playlist)
-        sys.exit()
-
-    if not playlistExists(plPath):
-        sys.exit()
-
-    #TODO Add toggle prepends to this point in cli logic flow
-    if args.toggle_prepends:
-        togglePrepends(plPath)
-        sys.exit()
+    plPath = getPlPath(args.PLAYLIST)
 
     #viewing playlist     
     if args.print:
@@ -252,47 +287,32 @@ def cli():
     if args.diff:
         compareMetaData(plPath)
 
+def tracksHandler(args):
+    pass
 
+def cli():
+    '''
+    Runs command line application, talking in args and running commands
+    '''
+    args = setupParsers()
 
-    #playlist managing
+    if args.force_m4a:
+        cfg.params["format"] = 'm4a'
+
+    setupLogger(args)
+
     try:
-        #smart syncing
-        if args.smart_sync:
-            smartSync(plPath)
+        args.func(args)
 
-        #appending
-        elif args.append_new:
-            appendNew(plPath)
-
-        #manual adding
-        elif args.manual_add:
-            if not args.manual_add[1].isdigit():
-                cfg.logger.error("Index must be positive Integer")
-            else:
-
-                manualAdd(plPath,args.manual_add[0],int(args.manual_add[1]))
-
-        #moving/swaping songs
-        elif args.move:
-            moveRange(plPath,args.move[0],args.move[0],args.move[1])
-        
-        elif args.move_range:
-            moveRange(plPath,args.move_range[0],args.move_range[1],args.move_range[2])
-
-        elif args.swap:
-            swap(plPath,args.swap[0],args.swap[1])
-        
-        elif args.push_order:
-            pushLocalOrder(plPath)
-
-    #fixing metadata corruption in event of crash
     except Exception as e:
+        plPath = getPlPath(args.PLAYLIST)
         cfg.logger.exception(e)
         with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
             correctStateCorruption(plPath,metaData)
         cfg.logger.info("State Recovered")
 
     except: #sys.exit calls
+        plPath = getPlPath(args.PLAYLIST)
         with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
             correctStateCorruption(plPath,metaData)
         cfg.logger.info("State Recovered")
