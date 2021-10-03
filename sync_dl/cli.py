@@ -115,15 +115,11 @@ def playlistExists(plPath):
     #    return False
     return True
 
+
 def getPlPath(playlist):
     cwd = getCwd()
 
-    plPath = f"{cwd}/{playlist}"
-
-    if not playlistExists(plPath):
-        sys.exit()
-    return plPath
-
+    return f"{cwd}/{playlist}"
 
 def setupParsers():
     description = ("A tool for downloading and syncing remote playlists to your computer. Created to avoid having\n"
@@ -143,13 +139,14 @@ def setupParsers():
     tracks.set_defaults(func=tracksHandler)
     
     new = subparsers.add_parser('new', help='downloads new playlist from URL with name PLAYLIST', formatter_class=ArgsOnce)
-    new.add_argument('URL', nargs=1, type=str, help='playlist URL')
-    new.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    new.add_argument('URL', type=str, help='playlist URL')
+    new.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
     new.set_defaults(func=newHandler)
 
     sync = subparsers.add_parser("sync", help='smart sync playlist, unless options are added', formatter_class=ArgsOnce)
     sync.add_argument('-s','--smart-sync', action='store_true', help='smart sync local playlist with remote playlist')
     sync.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
+    sync.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
     sync.set_defaults(func=syncHandler)
 
 
@@ -159,14 +156,14 @@ def setupParsers():
     edit.add_argument('-r','--move-range',nargs=3, metavar=('I1','I2','NI'), type = int, help='makes songs in range [I1, I2] come after song index NI (NI=-1 will move to start)')
     edit.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
     edit.add_argument('-T','--toggle-prepends', action='store_true', help='toggles number prepends on/off')
-    edit.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    edit.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
     edit.set_defaults(func=editHandler)
 
     #changing remote
     ytapi = subparsers.add_parser("ytapi", help='push local playlist order to youtube playlist', formatter_class=ArgsOnce)
     ytapi.add_argument('--push-order', action='store_true', help='changes remote order to match local order (requires sign in with google)')
     ytapi.add_argument('--logout', action='store_true', help='revokes youtube oauth access tokens and deletes them')
-    ytapi.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    ytapi.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
     ytapi.set_defaults(func=ytapiHandler)
 
     config = subparsers.add_parser("config", help='change configuration', formatter_class=ArgsOnce)
@@ -188,12 +185,18 @@ def setupParsers():
 
 def newHandler(args):
     plPath = getPlPath(args.PLAYLIST)
-    newPlaylist(plPath,args.new_playlist)
+    if os.path.exists(plPath):
+        cfg.logging.error(f"Cannot Make Playlist {args.PLAYLIST} Because Directory Already Exists at Path: \n{plPath}")
+        return
+    newPlaylist(plPath, args.URL)
 
 
 
 def syncHandler(args):
     plPath = getPlPath(args.PLAYLIST)
+    if not playlistExists(plPath):
+        return
+
     #smart syncing
     if args.smart_sync:
         smartSync(plPath)
@@ -226,6 +229,8 @@ def configHandler(args):
 def editHandler(args): 
 
     plPath = getPlPath(args.PLAYLIST)
+    if not playlistExists(plPath):
+        return
 
     if args.move:
         moveRange(plPath,args.move[0],args.move[0],args.move[1])
@@ -252,6 +257,8 @@ def ytapiHandler(args):
         return
 
     plPath = getPlPath(args.PLAYLIST)
+    if not playlistExists(plPath):
+        return
 
     if args.push_order:
         pushLocalOrder(plPath)
@@ -279,6 +286,8 @@ def infoHandler(args):
         return
 
     plPath = getPlPath(args.PLAYLIST)
+    if not playlistExists(plPath):
+        return
 
     #viewing playlist     
     if args.print:
@@ -288,7 +297,9 @@ def infoHandler(args):
         compareMetaData(plPath)
 
 def tracksHandler(args):
-    pass
+    plPath = getPlPath(args.PLAYLIST)
+    if not playlistExists(plPath):
+        return
 
 def cli():
     '''
@@ -305,14 +316,11 @@ def cli():
         args.func(args)
 
     except Exception as e:
-        plPath = getPlPath(args.PLAYLIST)
         cfg.logger.exception(e)
-        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-            correctStateCorruption(plPath,metaData)
-        cfg.logger.info("State Recovered")
-
-    except: #sys.exit calls
-        plPath = getPlPath(args.PLAYLIST)
-        with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
-            correctStateCorruption(plPath,metaData)
-        cfg.logger.info("State Recovered")
+        if args.PLAYLIST:
+            plPath = getPlPath(args.PLAYLIST)
+            metaDataPath = f"{plPath}/{cfg.metaDataName}"
+            if os.path.exists(metaDataPath):
+                with shelve.open(metaDataPath, 'c',writeback=True) as metaData:
+                    correctStateCorruption(plPath,metaData)
+                cfg.logger.info("State Recovered")
