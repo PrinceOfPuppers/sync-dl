@@ -1,5 +1,6 @@
 import youtube_dl
 import os
+import time
 
 import shutil
 
@@ -71,14 +72,21 @@ def downloadToTmp(videoId,numberStr):
         for f in tmp:
             os.remove(f"{cfg.tmpDownloadPath}/{f}")
 
+        attemptNumber = 1
+        numAttempts = 2
+
         try:
             ydl.download([url])
             return True
-
         except Exception as e:
             cfg.logger.debug(e)
             cfg.logger.info(f"Unable to Download Song at {url}")
-            return False
+            if attemptNumber == numAttempts:
+                return False
+            cfg.logger.info("Retrying...")
+            time.sleep(0.5)
+            attemptNumber += 1
+
 
 def moveFromTmp(path):
     tmp = os.listdir(path=cfg.tmpDownloadPath) 
