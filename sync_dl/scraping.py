@@ -166,6 +166,23 @@ def getSongLengthSeconds(songPath):
     return float(result.stdout)
 
 
+def detectAndWipeChapters(ffmpegChapterFile:str):
+
+    chapterRe = r"\[CHAPTER\]\nTIMEBASE=.+\nSTART=.+\nEND=.+\ntitle=.+\n"
+
+    with open(ffmpegChapterFile, "r+") as f:
+        contents = f.read()
+        if re.search(chapterRe,contents):
+            newContents = re.sub(chapterRe, "", contents, flags=re.M)
+            f.seek(0)
+            f.write(newContents)
+            f.truncate()
+            return True
+
+    return False
+
+
+
 def addTimestampsToSong(songPath, timestamps:list[Timestamp]):
     '''
     writes timestamps to file, formatted to add chapters to file using ffmpeg
@@ -197,17 +214,24 @@ def addTimestampsToSong(songPath, timestamps:list[Timestamp]):
 
     chapterFmt ="[CHAPTER]\nTIMEBASE=1/1000\nSTART={start}\nEND={end}\ntitle={title}\n\n"
 
-    with open(ffmpegChapterFile, "a") as f:
-        for i in range(0, len(timestamps) - 1):
-            t1 = timestamps[i]
-            t2 = timestamps[i+1]
-            f.write( chapterFmt.format(start = 1000*t1.time, end = 1000*t2.time - 1, title = t1.label) )
 
-        t1 = timestamps[-1]
-        end = int(1000*getSongLengthSeconds(songPath))
-        f.write( chapterFmt.format(start = 1000*t1.time, end = end - 1, title = t1.label) )
+    if detectAndWipeChapters(ffmpegChapterFile):
+        response = input(f"Timestamps Detected in Song: {songName}, Would You Like to Replace Them? (y/n):")
+        if response != 'y' and response != 'Y':
+            return
 
-    applyChapterFile = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', songPath, '-i', ffmpegChapterFile, '-map_metadata', '1', '-codec', 'copy', f"{cfg.tmpDownloadPath}/{songName}"]
+    if len(timestamps) > 0:
+        with open(ffmpegChapterFile, "a") as f:
+            for i in range(0, len(timestamps) - 1):
+                t1 = timestamps[i]
+                t2 = timestamps[i+1]
+                f.write( chapterFmt.format(start = 1000*t1.time, end = 1000*t2.time - 1, title = t1.label) )
+
+            t1 = timestamps[-1]
+            end = int(1000*getSongLengthSeconds(songPath))
+            f.write( chapterFmt.format(start = 1000*t1.time, end = end - 1, title = t1.label) )
+
+    applyChapterFile = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', songPath, '-i', ffmpegChapterFile, '-map_metadata', '1', '-map_chapters', '1', '-codec', 'copy', f"{cfg.tmpDownloadPath}/{songName}"]
 
     try:
         subprocess.run(applyChapterFile,check=True)
@@ -234,7 +258,7 @@ def test1():
 
 
 def test2():
-    timestamps = [Timestamp(time = 0, label = "the zeroeth time stamp" ), Timestamp(time = 10, label = "the first time stamp" ), Timestamp(time = 40, label = "the second time stamp")]
+    timestamps = [Timestamp(time = 0, label = "the zeroeth time stamp" ), Timestamp(time = 20, label = "the first time stamp hi there" ), Timestamp(time = 40, label = "the second time stamp")]
     addTimestampsToSong('/home/princeofpuppers/Music/test/INPUT.opus', timestamps)
 
 if __name__ == "__main__":
