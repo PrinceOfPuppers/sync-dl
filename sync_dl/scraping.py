@@ -5,6 +5,14 @@ import json
 from collections import namedtuple
 Timestamp = namedtuple('Timestamp','label time')
 
+labelSanitizeRe = re.compile(r'^[:\-\s>]*(.*)\s*$')
+
+def sanitizeLabel(label):
+    match = labelSanitizeRe.match(label)
+    if match:
+        return match.group(1)
+    return label
+
 
 def scrapeJson(j, desiredKey: str, results:list):
     if isinstance(j,list):
@@ -102,7 +110,7 @@ def getTimestamp(line, timeRe):
             if time!=None:
                 label = line[(i+1)%2]['text']
                 if not scrapeFirstJson(label,"url"):
-                    return Timestamp(label=label, time=time)
+                    return Timestamp(label=sanitizeLabel(label), time=time)
     return None
 
 
@@ -128,7 +136,6 @@ def getTimeStamps(comments, videoId):
 
         lines.append(line)
 
-        print(lines)
         # parse lines for timestamps
         timeStamps = []
         for line in lines:
