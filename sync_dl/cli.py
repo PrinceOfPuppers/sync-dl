@@ -135,7 +135,7 @@ def setupParsers():
     timestamps = subparsers.add_parser('timestamps', help='detect, add and remove tracks from songs', formatter_class=ArgsOnce)
     timestamps.add_argument('-s', '--scrape', nargs=1, metavar='I', type=int, help='detect tracks in pinned/top comments for song index I')
     timestamps.add_argument('-r', '--scrape-range', nargs=2, metavar=('I1','I2'), type=int, help='detect tracks in pinned/top comments for song index I1 to I2')
-    timestamps.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    timestamps.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
     timestamps.set_defaults(func = lambda args: timestampsHandler(args, timestamps))
     
     new = subparsers.add_parser('new', help='downloads new playlist from URL with name PLAYLIST', formatter_class=ArgsOnce)

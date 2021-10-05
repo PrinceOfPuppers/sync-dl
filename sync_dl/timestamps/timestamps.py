@@ -7,7 +7,7 @@ from sync_dl.timestamps.scraping import Timestamp
 from sync_dl import noInterrupt
 
 
-chapterRe = re.compile(r"\[CHAPTER\]\nTIMEBASE=(.+)\nSTART=(.+)\nEND=(.+)\ntitle=(.+)\n")
+chapterRe = re.compile(r"\[CHAPTER\]\nTIMEBASE=(.+)\nSTART=(.+)\nEND=(.+)\ntitle=(.+)\n",flags = re.M)
 
 def _getSongLengthSeconds(songPath:str) -> float:
     result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
@@ -64,17 +64,15 @@ def wipeChapterFile() -> bool:
         for (timebase, start, _, title) in chapterRe.findall(contents):
             if not chaptersExist:
                 chaptersExist = True
-                cfg.logger.info("Existing Timestamps:")
+                cfg.logger.info("\nExisting Timestamps:")
 
-            timeBaseNum = eval(timebase)
-
-            timestamp = Timestamp(time=int(timeBaseNum*start), label=title)
+            timestamp = Timestamp.fromFfmpegChapter(timebase, start, title)
             
             cfg.logger.info(timestamp)
 
         if chaptersExist:
             cfg.logger.debug(f"Wiping Chapters from FFMPEG Metadata File")
-            newContents = re.sub(chapterRe, "", contents, flags=re.M)
+            newContents = chapterRe.sub("", contents)
             f.seek(0)
             f.write(newContents)
             f.truncate()

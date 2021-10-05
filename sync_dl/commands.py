@@ -509,7 +509,7 @@ def togglePrepends(plPath):
         cfg.logger.info("Prepends Removed")
 
 
-def addTimestampsFromComments(plPath, start, end, autoOverwrite = False):
+def addTimestampsFromComments(plPath, start, end, autoOverwrite = False, autoAccept = False):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
 
@@ -541,10 +541,28 @@ def addTimestampsFromComments(plPath, start, end, autoOverwrite = False):
             videoId = metaData['ids'][i]
 
             # Get timestamps
+            cfg.logger.info(f"Scraping Comments for Timestamps of Song: {songName}...\n")
             timestamps = scrapeCommentsForTimestamps(videoId)
             if len(timestamps) == 0:
-                cfg.logger.info(f"No Timestamps Found in Comments for Song: {songName}")
+                cfg.logger.info(f"No Timestamps Found")
                 continue
+            else:
+                cfg.logger.info(f"Timestamps Found:")
+                for timestamp in timestamps:
+                    cfg.logger.info(timestamp)
+
+                if not autoAccept:
+                    # if only one 
+                    if start == end:
+                        response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o:")).lower()
+                        if response != 'y':
+                            return
+                    else:
+                        response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o, [a]uto-accept:")).lower()
+                        if response == 'a':
+                            autoAccept = True
+                        if response != 'y' and response != 'a':
+                            continue
 
 
             if not createChapterFile(songPath, songName):
@@ -556,11 +574,11 @@ def addTimestampsFromComments(plPath, start, end, autoOverwrite = False):
                 else:
                     # if only one 
                     if start == end:
-                        response = (input(f"Timestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y/n]:")).lower()
+                        response = (input(f"\nTimestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y/n]:")).lower()
                         if response != 'y':
-                            continue
+                            return
                     else:
-                        response = (input(f"Timestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y]es, [n]o, yes-[a]ll:")).lower()
+                        response = (input(f"\nTimestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y]es, [n]o, [a]uto-overwrite:")).lower()
                         if response == 'a':
                             autoOverwrite = True
                         if response != 'y' and response != 'a':
@@ -571,4 +589,6 @@ def addTimestampsFromComments(plPath, start, end, autoOverwrite = False):
             if not applyChapterFileToSong(songPath, songName):
                 cfg.logger.error(f"Failed to Add Timestamps To Song {songName}")
                 continue
+            else:
+                cfg.logger.info("Timestamps Applied!")
 
