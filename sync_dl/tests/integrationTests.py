@@ -14,6 +14,9 @@ from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 from sync_dl.ytdlWrappers import getTitle,getIdsAndTitles
 
+from sync_dl.timestamps.timestamps import getTimestamps, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
+from sync_dl.timestamps.scraping import Timestamp, scrapeCommentsForTimestamps
+
 
 def metaDataSongsCorrect(metaData,plPath):
     '''
@@ -194,7 +197,51 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
     
 
+    def test_addTimeStamps(self):
+        currentDir = getLocalSongs(self.plPath)
 
+        songName = currentDir[0]
+        songPath = f"{self.plPath}/{songName}"
+
+        # Get timestamps
+        timestamps = [Timestamp(time=0, label="test 0"), Timestamp(time = 1, label="test1"), Timestamp(time=2, label="test2")]
+
+        if not createChapterFile(songPath, songName):
+            self.fail("Chapter Creation Failed")
+
+        wipeChapterFile()
+
+        addTimestampsToChapterFile(timestamps, songPath)
+
+        if not applyChapterFileToSong(songPath, songName):
+            cfg.logger.error(f"Failed to Add Timestamps To Song {songName}")
+            self.fail("Chapter Creation Failed")
+
+        appliedTimestamps = getTimestamps(cfg.ffmpegMetadataPath)
+
+        self.assertEqual(len(timestamps), len(appliedTimestamps))
+
+        for i in range(0,len(timestamps)):
+            self.assertEqual(timestamps[i], appliedTimestamps[i])
+
+    def test_scrapeTimeStamps(self):
+        videoId = '9WbtgupHTPA'
+        videoId = 'NK9ByuKQlEM'
+        knownTimeStamps = [
+            Timestamp(time = 0, label = 'beginning'),
+            Timestamp(time = 20, label = 'some stuff'),
+            Timestamp(time = 90, label = 'shaking up the format'),
+            Timestamp(time = 201, label = 'more shaking up the format'),
+            Timestamp(time = 361, label = 'wowee whats this'),
+        ]
+
+        scrapedTimestamps = scrapeCommentsForTimestamps(videoId)
+
+
+        self.assertEqual(len(knownTimeStamps), len(scrapedTimestamps))
+
+        for i in range(0,len(scrapedTimestamps)):
+            self.assertEqual(scrapedTimestamps[i], knownTimeStamps[i])
 
     def test_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
@@ -202,3 +249,4 @@ class test_integration(unittest.TestCase):
         
         compareMetaData(self.plPath)
         showPlaylist(self.plPath)
+

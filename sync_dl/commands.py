@@ -1,15 +1,18 @@
 import os
 
-import argparse
-
 import shelve
 import re
 import ntpath
 
 from sync_dl import noInterrupt
+
 from sync_dl.ytdlWrappers import getIDs, getIdsAndTitles,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
+
+from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
+from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
+
 import sync_dl.config as cfg
 
 
@@ -92,9 +95,6 @@ def smartSync(plPath):
 
     editPlaylist(plPath,newOrder)
 
-
-def hardSync():
-    '''Syncs to remote playlist will delete local songs'''
 
 def appendNew(plPath):
     '''will append new songs in remote playlist to local playlist in order that they appear'''
@@ -491,8 +491,6 @@ def peek(urlOrPlName,fmt="{index}: {url} {title}"):
         cfg.logger.info(songStr)
 
 
-
-
 def togglePrepends(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         if "removePrependOrder" in metaData:
@@ -502,4 +500,68 @@ def togglePrepends(plPath):
             return
         removePrepend(plPath,metaData)
         cfg.logger.info("Prepends Removed")
+
+
+def addTimestampsFromComments(plPath, start, end, autoOverwrite = False):
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
+
+        currentDir = getLocalSongs(plPath)
+        idsLen = len(metaData["ids"])
+
+        ### Sanitize Inputs ###
+        if start >= idsLen:
+            cfg.logger.error(f"No song has Index {start}, Largest Index is {idsLen-1}")
+            return
+
+        elif start < 0:
+            cfg.logger.error(f"No Song has a Negative Index")
+            return
+            
+        #clamp end index
+        if end >= idsLen or end == -1:
+            end = idsLen-1
+
+        elif end < start:
+            cfg.logger.error("End Index Must be Greater Than or Equal To Start Index (or -1)")
+            return
+        ### Sanitize Inputs Over ###
+
+
+        for i in range(start,end+1):
+            songName = currentDir[i]
+            songPath = f"{plPath}/{songName}"
+            videoId = metaData['ids'][i]
+
+            # Get timestamps
+            timestamps = scrapeCommentsForTimestamps(videoId)
+            if len(timestamps) == 0:
+                cfg.logger.info(f"No Timestamps Found in Comments for Song: {songName}")
+                continue
+
+
+            if not createChapterFile(songPath, songName):
+                continue
+
+            if wipeChapterFile():
+                if autoOverwrite:
+                    cfg.logger.info(f"Overwriting Chapters for {songName}")
+                else:
+                    # if only one 
+                    if start == end:
+                        response = (input(f"Timestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y/n]:")).lower()
+                        if response != 'y':
+                            continue
+                    else:
+                        response = (input(f"Timestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y]es, [n]o, yes-[a]ll:")).lower()
+                        if response == 'a':
+                            autoOverwrite = True
+                        if response != 'y' and response != 'a':
+                            continue
+
+            addTimestampsToChapterFile(timestamps, songPath)
+
+            if not applyChapterFileToSong(songPath, songName):
+                cfg.logger.error(f"Failed to Add Timestamps To Song {songName}")
+                continue
 

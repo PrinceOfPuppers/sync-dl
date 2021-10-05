@@ -75,17 +75,18 @@ def downloadToTmp(videoId,numberStr):
         attemptNumber = 1
         numAttempts = 2
 
-        try:
-            ydl.download([url])
-            return True
-        except Exception as e:
-            cfg.logger.debug(e)
-            cfg.logger.info(f"Unable to Download Song at {url}")
-            if attemptNumber == numAttempts:
-                return False
-            cfg.logger.info("Retrying...")
-            time.sleep(0.5)
-            attemptNumber += 1
+        while True:
+            try:
+                ydl.download([url])
+                return True
+            except Exception as e:
+                cfg.logger.debug(e)
+                cfg.logger.info(f"Unable to Download Song at {url}")
+                if attemptNumber == numAttempts:
+                    return False
+                cfg.logger.info("Retrying...")
+                time.sleep(0.5)
+                attemptNumber += 1
 
 
 def moveFromTmp(path):

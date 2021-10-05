@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 
 import argparse
@@ -9,8 +8,7 @@ from sync_dl import __version__
 from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
-
-from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek, togglePrepends
+from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek, togglePrepends, addTimestampsFromComments
 
 # import optional modules, otherwise replace commands with stubs
 try:
@@ -133,10 +131,11 @@ def setupParsers():
     parser.add_argument('-f','--force-m4a', action='store_true', help='Will only download m4a, rather than seeking for best audio' )
 
     subparsers = parser.add_subparsers()
-    tracks = subparsers.add_parser('tracks', help='detect, add and remove tracks from songs', formatter_class=ArgsOnce)
-    tracks.add_argument('-g', nargs=1, metavar='I', type=int, help='detect tracks in pinned/top comments for song index I')
-    tracks.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
-    tracks.set_defaults(func=tracksHandler)
+    timestamps = subparsers.add_parser('timestamps', help='detect, add and remove tracks from songs', formatter_class=ArgsOnce)
+    timestamps.add_argument('-s', '--scrape', nargs=1, metavar='I', type=int, help='detect tracks in pinned/top comments for song index I')
+    timestamps.add_argument('-r', '--scrape-range', nargs=2, metavar=('I1','I2'), type=int, help='detect tracks in pinned/top comments for song index I1 to I2')
+    timestamps.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
+    timestamps.set_defaults(func=timestampsHandler)
     
     new = subparsers.add_parser('new', help='downloads new playlist from URL with name PLAYLIST', formatter_class=ArgsOnce)
     new.add_argument('URL', type=str, help='playlist URL')
@@ -296,10 +295,17 @@ def infoHandler(args):
     if args.diff:
         compareMetaData(plPath)
 
-def tracksHandler(args):
+
+def timestampsHandler(args):
     plPath = getPlPath(args.PLAYLIST)
     if not playlistExists(plPath):
         return
+
+    if args.scrape:
+        addTimestampsFromComments(plPath, args.scrape[0], args.scrape[0])
+    
+    elif args.scrape_range:
+        addTimestampsFromComments(plPath, args.scrape_range[0], args.scrape_range[1])
 
 def cli():
     '''
