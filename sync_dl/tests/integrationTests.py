@@ -10,8 +10,7 @@ import random
 from sync_dl.commands import smartSync,newPlaylist,swap,shuffle,move
 import sync_dl.config as cfg
 from sync_dl.commands import compareMetaData, showPlaylist
-from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
-from sync_dl.plManagement import editPlaylist,correctStateCorruption
+from sync_dl.helpers import getLocalSongs
 from sync_dl.ytdlWrappers import getTitle,getIdsAndTitles
 
 from sync_dl.timestamps.timestamps import getTimestamps, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
@@ -226,7 +225,6 @@ class test_integration(unittest.TestCase):
 
     def test_scrapeTimeStamps(self):
         videoId = '9WbtgupHTPA'
-        videoId = 'NK9ByuKQlEM'
         knownTimeStamps = [
             Timestamp(time = 0, label = 'beginning'),
             Timestamp(time = 20, label = 'some stuff'),
@@ -245,7 +243,7 @@ class test_integration(unittest.TestCase):
 
     def test_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
-        cfg.logger.info("End of Integration Test Summery")
+        cfg.logger.info("Integration Test End Report:")
         
         compareMetaData(self.plPath)
         showPlaylist(self.plPath)

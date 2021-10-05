@@ -6,7 +6,7 @@ from typing import NamedTuple
 import sync_dl.config as cfg
 
 
-labelSanitizeRe = re.compile(r'^[:\-\s>]*(.*)\s*$')
+labelSanitizeRe = re.compile(r'^[:\-\s>]*(.*?)[:\-\s>]*$')
 
 class Timestamp(NamedTuple):
     time: int
@@ -142,7 +142,7 @@ def _getTime(url, timeRe):
 
 def _getTimestamp(line, timeRe):
     '''line must be of len 2  checks if line is [timestamp, label] or [label, timestamp]'''
-    for i in range(0,1):
+    for i in range(0,2):
         url = scrapeFirstJson(line[i], "url")
         if url is not None:
             time = _getTime(url,timeRe)
@@ -185,7 +185,6 @@ def _getTimeStamps(comments, videoId):
                 timeStamps.append(timeStamp)
 
         if len(timeStamps) > 1:
-            cfg.logger.debug(timeStamps)
             timeStamps.sort(key = lambda ele: ele.time)
             timeStampCandidates.append(timeStamps)
     timeStampCandidates.sort(key=lambda ele: len(ele), reverse=True)
@@ -204,10 +203,5 @@ def scrapeCommentsForTimestamps(videoId):
     return timeStamps
 
 if __name__ == "__main__":
-    videoId = 'NK9ByuKQlEM'
-    #videoId = 'UGRJZ1LXFjA'
-    timestamps = scrapeCommentsForTimestamps(videoId)
+    print(_sanitizeLabel("wowee whats this ")+"$")
 
-    print(len(timestamps))
-    for timestamp in timestamps:
-        print(timestamp.time, timestamp.label)

@@ -1,6 +1,5 @@
 import re
 import os
-import ntpath
 import subprocess
 
 import sync_dl.config as cfg

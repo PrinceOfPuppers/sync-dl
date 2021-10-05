@@ -447,15 +447,22 @@ def compareMetaData(plPath):
 
         # summery
         cfg.logger.info(f"\n=====================[Summary]=====================")
-        cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
-        cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
-        for i, localId, title in inLocalNotRemote:
-                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}")
 
-        cfg.logger.info(f"\n------------[In Remote But Not In Local]-----------")
-        cfg.logger.info(f"{' '*numDigits}: Remote ID   : Remote Title")
-        for j, remoteId, title in inRemoteNotLocal:
-                cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}")
+        if len(inLocalNotRemote)>0:
+            cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
+            cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
+            for i, localId, title in inLocalNotRemote:
+                    cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}")
+
+        if len(inRemoteNotLocal)>0:
+            cfg.logger.info(f"\n------------[In Remote But Not In Local]-----------")
+            cfg.logger.info(f"{' '*numDigits}: Remote ID   : Remote Title")
+            for j, remoteId, title in inRemoteNotLocal:
+                    cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}")
+
+        if len(inLocalNotRemote) == 0 and len(inRemoteNotLocal) == 0:
+            cfg.logger.info(f"Local And Remote Contain The Same Songs")
+
          
 
 def peek(urlOrPlName,fmt="{index}: {url} {title}"):
