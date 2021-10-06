@@ -509,7 +509,8 @@ def togglePrepends(plPath):
         cfg.logger.info("Prepends Removed")
 
 
-def addTimestampsFromComments(plPath, start, end, autoOverwrite = False, autoAccept = False):
+def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite = False, autoOverwrite = False):
+
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
 
@@ -535,60 +536,98 @@ def addTimestampsFromComments(plPath, start, end, autoOverwrite = False, autoAcc
         ### Sanitize Inputs Over ###
 
 
+        multipleSongs = start!=end
         for i in range(start,end+1):
+
+            if autoOverwrite and not overwrite:
+                cfg.logger.error("auto-overwrite can only be enabled if overwrite is")
+                return
+
+            if autoOverwrite and not autoAccept:
+                cfg.logger.error("auto-overwrite can only be enabled if auto-accept is")
+                return
+
             songName = currentDir[i]
             songPath = f"{plPath}/{songName}"
             videoId = metaData['ids'][i]
 
-            # Get timestamps
-            cfg.logger.info(f"Scraping Comments for Timestamps of Song: {songName}...\n")
-            timestamps = scrapeCommentsForTimestamps(videoId)
-            if len(timestamps) == 0:
-                cfg.logger.info(f"No Timestamps Found")
-                continue
-            else:
-                cfg.logger.info(f"Timestamps Found:")
-                for timestamp in timestamps:
-                    cfg.logger.info(timestamp)
-
-                if not autoAccept:
-                    # if only one 
-                    if start == end:
-                        response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o:")).lower()
-                        if response != 'y':
-                            return
-                    else:
-                        response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o, [a]uto-accept:")).lower()
-                        if response == 'a':
-                            autoAccept = True
-                        if response != 'y' and response != 'a':
-                            continue
-
-
             if not createChapterFile(songPath, songName):
                 continue
 
-            if wipeChapterFile():
-                if autoOverwrite:
-                    cfg.logger.info(f"Overwriting Chapters for {songName}")
+            # Check for existing chapters in ffmpegMetadata file, wipe them, and prompt user to continue
+            existingTimestamps = wipeChapterFile()
+            if len(existingTimestamps) > 0:
+                if not overwrite:
+                    cfg.logger.info(f"{i}: Existing Timestamps Detected on Song: {songName}\nSkipping...\n")
+                    continue
+
+            # Get timestamps
+            cfg.logger.info(f"{i}: Scraping Comments for Timestamps of Song: {songName}")
+            timestamps = scrapeCommentsForTimestamps(videoId)
+
+            if len(timestamps) == 0:
+                cfg.logger.info(f"No Timestamps Found\n")
+                continue
+
+            if existingTimestamps == timestamps:
+                cfg.logger.info("Timestamps Found are Idential to Existing Timestamps\n")
+                continue
+
+            if len(existingTimestamps) > 0:
+                if not overwrite:
+                    cfg.logger.info("Comment Timestamps and Existing Timestamps Found but Overwrite is Disabled\n")
+                    continue
+
+                # existing timestamps, plus timestamps found
+                cfg.logger.info(f"\nExisting Timestamps Found:")
+                for timestamp in existingTimestamps:
+                    cfg.logger.info(timestamp)
+                cfg.logger.info(f"\nComment Timestamps Found:")
+                for timestamp in timestamps:
+                    cfg.logger.info(timestamp)
+                cfg.logger.info('\n')
+
+                if autoOverwrite and autoAccept:
+                    cfg.logger.info("Auto Overwriting\n")
+                    continue
+
+                cfg.logger.info("Existing and Comment Timestamps Found")
+                response = (input(f"OVERWRITE Timestamps for: {songName}? \n[y]es, [n]o" + ", [a]uto-overwrites/accepts, [d]eny-overwrites:" if multipleSongs else "")).lower()
+                if response == 'a':
+                    autoAccept = True
+                    overwrite = True
+                    autoOverwrite = True
+                if response == 'd':
+                    overwrite = False
+                if response != 'y' and response != 'a':
+                    cfg.logger.info('\n')
+                    continue
+
+            else:
+                # comment timestamps found, no existing timestamps found
+                cfg.logger.info(f"\nComment Timestamps Found:")
+                for timestamp in timestamps:
+                    cfg.logger.info(timestamp)
+                cfg.logger.info('\n')
+
+                
+                if not autoAccept:
+                    response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o" + ", [a]uto-accept:" if multipleSongs else "")).lower()
+                    if response == 'a':
+                        autoAccept = True
+                    if response != 'y' and response != 'a':
+                        cfg.logger.info('\n')
+                        continue
                 else:
-                    # if only one 
-                    if start == end:
-                        response = (input(f"\nTimestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y/n]:")).lower()
-                        if response != 'y':
-                            return
-                    else:
-                        response = (input(f"\nTimestamps Detected in Song: {songName}, Would You Like to Overwrite Them? \n[y]es, [n]o, [a]uto-overwrite:")).lower()
-                        if response == 'a':
-                            autoOverwrite = True
-                        if response != 'y' and response != 'a':
-                            continue
+                    cfg.logger.info("Auto Accepting Timestamps")
 
             addTimestampsToChapterFile(timestamps, songPath)
 
             if not applyChapterFileToSong(songPath, songName):
-                cfg.logger.error(f"Failed to Add Timestamps To Song {songName}")
+                cfg.logger.error(f"Failed to Add Timestamps To Song {songName}\n")
                 continue
-            else:
-                cfg.logger.info("Timestamps Applied!")
+
+            cfg.logger.info("Timestamps Applied!\n")
+
+
 

@@ -6,13 +6,15 @@ from typing import NamedTuple
 import sync_dl.config as cfg
 
 
-labelSanitizeRe = re.compile(r'^[:\-\s>]*(.*?)[:\-\s>]*$')
+labelSanitizeRe = re.compile(r'^(?:[:\-|\s>]*)(?:\d{1,3}[\.:|]\s)?(.*?)[:\-|\s>]*$')
 
 class Timestamp(NamedTuple):
     time: int
     label: str
 
     chapterFmt ="[CHAPTER]\nTIMEBASE=1/1000\nSTART={start}\nEND={end}\ntitle={title}\n\n"
+
+    reprFmt = "{hh}:{mm:02d}:{ss:02d} - {ll}"
 
     def __eq__(self, other):
         return (self.time == other.time) and (self.label == other.label)
@@ -25,15 +27,18 @@ class Timestamp(NamedTuple):
 
         hours = minutes//60
 
-        return f"{hours}:{minutesRemainder:02d}:{secondsRemainder:02d} - {self.label}"
+        return self.reprFmt.format(hh=hours, mm=minutesRemainder, ss=secondsRemainder, ll=self.label)
 
     @classmethod
-    def fromFfmpegChapter(cls, timeBase:str, start, title):
+    def fromFfmpegChapter(cls, timeBase:str, start, title) -> 'Timestamp':
         timeBaseNum = eval(timeBase)
         return cls(label = title, time = int(timeBaseNum*int(start)))
 
+
     def toFfmpegChapter(self, nextTime):
         return self.chapterFmt.format(start = 1000*self.time, end = int(1000*nextTime) - 1, title = self.label) 
+
+    
 
 
 def scrapeJson(j, desiredKey: str, results:list):
@@ -202,6 +207,16 @@ def scrapeCommentsForTimestamps(videoId):
 
     return timeStamps
 
-if __name__ == "__main__":
-    print(_sanitizeLabel("wowee whats this ")+"$")
-
+if __name__ == '__main__':
+    tests = ['- 01. "Goodmorning America!"',
+    '- 01. "Goodmorning America!"',
+    '- 00: "Goodmorning America!"',
+    '- 00:"Goodmorning America!"',
+    '-00: "Goodmorning America!"',
+    '|->: 01. "Goodmorning America!"',
+    '- "Goodmorning America!"',
+    '-> "Goodmorning America!"',
+    '04.1 "Goodmorning America!"',
+    '04.1 "Goodmorning America!"',
+    '104. "Goodmorning America!"',
+    ]

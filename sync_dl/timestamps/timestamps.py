@@ -53,32 +53,24 @@ def createChapterFile(songPath:str, songName:str) -> bool:
 
     return True
 
-def wipeChapterFile() -> bool:
-    '''detects chapters in file and wipes them, info logs them. returns true/false if chapters where detected'''
+def wipeChapterFile() -> list[Timestamp]:
+    '''detects chapters in file and wipes them. returns list of existing timestamps'''
 
+    existingTimestamps = []
     with open(cfg.ffmpegMetadataPath, "r+") as f:
         contents = f.read()
 
-        chaptersExist = False
-
         for (timebase, start, _, title) in chapterRe.findall(contents):
-            if not chaptersExist:
-                chaptersExist = True
-                cfg.logger.info("\nExisting Timestamps:")
+            existingTimestamps.append(Timestamp.fromFfmpegChapter(timebase, start, title))
 
-            timestamp = Timestamp.fromFfmpegChapter(timebase, start, title)
-            
-            cfg.logger.info(timestamp)
-
-        if chaptersExist:
+        if len(existingTimestamps) > 0:
             cfg.logger.debug(f"Wiping Chapters from FFMPEG Metadata File")
             newContents = chapterRe.sub("", contents)
             f.seek(0)
             f.write(newContents)
             f.truncate()
-            return True
 
-    return chaptersExist
+    return existingTimestamps
 
 
 def addTimestampsToChapterFile(timestamps:list[Timestamp], songPath:str):
