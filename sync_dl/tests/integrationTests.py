@@ -103,7 +103,7 @@ class test_integration(unittest.TestCase):
     plName = 'integration'
     plPath = f'{cfg.testPlPath}/{plName}'
 
-    def test_creation(self):
+    def test_0_creation(self):
 
         cfg.logger.info("Running test_creation")
 
@@ -120,7 +120,7 @@ class test_integration(unittest.TestCase):
 
 
     
-    def test_smartSyncNoEdit(self):
+    def test_1_smartSyncNoEdit(self):
         cfg.logger.info("Running test_smartSyncNoEdit")
         smartSync(self.plPath)
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -129,7 +129,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
     
 
-    def test_smartSyncSwap(self):
+    def test_2_smartSyncSwap(self):
         '''Simulates remote reordering by reordering local'''
         cfg.logger.info("Running test_smartSyncSwap")
         swap(self.plPath,0 , 1)
@@ -140,7 +140,7 @@ class test_integration(unittest.TestCase):
 
         self.assertTrue(passed)
 
-    def test_smartSyncMove(self):
+    def test_3_smartSyncMove(self):
         cfg.logger.info("Running test_smartSyncSwap")
 
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -156,7 +156,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
 
 
-    def test_smartSyncShuffle(self):
+    def test_4_smartSyncShuffle(self):
         '''Simulates remote reordering by shuffling local'''
         cfg.logger.info("Running test_smartSyncShuffle")
         shuffle(self.plPath)
@@ -167,7 +167,7 @@ class test_integration(unittest.TestCase):
 
         self.assertTrue(passed)
 
-    def test_smartSyncDelAndShuffle(self):
+    def test_5_smartSyncDelAndShuffle(self):
         cfg.logger.info("Running test_smartSyncDelAndShuffle")
         shuffle(self.plPath)
 
@@ -196,7 +196,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
     
 
-    def test_addTimeStamps(self):
+    def test_6_addTimeStamps(self):
         currentDir = getLocalSongs(self.plPath)
 
         songName = currentDir[0]
@@ -223,7 +223,7 @@ class test_integration(unittest.TestCase):
         for i in range(0,len(timestamps)):
             self.assertEqual(timestamps[i], appliedTimestamps[i])
 
-    def test_scrapeTimeStamps(self):
+    def test_7_scrapeTimeStamps(self):
         videoId = '9WbtgupHTPA'
         knownTimeStamps = [
             Timestamp(time = 0, label = 'beginning'),
@@ -241,7 +241,7 @@ class test_integration(unittest.TestCase):
         for i in range(0,len(scrapedTimestamps)):
             self.assertEqual(scrapedTimestamps[i], knownTimeStamps[i])
 
-    def test_stateSummery(self):
+    def test_8_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
         cfg.logger.info("Integration Test End Report:")
         

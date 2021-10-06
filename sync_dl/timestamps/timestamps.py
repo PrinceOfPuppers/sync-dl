@@ -4,6 +4,7 @@ import subprocess
 
 import sync_dl.config as cfg
 from sync_dl.timestamps.scraping import Timestamp
+from typing import List
 from sync_dl import noInterrupt
 
 
@@ -18,7 +19,7 @@ def _getSongLengthSeconds(songPath:str) -> float:
     return float(result.stdout)
 
 
-def getTimestamps(ffmpegMetadataPath:str) -> list[Timestamp]:
+def getTimestamps(ffmpegMetadataPath:str) -> List[Timestamp]:
     with open(ffmpegMetadataPath, "r") as f:
         contents = f.read()
         timestamps = []
@@ -53,7 +54,7 @@ def createChapterFile(songPath:str, songName:str) -> bool:
 
     return True
 
-def wipeChapterFile() -> list[Timestamp]:
+def wipeChapterFile() -> List[Timestamp]:
     '''detects chapters in file and wipes them. returns list of existing timestamps'''
 
     existingTimestamps = []
@@ -73,7 +74,7 @@ def wipeChapterFile() -> list[Timestamp]:
     return existingTimestamps
 
 
-def addTimestampsToChapterFile(timestamps:list[Timestamp], songPath:str):
+def addTimestampsToChapterFile(timestamps:List[Timestamp], songPath:str):
 
     timestamps.sort(key = lambda ele: ele.time)
 
