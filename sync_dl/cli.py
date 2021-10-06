@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 
 import argparse
@@ -9,8 +8,7 @@ from sync_dl import __version__
 from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
-
-from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek, togglePrepends
+from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek, togglePrepends, addTimestampsFromComments
 
 # import optional modules, otherwise replace commands with stubs
 try:
@@ -131,23 +129,29 @@ def setupParsers():
     parser.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     parser.add_argument('-f','--force-m4a', action='store_true', help='Will only download m4a, rather than seeking for best audio' )
+    parser.set_defaults(func = lambda args: baseHandler(args, parser))
 
     subparsers = parser.add_subparsers()
-    tracks = subparsers.add_parser('tracks', help='detect, add and remove tracks from songs', formatter_class=ArgsOnce)
-    tracks.add_argument('-g', nargs=1, metavar='I', type=int, help='detect tracks in pinned/top comments for song index I')
-    tracks.add_argument('PLAYLIST',nargs=1, type=str, help='the name of the directory for the playlist')
-    tracks.set_defaults(func=tracksHandler)
+    timestamps = subparsers.add_parser('timestamps', help='detect, add and remove tracks from songs', formatter_class=ArgsOnce)
+    timestamps.add_argument('-s', '--scrape', nargs=1, metavar='I', type=int, help='detect tracks in pinned/top comments for song index I')
+    timestamps.add_argument('-r', '--scrape-range', nargs=2, metavar=('I1','I2'), type=int, help='detect tracks in pinned/top comments for song index I1 to I2')
+    timestamps.add_argument('-a', '--auto-accept', action='store_true', help='automatically accept new timestamps')
+    timestamps.add_argument('-o', '--overwrite', action='store_true', help='allow overwriting of existing timestamps, will be prompted')
+    timestamps.add_argument('--auto-overwrite', action='store_true', help='allow overwriting of existing timestamps, will not be prompted to approve overwritng/accepting')
+
+    timestamps.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
+    timestamps.set_defaults(func = lambda args: timestampsHandler(args, timestamps))
     
     new = subparsers.add_parser('new', help='downloads new playlist from URL with name PLAYLIST', formatter_class=ArgsOnce)
     new.add_argument('URL', type=str, help='playlist URL')
     new.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
-    new.set_defaults(func=newHandler)
+    new.set_defaults(func = lambda args: newHandler(args, new))
 
     sync = subparsers.add_parser("sync", help='smart sync playlist, unless options are added', formatter_class=ArgsOnce)
     sync.add_argument('-s','--smart-sync', action='store_true', help='smart sync local playlist with remote playlist')
     sync.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
     sync.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
-    sync.set_defaults(func=syncHandler)
+    sync.set_defaults(func = lambda args: syncHandler(args, sync))
 
 
     edit = subparsers.add_parser("edit", help='change order of local playlist', formatter_class=ArgsOnce)
@@ -157,19 +161,19 @@ def setupParsers():
     edit.add_argument('-w','--swap',nargs=2, metavar=('I1','I2'), type = int, help='swaps order of songs index I1 and I2')
     edit.add_argument('-T','--toggle-prepends', action='store_true', help='toggles number prepends on/off')
     edit.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
-    edit.set_defaults(func=editHandler)
+    edit.set_defaults(func = lambda args: editHandler(args, edit))
 
     #changing remote
     ytapi = subparsers.add_parser("ytapi", help='push local playlist order to youtube playlist', formatter_class=ArgsOnce)
     ytapi.add_argument('--push-order', action='store_true', help='changes remote order to match local order (requires sign in with google)')
     ytapi.add_argument('--logout', action='store_true', help='revokes youtube oauth access tokens and deletes them')
     ytapi.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
-    ytapi.set_defaults(func=ytapiHandler)
+    ytapi.set_defaults(func = lambda args: ytapiHandler(args, ytapi))
 
     config = subparsers.add_parser("config", help='change configuration', formatter_class=ArgsOnce)
     # the '\n' are used as defaults so they dont get confused with actual paths
     config.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
-    config.set_defaults(func=configHandler)
+    config.set_defaults(func= lambda args: configHandler(args, config))
 
     #info
     info = subparsers.add_parser("info", help='get info about playlist', formatter_class=ArgsOnce)
@@ -177,13 +181,15 @@ def setupParsers():
     info.add_argument('-d','--diff',action='store_true', help='shows differences between local and remote playlists' )
     info.add_argument('--peek',nargs='?',metavar='FMT', const=cfg.defualtPeekFmt, type=str, help='prints remote PLAYLIST (url or name) without downloading, optional FMT string can contain: {id}, {url}, {title}, {duration}, {uploader}')
     info.add_argument('PLAYLIST',nargs='?', type=str, help='the name of the directory for the playlist')
-    info.set_defaults(func=infoHandler)
+    info.set_defaults(func = lambda args: infoHandler(args, info))
 
     args = parser.parse_args()
     return args
 
+def baseHandler(_,parser):
+    parser.print_help()
 
-def newHandler(args):
+def newHandler(args,_):
     plPath = getPlPath(args.PLAYLIST)
     if os.path.exists(plPath):
         cfg.logging.error(f"Cannot Make Playlist {args.PLAYLIST} Because Directory Already Exists at Path: \n{plPath}")
@@ -192,7 +198,7 @@ def newHandler(args):
 
 
 
-def syncHandler(args):
+def syncHandler(args,parser):
     plPath = getPlPath(args.PLAYLIST)
     if not playlistExists(plPath):
         return
@@ -205,9 +211,13 @@ def syncHandler(args):
     elif args.append_new:
         appendNew(plPath)
 
+    else:
+        parser.print_help()
+        cfg.logger.error("Please Select an Option")
 
 
-def configHandler(args):
+
+def configHandler(args,parser):
     if args.local_dir:
         if args.local_dir == '\n':
             if cfg.musicDir=='':
@@ -224,9 +234,12 @@ def configHandler(args):
         cfg.writeToConfig('musicDir',music)
         cfg.musicDir = music
 
+    else:
+        parser.print_help()
+        cfg.logger.error("Please Select an Option")
 
 
-def editHandler(args): 
+def editHandler(args,parser): 
 
     plPath = getPlPath(args.PLAYLIST)
     if not playlistExists(plPath):
@@ -247,11 +260,16 @@ def editHandler(args):
         else:
             manualAdd(plPath,args.manual_add[0],int(args.manual_add[1]))
 
+    # if no options are selected, show help
+    elif not args.toggle_prepends:
+        parser.print_help()
+        cfg.logger.error("Please Select an Option")
+
     if args.toggle_prepends:
         togglePrepends(plPath)
 
 
-def ytapiHandler(args):
+def ytapiHandler(args,parser):
     if args.logout:
         logout()
         return
@@ -263,8 +281,11 @@ def ytapiHandler(args):
     if args.push_order:
         pushLocalOrder(plPath)
 
+    else:
+        parser.print_help()
+        cfg.logger.error("Please Select an Option")
 
-def infoHandler(args):
+def infoHandler(args,parser):
     if args.peek:
         if not args.PLAYLIST:
             if args.peek != cfg.defualtPeekFmt: #removes the need to have posistional args before empty nargs='?' option
@@ -296,10 +317,32 @@ def infoHandler(args):
     if args.diff:
         compareMetaData(plPath)
 
-def tracksHandler(args):
+    if (not args.print) and (not args.diff):
+        parser.print_help()
+        cfg.logger.error("Please Select an Option")
+
+def timestampsHandler(args,parser):
     plPath = getPlPath(args.PLAYLIST)
     if not playlistExists(plPath):
         return
+
+    autoAccept = args.auto_accept
+    overwrite = args.overwrite
+    autoOverwrite = args.auto_overwrite
+
+    if autoOverwrite:
+        autoAccept = True
+        overwrite = True
+
+    if args.scrape:
+        addTimestampsFromComments(plPath, args.scrape[0], args.scrape[0], autoAccept=autoAccept, overwrite=overwrite, autoOverwrite=autoOverwrite)
+    
+    elif args.scrape_range:
+        addTimestampsFromComments(plPath, args.scrape_range[0], args.scrape_range[1], autoAccept=autoAccept, overwrite=overwrite, autoOverwrite=autoOverwrite)
+
+    else:
+        parser.print_help()
+        cfg.logger.error("Please Select an Option")
 
 def cli():
     '''

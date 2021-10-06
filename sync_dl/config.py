@@ -56,6 +56,8 @@ tmpDownloadPath = f"{modulePath}/{section['tmpDownloadPath']}"
 
 musicDir = section['musicDir']
 
+ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
+
 #TODO move add to ini
 defualtPeekFmt='{index}: {url} {title}'
 

@@ -10,9 +10,11 @@ import random
 from sync_dl.commands import smartSync,newPlaylist,swap,shuffle,move
 import sync_dl.config as cfg
 from sync_dl.commands import compareMetaData, showPlaylist
-from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs
-from sync_dl.plManagement import editPlaylist,correctStateCorruption
+from sync_dl.helpers import getLocalSongs
 from sync_dl.ytdlWrappers import getTitle,getIdsAndTitles
+
+from sync_dl.timestamps.timestamps import getTimestamps, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
+from sync_dl.timestamps.scraping import Timestamp, scrapeCommentsForTimestamps
 
 
 def metaDataSongsCorrect(metaData,plPath):
@@ -101,7 +103,7 @@ class test_integration(unittest.TestCase):
     plName = 'integration'
     plPath = f'{cfg.testPlPath}/{plName}'
 
-    def test_creation(self):
+    def test_0_creation(self):
 
         cfg.logger.info("Running test_creation")
 
@@ -118,7 +120,7 @@ class test_integration(unittest.TestCase):
 
 
     
-    def test_smartSyncNoEdit(self):
+    def test_1_smartSyncNoEdit(self):
         cfg.logger.info("Running test_smartSyncNoEdit")
         smartSync(self.plPath)
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -127,7 +129,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
     
 
-    def test_smartSyncSwap(self):
+    def test_2_smartSyncSwap(self):
         '''Simulates remote reordering by reordering local'''
         cfg.logger.info("Running test_smartSyncSwap")
         swap(self.plPath,0 , 1)
@@ -138,7 +140,7 @@ class test_integration(unittest.TestCase):
 
         self.assertTrue(passed)
 
-    def test_smartSyncMove(self):
+    def test_3_smartSyncMove(self):
         cfg.logger.info("Running test_smartSyncSwap")
 
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -154,7 +156,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
 
 
-    def test_smartSyncShuffle(self):
+    def test_4_smartSyncShuffle(self):
         '''Simulates remote reordering by shuffling local'''
         cfg.logger.info("Running test_smartSyncShuffle")
         shuffle(self.plPath)
@@ -165,7 +167,7 @@ class test_integration(unittest.TestCase):
 
         self.assertTrue(passed)
 
-    def test_smartSyncDelAndShuffle(self):
+    def test_5_smartSyncDelAndShuffle(self):
         cfg.logger.info("Running test_smartSyncDelAndShuffle")
         shuffle(self.plPath)
 
@@ -194,11 +196,55 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
     
 
+    def test_6_addTimeStamps(self):
+        currentDir = getLocalSongs(self.plPath)
+
+        songName = currentDir[0]
+        songPath = f"{self.plPath}/{songName}"
+
+        # Get timestamps
+        timestamps = [Timestamp(time=0, label="test 0"), Timestamp(time = 1, label="test1"), Timestamp(time=2, label="test2")]
+
+        if not createChapterFile(songPath, songName):
+            self.fail("Chapter Creation Failed")
+
+        wipeChapterFile()
+
+        addTimestampsToChapterFile(timestamps, songPath)
+
+        if not applyChapterFileToSong(songPath, songName):
+            cfg.logger.error(f"Failed to Add Timestamps To Song {songName}")
+            self.fail("Chapter Creation Failed")
+
+        appliedTimestamps = getTimestamps(cfg.ffmpegMetadataPath)
+
+        self.assertEqual(len(timestamps), len(appliedTimestamps))
+
+        for i in range(0,len(timestamps)):
+            self.assertEqual(timestamps[i], appliedTimestamps[i])
+
+    def test_7_scrapeTimeStamps(self):
+        videoId = '9WbtgupHTPA'
+        knownTimeStamps = [
+            Timestamp(time = 0, label = 'beginning'),
+            Timestamp(time = 20, label = 'some stuff'),
+            Timestamp(time = 90, label = 'shaking up the format'),
+            Timestamp(time = 201, label = 'more shaking up the format'),
+            Timestamp(time = 361, label = 'wowee whats this'),
+        ]
+
+        scrapedTimestamps = scrapeCommentsForTimestamps(videoId)
 
 
-    def test_stateSummery(self):
+        self.assertEqual(len(knownTimeStamps), len(scrapedTimestamps))
+
+        for i in range(0,len(scrapedTimestamps)):
+            self.assertEqual(scrapedTimestamps[i], knownTimeStamps[i])
+
+    def test_8_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
-        cfg.logger.info("End of Integration Test Summery")
+        cfg.logger.info("Integration Test End Report:")
         
         compareMetaData(self.plPath)
         showPlaylist(self.plPath)
+

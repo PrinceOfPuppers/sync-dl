@@ -1,15 +1,18 @@
 import os
 
-import argparse
-
 import shelve
 import re
 import ntpath
 
 from sync_dl import noInterrupt
+
 from sync_dl.ytdlWrappers import getIDs, getIdsAndTitles,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
 from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
+
+from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
+from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
+
 import sync_dl.config as cfg
 
 
@@ -92,9 +95,6 @@ def smartSync(plPath):
 
     editPlaylist(plPath,newOrder)
 
-
-def hardSync():
-    '''Syncs to remote playlist will delete local songs'''
 
 def appendNew(plPath):
     '''will append new songs in remote playlist to local playlist in order that they appear'''
@@ -447,15 +447,22 @@ def compareMetaData(plPath):
 
         # summery
         cfg.logger.info(f"\n=====================[Summary]=====================")
-        cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
-        cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
-        for i, localId, title in inLocalNotRemote:
-                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}")
 
-        cfg.logger.info(f"\n------------[In Remote But Not In Local]-----------")
-        cfg.logger.info(f"{' '*numDigits}: Remote ID   : Remote Title")
-        for j, remoteId, title in inRemoteNotLocal:
-                cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}")
+        if len(inLocalNotRemote)>0:
+            cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
+            cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
+            for i, localId, title in inLocalNotRemote:
+                    cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}")
+
+        if len(inRemoteNotLocal)>0:
+            cfg.logger.info(f"\n------------[In Remote But Not In Local]-----------")
+            cfg.logger.info(f"{' '*numDigits}: Remote ID   : Remote Title")
+            for j, remoteId, title in inRemoteNotLocal:
+                    cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}")
+
+        if len(inLocalNotRemote) == 0 and len(inRemoteNotLocal) == 0:
+            cfg.logger.info(f"Local And Remote Contain The Same Songs")
+
          
 
 def peek(urlOrPlName,fmt="{index}: {url} {title}"):
@@ -491,8 +498,6 @@ def peek(urlOrPlName,fmt="{index}: {url} {title}"):
         cfg.logger.info(songStr)
 
 
-
-
 def togglePrepends(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         if "removePrependOrder" in metaData:
@@ -502,4 +507,127 @@ def togglePrepends(plPath):
             return
         removePrepend(plPath,metaData)
         cfg.logger.info("Prepends Removed")
+
+
+def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite = False, autoOverwrite = False):
+
+    with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
+        correctStateCorruption(plPath,metaData)
+
+        currentDir = getLocalSongs(plPath)
+        idsLen = len(metaData["ids"])
+
+        ### Sanitize Inputs ###
+        if start >= idsLen:
+            cfg.logger.error(f"No song has Index {start}, Largest Index is {idsLen-1}")
+            return
+
+        elif start < 0:
+            cfg.logger.error(f"No Song has a Negative Index")
+            return
+            
+        #clamp end index
+        if end >= idsLen or end == -1:
+            end = idsLen-1
+
+        elif end < start:
+            cfg.logger.error("End Index Must be Greater Than or Equal To Start Index (or -1)")
+            return
+        ### Sanitize Inputs Over ###
+
+
+        multipleSongs = start!=end
+        for i in range(start,end+1):
+
+            if autoOverwrite and not overwrite:
+                cfg.logger.error("auto-overwrite can only be enabled if overwrite is")
+                return
+
+            if autoOverwrite and not autoAccept:
+                cfg.logger.error("auto-overwrite can only be enabled if auto-accept is")
+                return
+
+            songName = currentDir[i]
+            songPath = f"{plPath}/{songName}"
+            videoId = metaData['ids'][i]
+
+            if not createChapterFile(songPath, songName):
+                continue
+
+            # Check for existing chapters in ffmpegMetadata file, wipe them, and prompt user to continue
+            existingTimestamps = wipeChapterFile()
+            if len(existingTimestamps) > 0:
+                if not overwrite:
+                    cfg.logger.info(f"{i}: Existing Timestamps Detected on Song: {songName}\nSkipping...\n")
+                    continue
+
+            # Get timestamps
+            cfg.logger.info(f"{i}: Scraping Comments for Timestamps of Song: {songName}")
+            timestamps = scrapeCommentsForTimestamps(videoId)
+
+            if len(timestamps) == 0:
+                cfg.logger.info(f"No Timestamps Found\n")
+                continue
+
+            if existingTimestamps == timestamps:
+                cfg.logger.info("Timestamps Found are Idential to Existing Timestamps\n")
+                continue
+
+            if len(existingTimestamps) > 0:
+                if not overwrite:
+                    cfg.logger.info("Comment Timestamps and Existing Timestamps Found but Overwrite is Disabled\n")
+                    continue
+
+                # existing timestamps, plus timestamps found
+                cfg.logger.info(f"\nExisting Timestamps Found:")
+                for timestamp in existingTimestamps:
+                    cfg.logger.info(timestamp)
+                cfg.logger.info(f"\nComment Timestamps Found:")
+                for timestamp in timestamps:
+                    cfg.logger.info(timestamp)
+                cfg.logger.info('\n')
+
+                if autoOverwrite and autoAccept:
+                    cfg.logger.info("Auto Overwriting\n")
+                    continue
+
+                cfg.logger.info("Existing and Comment Timestamps Found")
+                response = (input(f"OVERWRITE Timestamps for: {songName}? \n[y]es, [n]o" + ", [a]uto-overwrites/accepts, [d]eny-overwrites:" if multipleSongs else "")).lower()
+                if response == 'a':
+                    autoAccept = True
+                    overwrite = True
+                    autoOverwrite = True
+                if response == 'd':
+                    overwrite = False
+                if response != 'y' and response != 'a':
+                    cfg.logger.info('\n')
+                    continue
+
+            else:
+                # comment timestamps found, no existing timestamps found
+                cfg.logger.info(f"\nComment Timestamps Found:")
+                for timestamp in timestamps:
+                    cfg.logger.info(timestamp)
+                cfg.logger.info('\n')
+
+                
+                if not autoAccept:
+                    response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o" + ", [a]uto-accept:" if multipleSongs else "")).lower()
+                    if response == 'a':
+                        autoAccept = True
+                    if response != 'y' and response != 'a':
+                        cfg.logger.info('\n')
+                        continue
+                else:
+                    cfg.logger.info("Auto Accepting Timestamps")
+
+            addTimestampsToChapterFile(timestamps, songPath)
+
+            if not applyChapterFileToSong(songPath, songName):
+                cfg.logger.error(f"Failed to Add Timestamps To Song {songName}\n")
+                continue
+
+            cfg.logger.info("Timestamps Applied!\n")
+
+
 
