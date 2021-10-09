@@ -40,13 +40,13 @@ sync-dl [options] COMMAND [options] PLAYLIST
 ```
 
 sync-dl has the several subcommands, run `sync-dl -h` to see them all and `sync-dl [COMMAND] -h` to get info on a particular one.
-As an example, here is the new command which creates new playlists from youtube url [URL]:
+As an example, here is the new command which creates new playlists from a youtube [URL]:
 
 ```
 sync-dl new [URL] [PLAYLIST]
 ```
 
-the playlist will be put it in directory [PLAYLIST], which is relative to the current working directory unless you specify your music directory using:
+The playlist will be put it in directory [PLAYLIST], which is relative to the current working directory unless you specify your music directory using:
 
 ```
 sync-dl config -l [PATH]
@@ -56,7 +56,7 @@ Where [PATH] is where you wish to store all your playlists in, ie) `~/Music`.
 
 
 ## Smart Sync:
-The main feature of sync-dl
+The main feature of sync-dl:
 ```
 sync-dl sync -s PLAYLIST
 ```
@@ -65,19 +65,21 @@ Adds new music from remote playlist to local playlist, also takes ordering of re
 without deleting songs no longer available in remote playlist.
 
 Songs that are no longer available in remote, will remain after the song they are currently after
-in the local playlist.
+in the local playlist to maintain playlist flow.
 
 
 ## Push Order:
 ```
 sync-dl ytapi --push order [PLAYLIST]
 ```
-sync-dl has a submodule which uses the youtube api the preform the reverse of Smart Sync called Push Order. sync-dl will prompt you to install the submodule if you use any of its options ie) --push-order. you must also sign in with google (so sync-dl can edit the order of your playlist)
+sync-dl has a submodule which uses the youtube api the preform the reverse of Smart Sync called Push Order. sync-dl will prompt you to install the submodule if you use any of its options ie) --push-order. you must also sign in with google (so sync-dl can edit the order of your playlist).
 
 For more information see https://github.com/PrinceOfPuppers/sync-dl-ytapi
 
+the order of songs which work well for large playlists, ie) 
 ## Many More!
-Includes tools for managing the order of songs which work well for large playlists, ie) --move-range, which allows a user to move a block of songs to a different posistion. doing so on youtube would require moving each song individually using clunky drag and drop tools.
+Includes tools managing large playlists, For example `sync-dl edit --move-range [I1] [I2] [NI] [PLAYLIST]` which allows a user to move a block of songs From [I1] to [I2] to after song [N1]. 
+Moving large blocks of songs on youtube requires dragging each song individually up/down a the page as it trys to dynamically load the hunders of songs you're scrolling past, which you would have to do every time you would want to add new music to somewhere other than the end of the playlist... (ask me how I know :^P)
 
 
 # EXAMPLE
@@ -94,7 +96,7 @@ download the playlist at the provided url to it.
 ```
 sync-dl timestamps --scrape-range 0 4 sweetJams
 ```
-Will scrape youtube comments for timestamps to add to songs 0 to 4 of sweetJams. Will ask you to review them before it adds them (can be changed with option -a)
+Will scrape youtube comments for timestamps to add to songs 0 to 4 of sweetJams. Will ask you to review them before it adds them (can be changed with option -a).
 
 ```
 sync-dl edit -m 1 5 sweetJams
@@ -114,7 +116,7 @@ Will use smart sync on sweetJams, downloading new songs from the remote playlist
 ```
 sync-dl edit --move-range 0 4 8 sweetJams
 ```
-Will move all songs from 0 to 4 to after song 8
+Will move all songs from 0 to 4 to after song 8.
 
 ```
 sync-dl info -p sweetJams
@@ -129,7 +131,7 @@ Will prompt you to install sync-dl-ytapi and sign in with google (if you havent 
 ```
 sync-dl ytapi --logout
 ```
-Will remove invalidate and delete access and refresh token for the youtube api, requiring you to log in next time you use `sync-dl ytapi --pushorder`
+Will remove invalidate and delete access and refresh token for the youtube api, requiring you to log in next time you use `sync-dl ytapi --pushorder`.
 
 
 # DEVLOPMENT
