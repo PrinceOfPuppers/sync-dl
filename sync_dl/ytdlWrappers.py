@@ -37,7 +37,7 @@ def getIdsAndTitles(url):
                 titles.append(ydl.prepare_filename(videoData))
         return ids, titles
     except:
-        return []
+        return [],[]
 
 def getTitle(url):
     '''

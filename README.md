@@ -36,27 +36,42 @@ The application does not store any of its metadata in songs, metadata is stored 
 
 # Usage
 ```
-sync-dl [options] PLAYLIST
+sync-dl [options] COMMAND [options] PLAYLIST
 ```
-Where playlist is simply the name of the directory you wish to store the playlist in. playlist directory will always be in current working directory unless a music directory is specified using the -l, --local-dir option to hard set a music directory.
 
-To see all options use the command:
+sync-dl has the several subcommands, run `sync-dl -h` to see them all and `sync-dl [COMMAND] -h` to get info on a particular one.
+As an example, here is the new command which creates new playlists from youtube url [URL]:
+
 ```
-sync-dl -h
+sync-dl new [URL] [PLAYLIST]
 ```
+
+the playlist will be put it in directory [PLAYLIST], which is relative to the current working directory unless you specify your music directory using:
+
+```
+sync-dl config -l [PATH]
+```
+
+Where [PATH] is where you wish to store all your playlists in, ie) `~/Music`.
+
 
 ## Smart Sync:
 The main feature of sync-dl
 ```
-sync-dl -s PLAYLIST
+sync-dl sync -s PLAYLIST
 ```
+
 Adds new music from remote playlist to local playlist, also takes ordering of remote playlist
 without deleting songs no longer available in remote playlist.
 
 Songs that are no longer available in remote, will remain after the song they are currently after
 in the local playlist.
 
+
 ## Push Order:
+```
+sync-dl ytapi --push order [PLAYLIST]
+```
 sync-dl has a submodule which uses the youtube api the preform the reverse of Smart Sync called Push Order. sync-dl will prompt you to install the submodule if you use any of its options ie) --push-order. you must also sign in with google (so sync-dl can edit the order of your playlist)
 
 For more information see https://github.com/PrinceOfPuppers/sync-dl-ytapi
@@ -64,41 +79,57 @@ For more information see https://github.com/PrinceOfPuppers/sync-dl-ytapi
 ## Many More!
 Includes tools for managing the order of songs which work well for large playlists, ie) --move-range, which allows a user to move a block of songs to a different posistion. doing so on youtube would require moving each song individually using clunky drag and drop tools.
 
+
 # EXAMPLE
 ```
-sync-dl -l my/local/music/folder
+sync-dl config -l my/local/music/folder
 ```
-Will use my/local/music/folder to store and manipulate playlist in the future.
+Will use my/local/music/folder to store and manipulate playlists in the future.
 ```
-sync-dl -n https://www.youtube.com/playlist?list=PL-lQgJ3eJ1HtLvM6xtxOY_1clTLov0qM3 sweetJams
+sync-dl new https://www.youtube.com/playlist?list=PL-lQgJ3eJ1HtLvM6xtxOY_1clTLov0qM3 sweetJams
 ```
 Will create a new playlist at my/local/music/folder/sweetJams and
 download the playlist at the provided url to it.
 
 ```
-sync-dl -m 1 5 sweetJams
+sync-dl timestamps --scrape-range 0 4 sweetJams
+```
+Will scrape youtube comments for timestamps to add to songs 0 to 4 of sweetJams. Will ask you to review them before it adds them (can be changed with option -a)
+
+```
+sync-dl edit -m 1 5 sweetJams
 ```
 Will move song number 1 in the playlist to position 5.
+
 ```
-sync-dl -a sweetJams
+sync-dl sync -a sweetJams
 ```
 Will check for any new songs in the remote playlist and append them to the end of sweetJams.
+
 ```
-sync-dl -s sweetJams
+sync-dl sync -s sweetJams
 ```
 Will use smart sync on sweetJams, downloading new songs from the remote playlist and reordering the playlist to match the order of the remote playlist without deleting any songs that are no longer available.
+
 ```
-sync-dl --move-range 0 4 8 sweetJams
+sync-dl edit --move-range 0 4 8 sweetJams
 ```
 Will move all songs from 0 to 4 to after song 8
+
 ```
-sync-dl -p sweetJams
+sync-dl info -p sweetJams
 ```
 Will give you all the urls for the songs in sweetJams.
+
 ```
-sync-dl --push-order sweetJams
+sync-dl ytapi --push-order sweetJams
 ```
 Will prompt you to install sync-dl-ytapi and sign in with google (if you havent already), after doing so it will push the local order of the playlist to youtube.
+
+```
+sync-dl ytapi --logout
+```
+Will remove invalidate and delete access and refresh token for the youtube api, requiring you to log in next time you use `sync-dl ytapi --pushorder`
 
 
 # DEVLOPMENT
@@ -111,6 +142,7 @@ cd sync-dl
 pip install -e .
 ```
 This will build and install sync-dl in place, allowing you to work on the code without having to reinstall after changes.
+
 
 ## Automated Testing
 ```
