@@ -592,7 +592,7 @@ def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite 
                     continue
 
                 cfg.logger.info("Existing and Comment Timestamps Found")
-                response = (input(f"OVERWRITE Timestamps for: {songName}? \n[y]es, [n]o" + ", [a]uto-overwrites/accepts, [d]eny-overwrites:" if multipleSongs else "")).lower()
+                response = (input(f"OVERWRITE Timestamps for: {songName}? \n[y]es, [n]o" + (", [a]uto-overwrites/accepts, [d]eny-overwrites" if multipleSongs else "") + ":")).lower()
                 if response == 'a':
                     autoAccept = True
                     overwrite = True
@@ -612,7 +612,8 @@ def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite 
 
                 
                 if not autoAccept:
-                    response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o" + ", [a]uto-accept:" if multipleSongs else "")).lower()
+                    cfg.logger.info("here");
+                    response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o" + (", [a]uto-accept" if multipleSongs else "") + ":")).lower()
                     if response == 'a':
                         autoAccept = True
                     if response != 'y' and response != 'a':

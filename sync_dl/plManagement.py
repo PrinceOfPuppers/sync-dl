@@ -33,7 +33,6 @@ def _checkDeletions(plPath,metaData):
 
     numDeleted = len(deleted)
 
-
     if numDeleted > 0:
         cfg.logger.debug(f"songs numbered {deleted} are no longer in playlist")
 

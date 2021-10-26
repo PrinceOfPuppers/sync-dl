@@ -6,7 +6,7 @@ from typing import NamedTuple, List
 import sync_dl.config as cfg
 
 
-labelSanitizeRe = re.compile(r'^(?:[:\-|\s>]*)(?:\d{1,3}[\.:|]\s)?(.*?)[:\-|\s>]*$')
+labelSanitizeRe = re.compile(r'^(?:[:\-|\s>]*)(?:\d{1,3}[\.:|])?(?:\s)?(.*?)[:\-|\s>]*$')
 
 class Timestamp(NamedTuple):
     time: int
