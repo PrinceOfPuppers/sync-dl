@@ -110,7 +110,6 @@ def _getComments(url):
     continuationToken = y.group(1)
     clientVersion = z.group(1)
 
-    r=requests.get(url)
     requestData = '''{
         "context": {
             "adSignalsInfo": {
