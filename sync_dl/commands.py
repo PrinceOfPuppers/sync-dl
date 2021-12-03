@@ -182,7 +182,7 @@ def swap(plPath, index1, index2):
             cfg.logger.error(f"Given Index is Negative")
             return
 
-        cfg.logger.info(f"Swapping {currentDir[index1]} and {currentDir[index2]}")
+        cfg.logger.info(f"Swapping: \n{currentDir[index1]} \nand \n{currentDir[index2]}")
         #shift index1 out of the way (to idsLen)
 
         oldName = currentDir[index1]

@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 
 import argparse
@@ -76,7 +77,7 @@ class ArgsOnce(argparse.HelpFormatter):
 def setupLogger(args):
     '''sets cfg.logger level based on verbosity'''
     #verbosity
-    stream = logging.StreamHandler()
+    stream = logging.StreamHandler(sys.stdout)
     if args.verbose:
         cfg.logger.setLevel(logging.DEBUG)
         stream.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))

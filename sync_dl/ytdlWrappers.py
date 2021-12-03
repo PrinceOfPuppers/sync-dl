@@ -1,4 +1,5 @@
-import youtube_dl
+#import youtube_dl
+import yt_dlp as youtube_dl
 import os
 import time
 
@@ -6,10 +7,26 @@ import shutil
 
 import sync_dl.config as cfg
 
+
+class MyLogger:
+    def debug(self, msg):
+        cfg.logger.debug(msg)
+
+    def info(self, msg):
+        cfg.logger.debug(msg)
+
+    def warning(self, msg):
+        cfg.logger.debug(msg)
+
+    def error(self, msg):
+        cfg.logger.debug(msg)
+
+
 #ids are the unique part of each videos url
 def getIDs(playlistUrl):
     try:
         params={"extract_flat": True, "quiet": True}
+        params['logger'] = MyLogger()
         with youtube_dl.YoutubeDL(params) as ydl:
             result = ydl.extract_info(playlistUrl,download=False)
             ids = []
@@ -20,7 +37,6 @@ def getIDs(playlistUrl):
         return []
 
 
-
 def getIdsAndTitles(url):
     '''
     used to check for corrupted metadata in integration tests
@@ -28,6 +44,7 @@ def getIdsAndTitles(url):
     '''
     try:
         params={"extract_flat": True, "quiet": True, "outtmpl": f'%(title)s'}
+        params['logger'] = MyLogger()
         with youtube_dl.YoutubeDL(params) as ydl:
             result = ydl.extract_info(url,download=False)
             ids = []
@@ -49,6 +66,7 @@ def getTitle(url):
     params['extract_flat'] = True
     params['quiet'] = True
     params["outtmpl"] = f'%(title)s'
+    params['logger'] = MyLogger()
     
     with youtube_dl.YoutubeDL(params) as ydl:
         
@@ -64,6 +82,7 @@ def downloadToTmp(videoId,numberStr):
         os.mkdir(cfg.tmpDownloadPath)
     
     cfg.params["outtmpl"] = f'{cfg.tmpDownloadPath}/{numberStr}_%(title)s.%(ext)s'
+    cfg.params['logger'] = MyLogger()
     
     with youtube_dl.YoutubeDL(cfg.params) as ydl:
 
@@ -99,6 +118,7 @@ def getJsonPlData(url):
     params['extract_flat'] = True 
 
     params['quiet'] = True
+    params['logger'] = MyLogger()
     with youtube_dl.YoutubeDL(params) as ydl:
         try:
             entries = ydl.extract_info(url,download=False)['entries']
