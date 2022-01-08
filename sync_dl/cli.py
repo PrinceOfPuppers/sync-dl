@@ -106,8 +106,11 @@ def playlistExists(plPath):
     
     try:
         shelve.open(f'{plPath}/{cfg.metaDataName}').close()
-    except:
-        cfg.logger.error(f"No Playlist Exists at {plPath}, Could not Find Metadata")
+    except Exception as e:
+        if e.args == (13, 'Permission denied') or e.__class__ == PermissionError:
+            cfg.logger.error(f"Could Not Access Playlist at {plPath}, Permission Denined")
+        else:
+            cfg.logger.error(f"No Playlist Exists at {plPath}, Could not Find Metadata")
         return False
     #if not os.path.exists(f'{plPath}/{cfg.metaDataName}'):
     #    cfg.logger.error(f"No Playlist Exists at {plPath}, Could not Find Metadata")
