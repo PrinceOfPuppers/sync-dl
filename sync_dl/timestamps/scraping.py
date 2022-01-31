@@ -6,7 +6,23 @@ from typing import NamedTuple, List
 import sync_dl.config as cfg
 
 
-labelSanitizeRe = re.compile(r'^(?:[:\-|\s>]*)(?:\d{1,3}[\.:|])?(?:\s)?(.*?)[:\-|\s>]*$')
+def jsonRegex(*args, surroundingBrace = False):
+    r = ""
+
+    numPairs = len(args)//2
+    for i in range(numPairs):
+        r += r"\s*[\'\"]" + args[2*i] + r"[\'\"]\s*:\s*"
+        r += r"[\'\"]" + args[2*i+1] + r"[\'\"]\s*.?"
+
+    if surroundingBrace:
+        r = "{" + r + "}"
+    return r
+
+apiKeyRe = re.compile(jsonRegex("INNERTUBE_API_KEY", "(.*?)"))
+clientVersionRe = re.compile(jsonRegex("key", "cver", "value", "(.*?)" , surroundingBrace = True))
+continuationTokenRe = re.compile(r'[\'\"]token[\'\"]:[\'\"](.*?)[\'\"]')
+
+labelSanitizeRe = re.compile(r'^(?:[:\-|\s>]*)(?:\d{1,3}[\.:|])?\]?(?:\s)?(.*?)[:\-|\s>]*$')
 
 class Timestamp(NamedTuple):
     time: int
@@ -88,23 +104,17 @@ def _sanitizeLabel(label):
 def _getComments(url):
     r=requests.get(url)
 
-    apiKeyRe = re.compile(r'[\'\"]INNERTUBE_API_KEY[\'\"]:[\'\"](.*?)[\'\"]')
-    continuationTokenRe = re.compile(r'[\'\"]token[\'\"]:[\'\"](.*?)[\'\"]')
-    clientVersionRe = re.compile(r'[\'\"]cver[\'\"]: [\'|\"](.*?)[\'\"]')
 
     x,y,z = apiKeyRe.search(r.text), continuationTokenRe.search(r.text), clientVersionRe.search(r.text)
 
     if not x:
-        cfg.logger.debug("Unable to Find INNERTUBE_API_KEY")
-        return []
+        raise Exception("Unable to Find INNERTUBE_API_KEY")
 
     if not y:
-        cfg.logger.debug("Unable to Find Continuation Token")
-        return []
+        raise Exception("Unable to Find Continuation Token")
 
     if not z:
-        cfg.logger.debug("Unable to Find Youtube Client Version")
-        return []
+        raise Exception("Unable to Find Youtube Client Version")
 
     key = x.group(1)
     continuationToken = y.group(1)

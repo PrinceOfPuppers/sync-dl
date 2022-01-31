@@ -4,9 +4,10 @@ import shutil
 import shelve
 import sys
 import inspect
+from string import ascii_uppercase
 
 import sync_dl.config as cfg
-from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs,getNumDigets
+from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs,getNumDigets, calcuateTransferMoves, TransferMove
 from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
 from sync_dl.commands import move, swap, manualAdd, moveRange,togglePrepends
@@ -950,3 +951,89 @@ class test_yt_api_pushOrderMoves(unittest.TestCase):
         # Checks if any remoteIds not in localIds stayed after the correct Id
         if not remoteCorrectOrder(remoteIds,localIds):
             self.fail(f'RemoteIds Ids Not In Correct Order After Moves\nremoteIds: {remoteIds}\nlocalIds:  {localIds}')
+
+# helper for test_calculateTransferMoves
+def getGenericState(length: int, filePrepends: str = '', idPrepends: str = ''):
+    if length > len(ascii_uppercase):
+        raise Exception()
+    files = list(ascii_uppercase[0:length])
+    ids = list(ascii_uppercase[0:length])
+    for i in range(0, length):
+        files[i] = filePrepends + files[i]
+        ids[i] = idPrepends + ids[i]
+
+    return files, ids
+
+
+def _setPadded(l: list, index: int, ele):
+    for _ in range(index - len(l) + 1):
+        l.append('')
+    l[index] = ele
+
+def _movePadded(l: list, srcIndex: int, destIndex: int):
+    for _ in range(destIndex - len(l) + 1):
+        l.append('')
+    l[destIndex] = l[srcIndex]
+    l[srcIndex] = ''
+
+
+def simulateTransferMoves(moves: list[TransferMove], srcStart: int, srcEnd: int, destIndex: int, 
+                          srcDir:list, destDir:list, srcLocalIds:list, destLocalIds:list, srcRemoteIds:list, destRemoteIDs:list):
+
+    # make room for block
+    blockSize = srcEnd - srcStart + 1
+    for i in reversed(range(destIndex+1,len(destLocalIds))):
+        _movePadded(destDir, i, i+blockSize)
+        _movePadded(destLocalIds, i, i+blockSize)
+
+    
+
+    for move in moves:
+        if move.performCopy:
+            _setPadded(destDir, move.destCopyIndex, srcDir[move.srcCopyIndex])
+            _setPadded(destLocalIds, move.destCopyIndex, srcLocalIds[move.srcCopyIndex])
+
+        if move.remoteAddAction:
+            destRemoteIDs.insert(move.destRemoteAddIndex, move.songId)
+
+        if move.localDeleteAction:
+            srcDir.pop(move.srcLocalDeleteIndex)
+            srcLocalIds.pop(move.srcLocalDeleteIndex)
+
+        if move.remoteDeleteAction:
+            srcRemoteIds.pop(move.srcRemoteDeleteIndex)
+
+
+
+
+class test_calculateTransferMoves(unittest.TestCase):
+    def test_basicTransfer(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
+        srcDir, srcLocalIds = getGenericState(5, 'f', 'i')
+        srcRemoteIds = srcLocalIds.copy()
+
+        destLocalIds   = []
+        destRemoteIds  = []
+        destDir = []
+
+        srcStart = 1
+        srcEnd = 3
+        destIndex = -1
+
+        moves = calcuateTransferMoves(srcDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds, srcStart, srcEnd, destIndex)
+        simulateTransferMoves(moves, srcStart, srcEnd, destIndex, srcDir, destDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds)
+
+        self.assertListEqual(srcDir, ['fA', 'fE'])
+        self.assertListEqual(srcLocalIds, ['iA', 'iE'])
+        self.assertListEqual(srcRemoteIds, ['iA', 'iE'])
+
+        self.assertListEqual(destDir, ['fB', 'fC', 'fD'])
+        self.assertListEqual(destLocalIds, ['iB', 'iC', 'iD'])
+        self.assertListEqual(destRemoteIds, ['iB', 'iC', 'iD'])
+
+if __name__ == '__main__':
+    t = test_calculateTransferMoves()
+    t.test_basicTransfer()
+

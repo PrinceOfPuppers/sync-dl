@@ -204,7 +204,6 @@ def swap(plPath, index1, index2):
 
 # move is no longer used in CLI, functionality has been merged with moveRange to be more consistant
 # move is still used in integration tests to reorder playlists before testing smart sync
-
 def move(plPath, currentIndex, newIndex):
     if currentIndex==newIndex:
         cfg.logger.info("Indexes Are the Same")
@@ -259,9 +258,9 @@ def move(plPath, currentIndex, newIndex):
 
 def moveRange(plPath, start, end, newStart):
     '''
-    moves block of songs from start to end indices, to newStart
+    moves block of songs from start to end indices, to after newStart
     ie) start = 4, end = 6, newStart = 2
-    0 1 2 3 4 5 6 7 -> 0 1 4 5 6 2 3
+    0 1 2 3 4 5 6 7 -> 0 1 2 4 5 6 3
     '''    
 
     if start == newStart:

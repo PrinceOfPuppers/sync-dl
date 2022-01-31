@@ -1,12 +1,17 @@
 import os
 import re
+import shutil
+from typing import Union
 
 from sync_dl import noInterrupt
 import sync_dl.config as cfg
-from sync_dl.ytdlWrappers import getIDs,downloadToTmp,moveFromTmp
+from sync_dl.ytdlWrappers import downloadToTmp,moveFromTmp
 
 def getNumDigets(plLen):
     return len(str( plLen+1 ))
+
+def padZeros(s, numDigits):
+    return str(s).zfill(numDigits)
 
 def rename(metaData, printer, plPath, oldName, newName, index, newId):
     with noInterrupt:
@@ -51,6 +56,28 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
         metaData['ids'][oldIndex] = ''
         printer("Relabeling Complete")
     return newName
+
+def copy(srcMetaData, destMetaData, printer, srcPlPath, destPlPath, srcName, srcIndex, destIndex, numDigets):
+    destName = re.sub(cfg.filePrependRE, f"{createNumLabel(destIndex,numDigets)}_" , srcName)
+    songId = srcMetaData['ids'][srcIndex]
+    numDestIds = len(destMetaData["ids"])
+
+    with noInterrupt:
+        printer(f"Copying {srcPlPath}/{srcName} to {destPlPath}/{destName}")
+
+        shutil.copy(f"{srcPlPath}/{srcName}",f"{destPlPath}/{destName}")
+
+        if destIndex >= numDestIds:
+            for _ in range(destIndex-numDestIds):
+                destMetaData["ids"].append('')
+            
+            destMetaData["ids"].append(songId)
+        else:
+            destMetaData["ids"][destIndex] = songId
+
+        printer("Copy Complete")
+    return destName
+
 
 def delete(metaData, plPath, name, index):
     with noInterrupt:
@@ -111,6 +138,7 @@ def getSongNum(element):
     '''
     match = re.match(cfg.filePrependRE,element)
 
+    assert match is not None
     return int(match.group()[:-1])
 
 def _filterFunc(element):
@@ -172,11 +200,13 @@ def smartSyncNewOrder(localIds,remoteIds):
             # remote song exists in local but in wrong place
 
             index = localIds[localIndex+1:].index(remoteId)+localIndex+1
+            j = -1
             for i,_ in enumerate(localIdPairs):
                 if localIdPairs[i][1]==index:
                     j = i
                     break
 
+            assert j != -1
             newOrder.append( localIdPairs.pop(j) )
             remoteId = remoteIds.pop(0) #must also remove this remote element
             
@@ -190,4 +220,143 @@ def smartSyncNewOrder(localIds,remoteIds):
             newOrder.append( (remoteIds.pop(0),None) )
     
     return newOrder
+
+def getNthOccuranceIndex(l: list, item, n:int) -> Union[int, None]:
+    '''returns the nth occurance of item in l'''
+    num = 0
+    lastOccuranceIndex = None
+    for i,item2 in enumerate(l):
+        if item == item2:
+            if num == n:
+                return i
+            lastOccuranceIndex = i
+
+            num+=1
+
+    return lastOccuranceIndex
+
+def numOccurance(l: list, index: int) -> int:
+    '''
+    the reverse of getNthOccuranceIndex
+    let A = l[index], and this function returns 1, that means l[index] is the 1th A in l (after the 0th)
+    ie) l = [A, B ,A ,C, B , B] index = 2 will return 1
+    '''
+    item = l[index]
+    num = 0
+    for i in range(0, index):
+        if l[i] == item:
+            num+=1
+
+    return num
+
+class TransferMove:
+    songId: str
+    songName: str
+
+    performCopy:bool = False
+    srcCopyName: str
+    srcCopyIndex: int
+    destCopyIndex: int
+
+    performRemoteAdd:bool = False
+    destRemoteAddIndex: int
+
+    performLocalDelete: bool = False
+    srcLocalDeleteIndex: int
+    srcLocalDeleteName: str
+
+    performRemoteDelete:bool = False
+    srcRemoteDeleteIndex: int
+
+    def __init__(self, songId, songName):
+        self.songId = songId
+        self.songName = songName
+        return
+
+    def copyAction(self, srcCopyName, srcCopyIndex, destCopyIndex):
+        self.performCopy   = True
+        self.srcCopyName   = srcCopyName
+        self.srcCopyIndex  = srcCopyIndex
+        self.destCopyIndex = destCopyIndex
+
+    def remoteAddAction(self, destRemoteAddIndex):
+        self.performRemoteAdd   = True
+        self.destRemoteAddIndex = destRemoteAddIndex
+
+        assert self.performCopy
+
+    def localDeleteAction(self, srcLocalDeleteIndex, srcLocalDeleteName):
+        self.performLocalDelete  = True
+        self.srcLocalDeleteIndex = srcLocalDeleteIndex
+        self.srcLocalDeleteName  = srcLocalDeleteName
+
+        assert self.performCopy
+
+        assert self.srcLocalDeleteIndex == self.srcCopyIndex
+        assert self.srcCopyName == self.srcLocalDeleteName
+
+    def remoteDeleteAction(self, srcRemoteDeleteIndex):
+        self.performRemoteDelete  = True
+        self.srcRemoteDeleteIndex = srcRemoteDeleteIndex 
+
+        assert self.performRemoteAdd
+        assert self.performLocalDelete
+
+
+def calcuateTransferMoves(currentSrcDir: list[str], 
+                          srcLocalIds:list[str],    destLocalIds:list[str], 
+                          srcRemoteIds:list[str],   destRemoteIds:list[str], 
+                          srcStart:int, srcEnd:int, destIndex:int) -> list[TransferMove]:
+
+    '''calculates moves for transferSongs'''
+
+    # number of elements to move
+    blockSize = srcEnd-srcStart+1
+
+
+    # get index to add songs in remote dest
+    if destIndex != -1:
+        destLocalNumOccurances = numOccurance(destLocalIds, destIndex)
+        destRemoteIndex = getNthOccuranceIndex(destRemoteIds, destLocalIds[destIndex], destLocalNumOccurances)
+        if destRemoteIndex == None:
+            destRemoteIndex = 0
+        else:
+            destRemoteIndex += 1
+    else:
+        destRemoteIndex = 0
+
+
+    # store moves
+    songTransfers: list[TransferMove] = []
+
+    ### Calculate moves
+    copyIndex = destIndex + blockSize
+    for srcIndex in reversed(range(srcStart, srcEnd+1)):
+        songId = srcLocalIds[srcIndex]
+        srcLocalNumOccurances = numOccurance(srcLocalIds, srcIndex)
+        srcRemoteIndex = getNthOccuranceIndex(srcRemoteIds, songId, srcLocalNumOccurances)
+        # if srcRemoteIndex is None, or if there are more of songId in srcLocalIds, dont delete
+
+        # copy song to dest local
+        srcName = currentSrcDir[srcIndex]
+        songName = re.sub(cfg.filePrependRE,"",srcName)
+        data = TransferMove(songId, songName)
+
+        data.copyAction(srcName, srcIndex, copyIndex)
+        copyIndex -= 1
+
+        # add song to dest remote
+        if srcRemoteIndex is not None:
+            data.remoteAddAction(destRemoteIndex)
+
+        # delete song from src local
+        data.localDeleteAction(srcIndex, srcName)
+
+        # delete song from src remote
+        if srcRemoteIndex is not None:
+            data.remoteDeleteAction(srcRemoteIndex)
+
+        songTransfers.append(data)
+
+    return songTransfers
 

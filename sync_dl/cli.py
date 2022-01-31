@@ -10,45 +10,9 @@ from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
 from sync_dl.commands import newPlaylist,smartSync,appendNew,manualAdd,swap, showPlaylist, compareMetaData, moveRange, peek, togglePrepends, addTimestampsFromComments
+from sync_dl.ytapiInterface import logout, pushLocalOrder, transferSongs
 
-# import optional modules, otherwise replace commands with stubs
-try:
-    from sync_dl_ytapi.commands import pushLocalOrder,logout
 
-except:
-    def promptInstall():
-        answer = input("Missing Optional Dependancies For This Command.\nWould You Like to Install Them? (y/n): ").lower()
-        if answer!='y':
-            return False
-
-        try:
-            import subprocess
-            subprocess.run(["pip","install",'sync-dl-ytapi'],check=True)
-        except:
-            cfg.logger.error("Unable to Install Optional Dependancies")
-            return False
-        cfg.logger.info("Optional Dependancies Installed")
-        return True
-    
-    #stubs 
-    def pushLocalOrder(plPath):
-
-        installed = promptInstall()
-
-        if not installed:
-            return 
-        from sync_dl_ytapi.commands import pushLocalOrder
-        cfg.logger.info("----------------------------------")
-        pushLocalOrder(plPath)
-
-    def logout():
-        installed = promptInstall()
-
-        if not installed:
-            return 
-        from sync_dl_ytapi.commands import logout
-        cfg.logger.info("----------------------------------")
-        logout()
 
 #modified version of help formatter which only prints args once in help message
 class ArgsOnce(argparse.HelpFormatter):
@@ -171,7 +135,7 @@ def setupParsers():
     ytapi = subparsers.add_parser("ytapi", help='push local playlist order to youtube playlist', formatter_class=ArgsOnce)
     ytapi.add_argument('--push-order', action='store_true', help='changes remote order to match local order (requires sign in with google)')
     ytapi.add_argument('--logout', action='store_true', help='revokes youtube oauth access tokens and deletes them')
-    ytapi.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
+    ytapi.add_argument('PLAYLIST', type=str, nargs='?', help='the name of the directory for the playlist')
     ytapi.set_defaults(func = lambda args: ytapiHandler(args, ytapi))
 
     config = subparsers.add_parser("config", help='change configuration', formatter_class=ArgsOnce)
@@ -276,6 +240,11 @@ def editHandler(args,parser):
 def ytapiHandler(args,parser):
     if args.logout:
         logout()
+        return
+
+    # if no playlist was provided all further functions cannot run
+    if not args.PLAYLIST:
+        cfg.logger.error("Playlist Name Required")
         return
 
     plPath = getPlPath(args.PLAYLIST)
