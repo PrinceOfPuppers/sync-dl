@@ -976,6 +976,11 @@ def _movePadded(l: list, srcIndex: int, destIndex: int):
     l[destIndex] = l[srcIndex]
     l[srcIndex] = ''
 
+def _removeBlanks(l: list):
+    for i in reversed(range(len(l))):
+        if l[i] == '':
+            l.pop(i)
+
 
 def simulateTransferMoves(moves: list[TransferMove], srcStart: int, srcEnd: int, destIndex: int, 
                           srcDir:list, destDir:list, srcLocalIds:list, destLocalIds:list, srcRemoteIds:list, destRemoteIDs:list):
@@ -999,8 +1004,12 @@ def simulateTransferMoves(moves: list[TransferMove], srcStart: int, srcEnd: int,
             srcDir.pop(move.srcLocalDeleteIndex)
             srcLocalIds.pop(move.srcLocalDeleteIndex)
 
+        # remote deletes are done using playlist item ids, whos posisitions are calculated at the start of the
+        # process, hence we must keep the posistion of remote list items static during testing to mimic this 
         if move.performRemoteDelete:
-            srcRemoteIds.pop(move.srcRemoteDeleteIndex)
+            srcRemoteIds[move.srcRemoteDeleteIndex] = ''
+
+    _removeBlanks(srcRemoteIds)
 
 
 
@@ -1157,3 +1166,146 @@ class test_calculateTransferMoves(unittest.TestCase):
         self.assertListEqual(destDir, ['dA', 'sB', 'sC', 'dB', 'dC'])
         self.assertListEqual(destLocalIds, ['dA', 'sB', 'sC', 'dB', 'dC'])
         self.assertListEqual(destRemoteIds, ['dA', 'sC', 'dB', 'dC'])
+
+    def test_srcRemoteIsSubset2(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
+        srcDir, srcLocalIds = getGenericState(5, 's', 's')
+        srcRemoteIds = srcLocalIds.copy()
+        srcRemoteIds.pop(2)
+        srcRemoteIds.pop(1)
+
+        destDir, destLocalIds = getGenericState(3, 'd', 'd')
+        destRemoteIds = destLocalIds.copy()
+
+        srcStart = 1
+        srcEnd = 2
+        destIndex = 0
+
+        moves = calcuateTransferMoves(srcDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds, srcStart, srcEnd, destIndex)
+        simulateTransferMoves(moves, srcStart, srcEnd, destIndex, srcDir, destDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds)
+
+        self.assertListEqual(srcDir, ['sA', 'sD', 'sE'])
+        self.assertListEqual(srcLocalIds, ['sA', 'sD', 'sE'])
+        self.assertListEqual(srcRemoteIds, ['sA', 'sD', 'sE'])
+
+        self.assertListEqual(destDir, ['dA', 'sB', 'sC', 'dB', 'dC'])
+        self.assertListEqual(destLocalIds, ['dA', 'sB', 'sC', 'dB', 'dC'])
+        self.assertListEqual(destRemoteIds, ['dA', 'dB', 'dC'])
+
+    def test_srcRemoteIsArbitrary(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
+        srcDir, srcLocalIds = getGenericState(5, 's', 's')
+        srcRemoteIds = ['sG', 'sC', 'sB', 'sC', 'sA', 'sE', 'sB', 'sF']
+
+        destDir, destLocalIds = getGenericState(4, 'd', 'd')
+        destRemoteIds = destLocalIds.copy()
+
+        srcStart = 1
+        srcEnd = 3
+        destIndex = 0
+
+        moves = calcuateTransferMoves(srcDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds, srcStart, srcEnd, destIndex)
+        simulateTransferMoves(moves, srcStart, srcEnd, destIndex, srcDir, destDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds)
+
+        self.assertListEqual(srcDir, ['sA', 'sE'])
+        self.assertListEqual(srcLocalIds, ['sA', 'sE'])
+        self.assertListEqual(srcRemoteIds, ['sG', 'sC', 'sA', 'sE', 'sB', 'sF'])
+
+        self.assertListEqual(destDir, ['dA', 'sB', 'sC', 'sD', 'dB', 'dC', 'dD'])
+        self.assertListEqual(destLocalIds, ['dA', 'sB', 'sC', 'sD', 'dB', 'dC', 'dD'])
+        self.assertListEqual(destRemoteIds, ['dA', 'sB', 'sC', 'dB', 'dC', 'dD'])
+
+    def test_repeats1(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
+        srcDir, srcLocalIds = getGenericState(3, 's', 's')
+        srcDir.extend(srcDir)
+        srcLocalIds.extend(srcLocalIds)
+        srcRemoteIds = srcLocalIds.copy()
+
+        destDir, destLocalIds = getGenericState(4, 'd', 'd')
+        destDir.extend(destDir)
+        destLocalIds.extend(destLocalIds)
+        destRemoteIds = destLocalIds.copy()
+
+        srcStart = 4
+        srcEnd = 5
+        destIndex = 5
+
+        moves = calcuateTransferMoves(srcDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds, srcStart, srcEnd, destIndex)
+        simulateTransferMoves(moves, srcStart, srcEnd, destIndex, srcDir, destDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds)
+
+        self.assertListEqual(srcDir, ['sA', 'sB', 'sC', 'sA'])
+        self.assertListEqual(srcLocalIds, ['sA', 'sB', 'sC', 'sA'])
+        self.assertListEqual(srcRemoteIds, ['sA', 'sB', 'sC', 'sA'])
+
+        self.assertListEqual(destDir, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sB', 'sC', 'dC', 'dD'])
+        self.assertListEqual(destLocalIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sB', 'sC', 'dC', 'dD'])
+        self.assertListEqual(destRemoteIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sB', 'sC', 'dC', 'dD'])
+
+    def test_repeats2(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
+        srcDir, srcLocalIds = getGenericState(3, 's', 's')
+        srcDir.extend(srcDir)
+        srcLocalIds.extend(srcLocalIds)
+        srcRemoteIds = srcLocalIds.copy()
+
+        destDir, destLocalIds = getGenericState(4, 'd', 'd')
+        destDir.extend(destDir)
+        destLocalIds.extend(destLocalIds)
+        destRemoteIds = destLocalIds.copy()
+
+        srcStart = 1
+        srcEnd = 4
+        destIndex = 5
+
+        moves = calcuateTransferMoves(srcDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds, srcStart, srcEnd, destIndex)
+        simulateTransferMoves(moves, srcStart, srcEnd, destIndex, srcDir, destDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds)
+
+        self.assertListEqual(srcDir, ['sA', 'sC'])
+        self.assertListEqual(srcLocalIds, ['sA', 'sC'])
+        self.assertListEqual(srcRemoteIds, ['sA', 'sC'])
+
+        self.assertListEqual(destDir, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sB', 'sC', 'sA', 'sB', 'dC', 'dD'])
+        self.assertListEqual(destLocalIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sB', 'sC', 'sA', 'sB', 'dC', 'dD'])
+        self.assertListEqual(destRemoteIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sB', 'sC', 'sA', 'sB', 'dC', 'dD'])
+
+    def test_repeats3(self):
+        name = inspect.currentframe().f_code.co_name
+        cfg.logger.info(f"Running {self.__class__.__name__}: {name}")
+
+        srcDir, srcLocalIds = getGenericState(3, 's', 's')
+        srcDir.extend(srcDir)
+        srcLocalIds.extend(srcLocalIds)
+        srcRemoteIds = srcLocalIds.copy()
+
+        destDir, destLocalIds = getGenericState(4, 'd', 'd')
+        destDir.extend(destDir)
+        destLocalIds.extend(destLocalIds)
+        destRemoteIds = destLocalIds.copy()
+
+        srcStart = 0
+        srcEnd = 5
+        destIndex = 5
+
+        moves = calcuateTransferMoves(srcDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds, srcStart, srcEnd, destIndex)
+        simulateTransferMoves(moves, srcStart, srcEnd, destIndex, srcDir, destDir, srcLocalIds, destLocalIds, srcRemoteIds, destRemoteIds)
+
+        self.assertListEqual(srcDir, [])
+        self.assertListEqual(srcLocalIds, [])
+        self.assertListEqual(srcRemoteIds, [])
+
+        self.assertListEqual(destDir, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sA', 'sB', 'sC', 'sA', 'sB', 'sC', 'dC', 'dD'])
+        self.assertListEqual(destLocalIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sA', 'sB', 'sC', 'sA', 'sB', 'sC', 'dC', 'dD'])
+        self.assertListEqual(destRemoteIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sA', 'sB', 'sC', 'sA', 'sB', 'sC', 'dC', 'dD'])
+
+if __name__ == '__main__':
+    t = test_calculateTransferMoves()
+    t.test_srcRemoteIsArbitrary()
