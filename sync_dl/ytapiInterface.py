@@ -1,5 +1,6 @@
 import os
 import shelve
+import re
 
 from sync_dl.ytdlWrappers import getIDs
 from sync_dl.plManagement import correctStateCorruption
@@ -99,6 +100,7 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
         currentDestDir = getLocalSongs(destPlPath)
         destPlName = os.path.basename(destPlPath)
 
+        cfg.logger.info("Loading Youtube Api Resources...")
         plAdder = getPlAdder(destPlUrl)
         destRemoteIds = getIDs(destPlUrl)
 
@@ -135,36 +137,79 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
 
         ### Inform User
         maxNum = max(srcIdsLen, destIdsLen, len(srcRemoteIds), len(destRemoteIds))
-        numMoveDigits = len(str(maxNum))
+        numIndexDigits = len(str(maxNum))
 
-        xs = 'x'* numMoveDigits
-        cfg.logger.info(f"------------[Transfer {srcPlName} [{srcStart}, {srcEnd}] -> {destPlName} {destIndex}]-----------")
-        cfg.logger.info(f"Song Actions| Song Id | Song name \nLocal Move: {xs} -> {xs} | Remote Move: {xs} -> {xs}")
-        for move in songTransfers:
-            actionPrompt  = f"{'LC' if move.copyAction else '  '} "
-            actionPrompt += f"{'RA' if move.remoteAddAction else '  '} "
-            actionPrompt += f"{'LR' if move.localDeleteAction else '  '} "
-            actionPrompt += f"{'RR' if move.remoteDeleteAction else '  '} | "
+        numMoveDigits = len(str(len(songTransfers)))
+
+        cfg.logger.info(f"------------[Transfer Moves (applied in reverse)]-----------")
+        cfg.logger.info(f"{'i'*numMoveDigits}: Move Parts  | Song Id     | Song name\n")
+        for i,move in reversed(list(enumerate(songTransfers))):
+            actionPrompt  = f"{padZeros(i, numMoveDigits)}: "
+            actionPrompt += f"{'LC' if move.performCopy else '  '} "
+            actionPrompt += f"{'RA' if move.performRemoteAdd else '  '} "
+            actionPrompt += f"{'LR' if move.performLocalDelete else '  '} "
+            actionPrompt += f"{'RR' if move.performRemoteDelete else '  '} | "
             prompt  = f"{move.songId} | {move.songName}\n"
-            prompt += ' '*len(actionPrompt)
-            prompt += f"Local {srcPlName}: {padZeros(move.srcLocalDeleteIndex, numMoveDigits)} -> {destPlName}: {padZeros(move.destCopyIndex, numMoveDigits)} | "
-            prompt += f"Remote {srcPlName}: {padZeros(move.srcRemoteDeleteIndex, numMoveDigits)} -> {destPlName}: {padZeros(move.destRemoteAddIndex, numMoveDigits)}\n"
-            cfg.logger.info(actionPrompt+prompt)
+
+            localPrompt = ""
+            if move.performCopy or move.performLocalDelete:
+                localPrompt += ' '*len(actionPrompt) + 'Local '
+            if move.performLocalDelete:
+                localPrompt += f"{srcPlName}: {padZeros(move.srcLocalDeleteIndex, numIndexDigits)} "
+            if move.performCopy:
+                localPrompt += f"-> {destPlName}: {padZeros(move.destCopyIndex, numIndexDigits)} | "
 
 
-        cfg.logger.info(f"------------[Legend]-----------\n")
+            remotePrompt = ""
+            if move.performRemoteAdd or move.performRemoteDelete:
+                remotePrompt += "Remote "
+            if move.performRemoteDelete:
+                remotePrompt += f"{srcPlName}: {padZeros(move.srcRemoteDeleteIndex, numIndexDigits)} "
+            if move.performRemoteAdd:
+                remoteActualMoveNum = padZeros(move.destRemoteAddIndex, numIndexDigits)
+                remoteFinalMoveNum  = padZeros(blockSize + move.destRemoteAddIndex - i - 1, numIndexDigits)
+                remotePrompt += f"-> {destPlName}: {remoteFinalMoveNum} ({remoteActualMoveNum})\n"
+
+
+
+            cfg.logger.info(actionPrompt + prompt + localPrompt + remotePrompt)
+
+
+        cfg.logger.info(f"------------[Legend]-----------")
         cfg.logger.info ( 
              f"LC: Local  Copy, from {srcPlName} to {destPlName}\n" \
-             f"RA: Remote  Add to {destPlName} \n" \
+             f"RA: Remote Add to {destPlName} \n" \
              f"LR: Local  Remove from {srcPlName} \n" \
              f"RR: Remote Remove from {srcPlName}\n" \
         )
 
+        cfg.logger.info(f"------------[Summery]-----------")
+        cfg.logger.info(f"{srcPlName}: [{srcStart}, {srcEnd}] -> {destPlName}: [{srcStart + destIndex}, {srcEnd + destIndex}]\n")
+
+        cfg.logger.info(f"Transfering Songs in Range [{srcStart}, {srcEnd}] in {srcPlName}")
+        cfg.logger.info(f"  Start Range:   {songTransfers[-1].songName}")
+        cfg.logger.info(f"  End Range:     {songTransfers[0].songName}")
+
+        if destIndex != -1: 
+            leaderSong = re.sub(cfg.filePrependRE,"", currentDestDir[destIndex]) # the name of the song the range will come after
+            cfg.logger.info(f"\nTo After song Index {destIndex} in {destPlName}")
+            cfg.logger.info(f"  {destIndex}: {leaderSong}")
+        else:
+            cfg.logger.info(f"\nTo Start of {destPlName}")
+
+
+        
+        cfg.logger.info(f"\n------------[Note]-----------")
+        cfg.logger.info(f"For Best Remote Playlists Results, Ensure Local and Remote Playlists are Synced")
+        cfg.logger.info(f"(failing to do so may lead to ordering changes in remote if there are duplicate songs)")
+
         ### Prompt User
-        answer = input("Prefrom With Transfer? (y)es/(n)o: ")
+        cfg.logger.info(f"\n------------[Prompt]-----------")
+        answer = input("Prefrom Transfer? (y)es/(n)o: ")
         if answer.lower() != 'y':
             return
 
+        cfg.logger.info("")
 
         #actual editing
         # make room for block
@@ -174,15 +219,16 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
             relabel(destMetaData, cfg.logger.debug, destPlPath, oldName, i,newIndex, numDestDigits)
 
 
-
         endEarly = False
         songsCompleted = 0
         songsPartiallyCompleated = 0
         for i,move in enumerate(songTransfers):
             if endEarly:
                 break
+            cfg.logger.info(f"Transfering Song: {move.songName}")
             if move.performCopy:
                 copyDestName = copy(srcMetaData, destMetaData, cfg.logger.debug, srcPlPath, destPlPath, move.srcCopyName, move.srcCopyIndex, move.destCopyIndex, numDestDigits)
+                cfg.logger.debug(f"Locally Copied Song {move.songName} from {srcPlName} to {destPlName}")
 
             if move.performRemoteAdd:
                 if not plAdder(move.songId, move.destRemoteAddIndex):
@@ -204,6 +250,7 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
 
             if move.performLocalDelete:
                 delete(srcMetaData, srcPlPath, move.srcLocalDeleteName, move.srcLocalDeleteIndex)
+                cfg.logger.debug(f"Locally Deleted Song {move.songName} from {srcPlName}")
 
             if move.performRemoteDelete:
                 if not (plRemover(move.srcRemoteDeleteIndex)):
@@ -223,6 +270,7 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
         if songsPartiallyCompleated != 0:
             cfg.logger.error(f"{songsPartiallyCompleated} / {len(songTransfers)} Songs Had Issues with Transfering, logged above")
 
+        cfg.logger.info("\nTransfer Complete.")
         return
 
 

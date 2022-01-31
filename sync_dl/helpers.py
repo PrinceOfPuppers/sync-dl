@@ -81,7 +81,7 @@ def copy(srcMetaData, destMetaData, printer, srcPlPath, destPlPath, srcName, src
 
 def delete(metaData, plPath, name, index):
     with noInterrupt:
-        cfg.logger.info(f"Deleting {name}")
+        cfg.logger.debug(f"Deleting {name}")
         os.remove(f"{plPath}/{name}")
 
         del metaData["ids"][index]

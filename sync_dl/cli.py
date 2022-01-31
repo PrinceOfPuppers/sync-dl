@@ -133,10 +133,19 @@ def setupParsers():
 
     #changing remote
     ytapi = subparsers.add_parser("ytapi", help='push local playlist order to youtube playlist', formatter_class=ArgsOnce)
-    ytapi.add_argument('--push-order', action='store_true', help='changes remote order to match local order (requires sign in with google)')
     ytapi.add_argument('--logout', action='store_true', help='revokes youtube oauth access tokens and deletes them')
-    ytapi.add_argument('PLAYLIST', type=str, nargs='?', help='the name of the directory for the playlist')
+    ytapi.add_argument('--push-order', nargs=1, metavar='PLAYLIST', type=str, help='changes remote order of PLAYLIST to match local order (requires sign in with google)')
     ytapi.set_defaults(func = lambda args: ytapiHandler(args, ytapi))
+
+    #transfer
+    ytapiSubParsers = ytapi.add_subparsers()
+    transfer = ytapiSubParsers.add_parser("transfer", help="transfer songs between playlist on both local and remote", formatter_class=ArgsOnce)
+    transfer.add_argument('-t','--transfer',nargs=2, metavar=('S1','DI'), type = int, help='makes SRC_PLAYLIST song index I1 come after DEST_PLAYLIST song index NI (NI=-1 will move to start)') 
+    transfer.add_argument('-r','--transfer-range',nargs=3, metavar=('S1','S2','DI'), type = int, help='makes SRC_PLAYLIST songs in range [I1, I2] come after DEST_PLAYLIST song index NI (NI=-1 will move to start)') 
+    transfer.add_argument('SRC_PLAYLIST', type=str, help='the name of the playlist to transfer songs from')
+    transfer.add_argument('DEST_PLAYLIST', type=str, help='the name of the playlist to transfer songs to')
+    transfer.set_defaults(func = lambda args: transferHandler(args, transfer))
+
 
     config = subparsers.add_parser("config", help='change configuration', formatter_class=ArgsOnce)
     # the '\n' are used as defaults so they dont get confused with actual paths
@@ -242,21 +251,43 @@ def ytapiHandler(args,parser):
         logout()
         return
 
-    # if no playlist was provided all further functions cannot run
-    if not args.PLAYLIST:
-        cfg.logger.error("Playlist Name Required")
-        return
-
-    plPath = getPlPath(args.PLAYLIST)
-    if not playlistExists(plPath):
-        return
-
     if args.push_order:
+
+        plPath = getPlPath(args.push_order[0])
+        if not playlistExists(plPath):
+            return
+
         pushLocalOrder(plPath)
 
     else:
         parser.print_help()
         cfg.logger.error("Please Select an Option")
+
+def transferHandler(args, parser):
+    if not args.SRC_PLAYLIST:
+        cfg.logger.error("SRC_PLAYLIST required for transfer")
+
+    if not args.DEST_PLAYLIST:
+        cfg.logger.error("DEST_PLAYLIST required for transfer")
+
+    srcPlPath = getPlPath(args.SRC_PLAYLIST)
+    if not playlistExists(srcPlPath):
+        return
+
+    destPlPath = getPlPath(args.DEST_PLAYLIST)
+    if not playlistExists(destPlPath):
+        return
+
+    if args.transfer:
+        transferSongs(srcPlPath, destPlPath, args.transfer[0], args.transfer[0], args.transfer[1])
+    
+    elif args.transfer_range:
+        transferSongs(srcPlPath, destPlPath, args.transfer_range[0], args.transfer_range[1], args.transfer_range[2])
+
+    else:
+        parser.print_help()
+        cfg.logger.error("Please Select an Option")
+
 
 def infoHandler(args,parser):
     if args.peek:
@@ -333,10 +364,29 @@ def cli():
 
     except Exception as e:
         cfg.logger.exception(e)
-        if args.PLAYLIST:
-            plPath = getPlPath(args.PLAYLIST)
+        plPaths = []
+        if 'PLAYLIST' in vars(args) and args.PLAYLIST:
+            try:
+                plPaths.append(getPlPath(args.PLAYLIST))
+            except:
+                pass
+
+        if 'SRC_PLAYLIST' in vars(args) and args.SRC_PLAYLIST:
+            try:
+                plPaths.append(getPlPath(args.SRC_PLAYLIST))
+            except:
+                pass
+
+        if 'DEST_PLAYLIST' in vars(args) and args.DEST_PLAYLIST:
+            try:
+                plPaths.append(getPlPath(args.DEST_PLAYLIST))
+            except:
+                pass
+
+        for plPath in plPaths:
             metaDataPath = f"{plPath}/{cfg.metaDataName}"
             if os.path.exists(metaDataPath):
                 with shelve.open(metaDataPath, 'c',writeback=True) as metaData:
                     correctStateCorruption(plPath,metaData)
-                cfg.logger.info("State Recovered")
+                cfg.logger.info(f"State Recovered For Playlist: {plPath}")
+        

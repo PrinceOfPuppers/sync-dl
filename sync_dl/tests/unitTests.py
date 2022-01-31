@@ -1306,6 +1306,3 @@ class test_calculateTransferMoves(unittest.TestCase):
         self.assertListEqual(destLocalIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sA', 'sB', 'sC', 'sA', 'sB', 'sC', 'dC', 'dD'])
         self.assertListEqual(destRemoteIds, ['dA', 'dB', 'dC', 'dD', 'dA', 'dB', 'sA', 'sB', 'sC', 'sA', 'sB', 'sC', 'dC', 'dD'])
 
-if __name__ == '__main__':
-    t = test_calculateTransferMoves()
-    t.test_srcRemoteIsArbitrary()
