@@ -184,7 +184,7 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
             if move.performCopy:
                 copyDestName = copy(srcMetaData, destMetaData, cfg.logger.debug, srcPlPath, destPlPath, move.srcCopyName, move.srcCopyIndex, move.destCopyIndex, numDestDigits)
 
-            if move.remoteAddAction:
+            if move.performRemoteAdd:
                 if not plAdder(move.songId, move.destRemoteAddIndex):
                     cfg.logger.error(f"Error When Adding {move.songName} to Remote Dest: {destPlName}, URL: {destPlUrl}")
                     cfg.logger.error(f"Local Copy for this song Already Happened")
@@ -202,10 +202,10 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
                         endEarly = True
 
 
-            if move.localDeleteAction:
+            if move.performLocalDelete:
                 delete(srcMetaData, srcPlPath, move.srcLocalDeleteName, move.srcLocalDeleteIndex)
 
-            if move.remoteDeleteAction:
+            if move.performRemoteDelete:
                 if not (plRemover(move.srcRemoteDeleteIndex)):
                     cfg.logger.error(f"Error When Removing {move.songName} from Remote Src: {srcPlName}, URL: {srcPlUrl}")
                     cfg.logger.error(f"All Other Steps, Completed. ")
