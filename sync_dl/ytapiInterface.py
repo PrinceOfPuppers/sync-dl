@@ -222,9 +222,11 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
         endEarly = False
         songsCompleted = 0
         songsPartiallyCompleated = 0
+
         for i,move in enumerate(songTransfers):
             if endEarly:
                 break
+
             cfg.logger.info(f"Transfering Song: {move.songName}")
             if move.performCopy:
                 copyDestName = copy(srcMetaData, destMetaData, cfg.logger.debug, srcPlPath, destPlPath, move.srcCopyName, move.srcCopyIndex, move.destCopyIndex, numDestDigits)
@@ -232,20 +234,36 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
 
             if move.performRemoteAdd:
                 if not plAdder(move.songId, move.destRemoteAddIndex):
-                    cfg.logger.error(f"Error When Adding {move.songName} to Remote Dest: {destPlName}, URL: {destPlUrl}")
-                    cfg.logger.error(f"Local Copy for this song Already Happened")
-                    cfg.logger.error(f"Fix by Either:")
-                    cfg.logger.error(f"- Manually Adding https://www.youtube.com/watch?v={move.songId} to Remote Playlist Provided Above And (c)ontinuing or (f)inishing this song.")
-                    cfg.logger.error(f"- Removing File {copyDestName} in {destPlName} and (e)nd transfer")
-                    answer = input("Would You Like to: (e)nd transfer, (c)ontinue transfer, (s)kip song, (f)inish this song").lower()
-                    if answer == 'e':
-                        songsPartiallyCompleated += 1
-                        break
-                    if answer == 's':
-                        songsPartiallyCompleated += 1
-                        continue
-                    if answer == 'f':
-                        endEarly = True
+                    if not move.performRemoteDelete:
+                        cfg.logger.error(f"Error When Adding {move.songName} to Remote Dest: {destPlName}, URL: {destPlUrl}")
+                        cfg.logger.error(f"This Song Does Not Occur in Remote Src: {srcPlName}, So It was Probably Removed from Youtube")
+                        cfg.logger.info(f"Continuing with Transfer")
+                    else:
+                        cfg.logger.error(f"Error When Adding {move.songName} to Remote Dest: {destPlName}, URL: {destPlUrl}")
+                        cfg.logger.error(f"Local Copy for this song Already Happened")
+                        cfg.logger.error(f"Fix by Either:")
+                        cfg.logger.error(f"- (r)evert Transfer for This Song")
+                        cfg.logger.error(f"- (m)anually Adding https://www.youtube.com/watch?v={move.songId} to Remote Playlist Provided Above And (c)ontinuing or (f)inishing this song.")
+                        answer = input("Would You Like to: (r)evert song, (m)anual fix, (q)uit").lower()
+
+                        if answer == 'r':
+                            if move.performCopy:
+                                delete(destMetaData, destPlPath, copyDestName, move.destCopyIndex)
+                                continue
+                        elif answer == 'q':
+                            songsPartiallyCompleated += 1
+                            break
+                        elif answer == 'm':
+                            cfg.logger.info(f"Please Add, {move.songName}: https://www.youtube.com/watch?v={move.songId} \nTo Playlist {destPlName}: {destPlUrl}")
+                            input("Hit Enter to Proceed: ")
+                            
+
+                        answer = input("Would You Like to: (c)ontinue transfer, (f)inish this song, (q)uit").lower()
+                        if answer == 'f':
+                            endEarly = True
+                        if answer == 'q':
+                            songsPartiallyCompleated += 1
+                            break
 
 
             if move.performLocalDelete:
@@ -258,8 +276,8 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
                     cfg.logger.error(f"All Other Steps, Completed. ")
                     cfg.logger.error(f"Fix by:")
                     cfg.logger.error(f"- Manually Removing https://www.youtube.com/watch?v={move.songId} from Remote Playlist Provided Above")
-                    answer = input("Would You Like to: (e)nd transfer, (c)ontinue").lower()
-                    if answer == 'e':
+                    answer = input("Would You Like to: (c)ontinue transfer, (q)uit").lower()
+                    if answer == 'q':
                         songsPartiallyCompleated += 1
                         break
 

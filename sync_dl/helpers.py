@@ -346,7 +346,7 @@ def calcuateTransferMoves(currentSrcDir: list[str],
         copyIndex -= 1
 
         # add song to dest remote
-        if srcRemoteIndex is not None:
+        if songId != cfg.manualAddId:
             data.remoteAddAction(destRemoteIndex)
 
         # delete song from src local
