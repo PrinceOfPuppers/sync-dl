@@ -5,7 +5,7 @@ import logging
 import argparse
 import shelve
 
-from sync_dl import __version__
+from sync_dl import __version__, noInterrupt, InterruptTriggered
 from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 
@@ -348,6 +348,35 @@ def timestampsHandler(args,parser):
         parser.print_help()
         cfg.logger.error("Please Select an Option")
 
+
+def checkAllStateCorruption(args):
+
+    plPaths = []
+    if 'PLAYLIST' in vars(args) and args.PLAYLIST:
+        try:
+            plPaths.append(getPlPath(args.PLAYLIST))
+        except:
+            pass
+
+    if 'SRC_PLAYLIST' in vars(args) and args.SRC_PLAYLIST:
+        try:
+            plPaths.append(getPlPath(args.SRC_PLAYLIST))
+        except:
+            pass
+
+    if 'DEST_PLAYLIST' in vars(args) and args.DEST_PLAYLIST:
+        try:
+            plPaths.append(getPlPath(args.DEST_PLAYLIST))
+        except:
+            pass
+
+    for plPath in plPaths:
+        metaDataPath = f"{plPath}/{cfg.metaDataName}"
+        if os.path.exists(metaDataPath):
+            with shelve.open(metaDataPath, 'c',writeback=True) as metaData:
+                correctStateCorruption(plPath,metaData)
+            cfg.logger.info(f"State Recovered For Playlist: {plPath}")
+
 def cli():
     '''
     Runs command line application, talking in args and running commands
@@ -362,31 +391,10 @@ def cli():
     try:
         args.func(args)
 
+    except InterruptTriggered as e:
+        checkAllStateCorruption(args)
+        
     except Exception as e:
         cfg.logger.exception(e)
-        plPaths = []
-        if 'PLAYLIST' in vars(args) and args.PLAYLIST:
-            try:
-                plPaths.append(getPlPath(args.PLAYLIST))
-            except:
-                pass
-
-        if 'SRC_PLAYLIST' in vars(args) and args.SRC_PLAYLIST:
-            try:
-                plPaths.append(getPlPath(args.SRC_PLAYLIST))
-            except:
-                pass
-
-        if 'DEST_PLAYLIST' in vars(args) and args.DEST_PLAYLIST:
-            try:
-                plPaths.append(getPlPath(args.DEST_PLAYLIST))
-            except:
-                pass
-
-        for plPath in plPaths:
-            metaDataPath = f"{plPath}/{cfg.metaDataName}"
-            if os.path.exists(metaDataPath):
-                with shelve.open(metaDataPath, 'c',writeback=True) as metaData:
-                    correctStateCorruption(plPath,metaData)
-                cfg.logger.info(f"State Recovered For Playlist: {plPath}")
+        checkAllStateCorruption(args)
         

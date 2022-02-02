@@ -81,7 +81,7 @@ def copy(srcMetaData, destMetaData, printer, srcPlPath, destPlPath, srcName, src
 
 def delete(metaData, plPath, name, index):
     with noInterrupt:
-        cfg.logger.debug(f"Deleting {name}")
+        cfg.logger.debug(f"Deleting {metaData['ids'][index]} {name}")
         os.remove(f"{plPath}/{name}")
 
         del metaData["ids"][index]
@@ -359,4 +359,84 @@ def calcuateTransferMoves(currentSrcDir: list[str],
         songTransfers.append(data)
 
     return songTransfers
+
+def promptAndSanitize(promptText, *args):
+    while True:
+        answer = input(promptText).lower().strip()
+        if answer not in args:
+            cfg.logger.error(f"{answer} is not an option")
+            continue
+        return answer
+
+    
+
+def logTransferInfo(songTransfers, srcPlName, destPlName, srcIdsLen, destIdsLen, srcRemoteIds, destRemoteIds, currentDestDir, srcStart, srcEnd, destIndex):
+    blockSize = srcEnd-srcStart+1
+
+    maxNum = max(srcIdsLen, destIdsLen, len(srcRemoteIds), len(destRemoteIds))
+    numIndexDigits = len(str(maxNum))
+
+    numMoveDigits = len(str(len(songTransfers)))
+
+    cfg.logger.info(f"------------[Transfer Moves (applied in reverse)]-----------")
+    cfg.logger.info(f"{'i'*numMoveDigits}: Move Parts  | Song Id     | Song name\n")
+    for i,move in reversed(list(enumerate(songTransfers))):
+        actionPrompt  = f"{padZeros(i, numMoveDigits)}: "
+        actionPrompt += f"{'LC' if move.performCopy else '  '} "
+        actionPrompt += f"{'RA' if move.performRemoteAdd else '  '} "
+        actionPrompt += f"{'LR' if move.performLocalDelete else '  '} "
+        actionPrompt += f"{'RR' if move.performRemoteDelete else '  '} | "
+        prompt  = f"{move.songId} | {move.songName}\n"
+
+        localPrompt = ""
+        if move.performCopy or move.performLocalDelete:
+            localPrompt += ' '*len(actionPrompt) + 'Local '
+        if move.performLocalDelete:
+            localPrompt += f"{srcPlName}: {padZeros(move.srcLocalDeleteIndex, numIndexDigits)} "
+        if move.performCopy:
+            localPrompt += f"-> {destPlName}: {padZeros(move.destCopyIndex, numIndexDigits)} | "
+
+
+        remotePrompt = ""
+        if move.performRemoteAdd or move.performRemoteDelete:
+            remotePrompt += "Remote "
+        if move.performRemoteDelete:
+            remotePrompt += f"{srcPlName}: {padZeros(move.srcRemoteDeleteIndex, numIndexDigits)} "
+        if move.performRemoteAdd:
+            remoteActualMoveNum = padZeros(move.destRemoteAddIndex, numIndexDigits)
+            remoteFinalMoveNum  = padZeros(blockSize + move.destRemoteAddIndex - i - 1, numIndexDigits)
+            remotePrompt += f"-> {destPlName}: {remoteFinalMoveNum} ({remoteActualMoveNum})\n"
+
+
+
+        cfg.logger.info(actionPrompt + prompt + localPrompt + remotePrompt)
+
+
+    cfg.logger.info(f"------------[Legend]-----------")
+    cfg.logger.info ( 
+         f"LC: Local  Copy, from {srcPlName} to {destPlName}\n" \
+         f"RA: Remote Add to {destPlName} \n" \
+         f"LR: Local  Remove from {srcPlName} \n" \
+         f"RR: Remote Remove from {srcPlName}\n" \
+    )
+
+    cfg.logger.info(f"------------[Summery]-----------")
+    cfg.logger.info(f"{srcPlName}: [{srcStart}, {srcEnd}] -> {destPlName}: [{srcStart + destIndex}, {srcEnd + destIndex}]\n")
+
+    cfg.logger.info(f"Transfering Songs in Range [{srcStart}, {srcEnd}] in {srcPlName}")
+    cfg.logger.info(f"  Start Range:   {songTransfers[-1].songName}")
+    cfg.logger.info(f"  End Range:     {songTransfers[0].songName}")
+
+    if destIndex != -1: 
+        leaderSong = re.sub(cfg.filePrependRE,"", currentDestDir[destIndex]) # the name of the song the range will come after
+        cfg.logger.info(f"\nTo After song Index {destIndex} in {destPlName}")
+        cfg.logger.info(f"  {destIndex}: {leaderSong}")
+    else:
+        cfg.logger.info(f"\nTo Start of {destPlName}")
+
+
+    
+    cfg.logger.info(f"\n------------[Note]-----------")
+    cfg.logger.info(f"For Best Remote Playlists Results, Ensure Local and Remote Playlists are Synced")
+    cfg.logger.info(f"(failing to do so may lead to ordering changes in remote if there are duplicate songs)")
 

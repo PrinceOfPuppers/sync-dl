@@ -1,4 +1,5 @@
 
+from threading import Lock, current_thread
 from sync_dl import config as cfg
 # from sync_dl.plManagement import correctStateCorruption #used to clean up state in the event of sigint
 from signal import signal,SIGINT,SIGABRT,SIGTERM,Signals
@@ -6,27 +7,43 @@ import sys
 
 __version__ = "2.2.0"
 
+class InterruptTriggered(Exception):
+    pass
+
 class _NoInterrupt:
-    inNoInterrupt = False
+    noInterruptDepth = 0
     signalReceived=False
 
     def __enter__(self):
-        if self.signalReceived:
+        if self.interruptible() and self.signalReceived:
             self.signalReceived = False
-            sys.exit()
+            self.interrupt()
 
-        self.inNoInterrupt=True
+        self.noInterruptDepth += 1
 
 
     def __exit__(self, type, value, traceback):
-        self.inNoInterrupt=False
-        if self.signalReceived:
+        self.noInterruptDepth -= 1
+        self.noInterruptDepth = max(0, self.noInterruptDepth)
+        if self.interruptible() and self.signalReceived:
             self.signalReceived = False
-            sys.exit()
+            self.interrupt()
+
+    def interrupt(self):
+        raise InterruptTriggered
+
+    def notInterruptible(self):
+        return self.noInterruptDepth > 0
+
+    def interruptible(self):
+        return self.noInterruptDepth == 0
 
     def handler(self,sig,frame):
-        if not self.inNoInterrupt:
-            sys.exit()
+        if not current_thread().__class__.__name__ == '_MainThread':
+            return
+
+        if self.interruptible():
+            self.interrupt()
 
         self.signalReceived = True
         cfg.logger.info(f'{Signals(2).name} Received, Closing after this Operation')
@@ -36,10 +53,10 @@ class _NoInterrupt:
         self.signalReceived = True
 
 
+
 noInterrupt = _NoInterrupt()
 signal(SIGINT,noInterrupt.handler)
 
 def main():
     from sync_dl.cli import cli
-
     cli()

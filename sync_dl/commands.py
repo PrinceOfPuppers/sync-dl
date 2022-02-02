@@ -3,6 +3,7 @@ import os
 import shelve
 import re
 import ntpath
+import shutil
 
 from sync_dl import noInterrupt
 
@@ -34,7 +35,10 @@ def newPlaylist(plPath,url):
     idsLen = len(ids)
     if idsLen == 0:
         cfg.logger.error(f"No Songs Found at {url}\nMake Sure the Playlist is Public!")
-        return
+        answer = input("Proceed with Creating Empty Playlist (y)es/(n)o: ").lower().strip()
+        if answer != 'y':
+            os.rmdir(plPath)
+            return
         
     numDigits = getNumDigets(idsLen) #needed for creating starting number for auto ordering ie) 001, 0152
 
@@ -52,9 +56,11 @@ def newPlaylist(plPath,url):
 
         cfg.logger.info(f"Downloaded {idsLen-invalidSongs}/{idsLen} Songs")
     
-    if (idsLen-invalidSongs == 0) and dirMade:
+    if (idsLen-invalidSongs == 0) and dirMade and idsLen!=0:
         cfg.logger.error(f"Unable to Download any Songs from {url}")
-        os.rmdir(plPath)
+        answer = input("Proceed with Creating Empty Playlist (y)es/(n)o: ").lower().strip()
+        if answer != 'y':
+            shutil.rmtree(plPath)
 
 
 def smartSync(plPath):
