@@ -16,3 +16,6 @@ before_script:
 
 script:
   - python3 test.py https://www.youtube.com/playlist\?list=PLbg8uA1JzGJD56Lfl7aYK4iW2vJHDo0DE
+
+after_failure:
+  - cat tests/testing.log
