@@ -1,7 +1,7 @@
 import os
 import re
 import shutil
-from typing import Union
+from typing import Union, List
 
 from sync_dl import noInterrupt
 import sync_dl.config as cfg
@@ -309,10 +309,10 @@ class TransferMove:
         assert self.performLocalDelete
 
 
-def calcuateTransferMoves(currentSrcDir: list, 
-                          srcLocalIds:list,    destLocalIds:list, 
-                          srcRemoteIds:list,   destRemoteIds:list, 
-                          srcStart:int, srcEnd:int, destIndex:int) -> list[TransferMove]:
+def calcuateTransferMoves(currentSrcDir: List[str], 
+                          srcLocalIds:   List[str], destLocalIds:  List[str], 
+                          srcRemoteIds:  List[str], destRemoteIds: List[str], 
+                          srcStart:int, srcEnd:int, destIndex:int) -> List[TransferMove]:
 
     '''calculates moves for transferSongs'''
 
@@ -333,7 +333,7 @@ def calcuateTransferMoves(currentSrcDir: list,
 
 
     # store moves
-    songTransfers: list[TransferMove] = []
+    songTransfers: List[TransferMove] = []
 
     ### Calculate moves
     copyIndex = destIndex + blockSize
