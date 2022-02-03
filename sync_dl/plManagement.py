@@ -3,8 +3,7 @@ import re
 import shelve
 
 from sync_dl import noInterrupt
-from sync_dl.ytdlWrappers import getIDs
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder,getLocalSongs,download, delete, relabel, getNumDigets, getSongNum
+from sync_dl.helpers import createNumLabel, getLocalSongs,download, delete, relabel, getNumDigets, getSongNum
 import sync_dl.config as cfg
 
 def _checkDeletions(plPath,metaData):

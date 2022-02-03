@@ -2,7 +2,6 @@ import configparser
 import os
 from re import compile
 from ntpath import dirname
-from shutil import copyfile
 
 '''
 contains all global variables, also parses config into global variables

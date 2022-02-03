@@ -1,9 +1,7 @@
 
-from threading import Lock, current_thread
+from threading import current_thread
 from sync_dl import config as cfg
-# from sync_dl.plManagement import correctStateCorruption #used to clean up state in the event of sigint
-from signal import signal,SIGINT,SIGABRT,SIGTERM,Signals
-import sys
+from signal import signal, SIGINT, Signals#,SIGABRT,SIGTERM
 
 __version__ = "2.2.0"
 
@@ -39,7 +37,7 @@ class _NoInterrupt:
         return self.noInterruptDepth == 0
 
     def handler(self,sig,frame):
-        if not current_thread().__class__.__name__ == '_MainThread':
+        if current_thread().__class__.__name__ != '_MainThread':
             return
 
         if self.interruptible():

@@ -5,7 +5,7 @@ import logging
 import argparse
 import shelve
 
-from sync_dl import __version__, noInterrupt, InterruptTriggered
+from sync_dl import __version__, InterruptTriggered
 from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
 

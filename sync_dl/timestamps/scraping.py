@@ -3,8 +3,6 @@ import re
 import json
 from typing import NamedTuple, List
 
-import sync_dl.config as cfg
-
 
 def jsonRegex(*args, surroundingBrace = False):
     r = ""
