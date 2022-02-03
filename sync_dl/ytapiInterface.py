@@ -129,8 +129,8 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
             return
 
         ### Clamp destIndex
-        if destIndex > destIdsLen:
-            destIndex = destIdsLen
+        if destIndex >= destIdsLen:
+            destIndex = destIdsLen -1
         elif destIndex < -1:
             destIndex = -1
 
@@ -183,7 +183,6 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
                             cfg.logger.info(f"Continuing with Transfer")
                         else:
                             cfg.logger.error(f"Error When Adding {move.songName} to Remote Dest: {destPlName}, URL: {destPlUrl}")
-                            cfg.logger.error(f"Local Copy for this song Already Happened")
                             cfg.logger.error(f"Fix by Either:")
                             cfg.logger.error(f"- (r)evert Transfer for This Song")
                             cfg.logger.error(f"- (m)anually Adding https://www.youtube.com/watch?v={move.songId} to Remote Playlist Provided Above And (c)ontinuing or (f)inishing this song.")
@@ -224,9 +223,9 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
                 if move.performRemoteDelete:
                     if not (plRemover(move.srcRemoteDeleteIndex)):
                         cfg.logger.error(f"Error When Removing {move.songName} from Remote Src: {srcPlName}, URL: {srcPlUrl}")
-                        cfg.logger.error(f"All Other Steps, Completed. ")
                         cfg.logger.error(f"Fix by:")
-                        cfg.logger.error(f"- Manually Removing https://www.youtube.com/watch?v={move.songId} from Remote Playlist Provided Above")
+                        cfg.logger.error(f"- Manually Removing Song Index: {move.srcRemoteDeleteIndex} URL: https://www.youtube.com/watch?v={move.songId} from Remote Playlist Provided Above")
+                        input("Hit Enter to Proceed: ")
                         answer = promptAndSanitize("Would You Like to: (c)ontinue transfer, (q)uit: ", 'c', 'q')
                         if answer == 'q':
                             songsPartiallyCompleated += 1

@@ -233,7 +233,7 @@ def move(plPath, currentIndex, newIndex):
             return
 
         #clamp newIndex
-        if newIndex > idsLen-1:
+        if newIndex >= idsLen:
             newIndex = idsLen-1
         elif newIndex < 0:
             newIndex = 0
@@ -299,8 +299,8 @@ def moveRange(plPath, start, end, newStart):
             return
 
         #clamp newStart
-        if newStart > idsLen:
-            newStart = idsLen
+        if newStart >= idsLen:
+            newStart = idsLen - 1
         elif newStart < -1:
             newStart = -1
         
