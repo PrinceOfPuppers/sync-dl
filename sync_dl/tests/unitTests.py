@@ -5,6 +5,7 @@ import shelve
 import sys
 import inspect
 from string import ascii_uppercase
+from typing import List
 
 import sync_dl.config as cfg
 from sync_dl.helpers import smartSyncNewOrder,createNumLabel,getLocalSongs,getNumDigets, calcuateTransferMoves, TransferMove
@@ -982,7 +983,7 @@ def _removeBlanks(l: list):
             l.pop(i)
 
 
-def simulateTransferMoves(moves: list[TransferMove], srcStart: int, srcEnd: int, destIndex: int, 
+def simulateTransferMoves(moves: List[TransferMove], srcStart: int, srcEnd: int, destIndex: int, 
                           srcDir:list, destDir:list, srcLocalIds:list, destLocalIds:list, srcRemoteIds:list, destRemoteIDs:list):
 
     # make room for block
