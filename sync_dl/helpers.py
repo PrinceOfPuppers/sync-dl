@@ -309,9 +309,9 @@ class TransferMove:
         assert self.performLocalDelete
 
 
-def calcuateTransferMoves(currentSrcDir: list[str], 
-                          srcLocalIds:list[str],    destLocalIds:list[str], 
-                          srcRemoteIds:list[str],   destRemoteIds:list[str], 
+def calcuateTransferMoves(currentSrcDir: list, 
+                          srcLocalIds:list,    destLocalIds:list, 
+                          srcRemoteIds:list,   destRemoteIds:list, 
                           srcStart:int, srcEnd:int, destIndex:int) -> list[TransferMove]:
 
     '''calculates moves for transferSongs'''
