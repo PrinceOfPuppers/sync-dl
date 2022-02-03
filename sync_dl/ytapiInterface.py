@@ -102,9 +102,14 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
 
         cfg.logger.info("Loading Youtube Api Resources...")
         plAdder = getPlAdder(destPlUrl)
+        if plAdder is None:
+            return
+
         destRemoteIds = getIDs(destPlUrl)
 
         plRemover, srcRemoteIds = getPlRemover(srcPlUrl)
+        if plRemover is None:
+            return
 
 
         ### Src start/end sanitization

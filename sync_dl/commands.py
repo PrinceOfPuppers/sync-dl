@@ -9,7 +9,7 @@ from sync_dl import noInterrupt
 
 from sync_dl.ytdlWrappers import getIDs, getIdsAndTitles,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets, numOccurance, getNthOccuranceIndex, getOrdinalIndicator
 
 from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
 from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
@@ -405,7 +405,7 @@ def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/w
         numDigits = len(str(maxNum))
 
         if urlWithoutId != None:
-            spacer=' '*(len(urlWithoutId)+11)
+            spacer=' '*(len(urlWithoutId)+10)
 
             cfg.logger.info(f"{' '*numDigits}: URL{spacer}{lineBreak}-> Local Title{lineBreak}")
             for i,songId in enumerate(metaData['ids']):
@@ -422,33 +422,42 @@ def compareMetaData(plPath):
         
         remoteIds, remoteTitles = getIdsAndTitles(metaData["url"])
         localIds = metaData["ids"]
+        assert isinstance(localIds, list)
         currentDir = getLocalSongs(plPath)
 
         maxNum = max(len(localIds), len(remoteIds))
         numDigits = len(str(maxNum))
         
 
-
         cfg.logger.info(f"\n==================[Playlist Data]==================")
         cfg.logger.info(f"{' '*numDigits}: Local ID    -> {' '*numDigits}: Remote ID   : Title")
 
         inLocalNotRemote = []
+        inRemoteNotLocal = [(i,numOccurance(remoteIds, i),remoteId,remoteTitles[i]) for i,remoteId in enumerate(remoteIds)]
+
         for i,localId in enumerate(localIds):
+            localOccuranceNum = numOccurance(localIds, i)
+
             title = re.sub(cfg.filePrependRE, '' , currentDir[i])
-            if localId in remoteIds:
-                j = remoteIds.index(localId)
-                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} -> {str(j).zfill(numDigits)}: {localId} : {title}")
+            remoteIndex = getNthOccuranceIndex(remoteIds, localId, localOccuranceNum)
+            if remoteIndex is not None:
+                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} -> {str(remoteIndex).zfill(numDigits)}: {localId} : {title}")
+                inRemoteNotLocal[remoteIndex] = None
 
             else:
                 cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} -> {' '*numDigits}:             : {title}")
-                inLocalNotRemote.append((i,localId,title))
+                inLocalNotRemote.append((i,localOccuranceNum,localId,title))
 
 
-        inRemoteNotLocal = [(i,remoteId,remoteTitles[i]) for i,remoteId in enumerate(remoteIds) if remoteId not in localIds]
-
-        for j, remoteId, title in inRemoteNotLocal:
-            if remoteId not in localIds:
-                cfg.logger.info(f"{' '*numDigits}:             -> {str(j).zfill(numDigits)}: {remoteId} : {title}")
+        j=0
+        while j<len(inRemoteNotLocal):
+            item = inRemoteNotLocal[j]
+            if item == None:
+                inRemoteNotLocal.pop(j)
+                continue
+            j,_ , remoteId, title = item
+            cfg.logger.info(f"{' '*numDigits}:             -> {str(j).zfill(numDigits)}: {remoteId} : {title}")
+            j+=1
 
         # summery
         cfg.logger.info(f"\n=====================[Summary]=====================")
@@ -456,14 +465,16 @@ def compareMetaData(plPath):
         if len(inLocalNotRemote)>0:
             cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
             cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
-            for i, localId, title in inLocalNotRemote:
-                    cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}")
+            for i, localOccuranceNum, localId, title in inLocalNotRemote:
+                    occuranceText = '' if localOccuranceNum == 0 else f' : {str(localOccuranceNum+1)}{getOrdinalIndicator(localOccuranceNum+1)} Occurance'
+                    cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}{occuranceText}")
 
         if len(inRemoteNotLocal)>0:
             cfg.logger.info(f"\n------------[In Remote But Not In Local]-----------")
             cfg.logger.info(f"{' '*numDigits}: Remote ID   : Remote Title")
-            for j, remoteId, title in inRemoteNotLocal:
-                    cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}")
+            for j, remoteOccuranceNum, remoteId, title in inRemoteNotLocal:
+                    occuranceText = '' if remoteOccuranceNum== 0 else f' : {str(remoteOccuranceNum+1)}{getOrdinalIndicator(remoteOccuranceNum+1)} Occurance'
+                    cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}{occuranceText}")
 
         if len(inLocalNotRemote) == 0 and len(inRemoteNotLocal) == 0:
             cfg.logger.info(f"Local And Remote Contain The Same Songs")

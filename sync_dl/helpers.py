@@ -7,6 +7,12 @@ from sync_dl import noInterrupt
 import sync_dl.config as cfg
 from sync_dl.ytdlWrappers import downloadToTmp,moveFromTmp
 
+_ords = ('th', 'st', 'nd', 'rd')
+def getOrdinalIndicator(n: int):
+    return 'th' if ( 4 <= n%100 <= 20 ) or n%10 >= 3 else _ords[n%10]
+
+
+
 def getNumDigets(plLen):
     return len(str( plLen+1 ))
 
