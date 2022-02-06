@@ -629,7 +629,6 @@ def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite 
 
                 
                 if not autoAccept:
-                    cfg.logger.info("here");
                     response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o" + (", [a]uto-accept" if multipleSongs else "") + ":")).lower()
                     if response == 'a':
                         autoAccept = True

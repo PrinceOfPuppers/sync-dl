@@ -6,6 +6,8 @@ from typing import Union, List
 from sync_dl import noInterrupt
 import sync_dl.config as cfg
 from sync_dl.ytdlWrappers import downloadToTmp,moveFromTmp
+from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
+from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
 
 _ords = ('th', 'st', 'nd', 'rd')
 def getOrdinalIndicator(n: int):
@@ -125,6 +127,38 @@ def download(metaData,plPath, songId, index,numDigets, counter = ''):
             cfg.logger.debug("Download Complete")
             return True
     return False
+
+
+def addTimestampsIfNoneExist(songName, songPath, videoId):
+
+    if not createChapterFile(songPath, songName):
+        return
+
+    existingTimestamps = wipeChapterFile()
+    if len(existingTimestamps) > 0:
+        cfg.logger.debug(f"No Existing Timestamps Found\n")
+        return
+
+    # Get timestamps
+    cfg.logger.debug(f"Scraping Comments for Timestamps of Song: {songName}")
+    timestamps = scrapeCommentsForTimestamps(videoId)
+
+    if len(timestamps) == 0:
+        cfg.logger.info(f"No Comment Timestamps Found\n")
+        return
+
+    # comment timestamps found, no existing timestamps found
+    cfg.logger.debug(f"\nComment Timestamps Found:")
+    for timestamp in timestamps:
+        cfg.logger.debug(timestamp)
+    cfg.logger.info('\n')
+
+    cfg.logger.info(f"\nAdding Comment Timestamps")
+    addTimestampsToChapterFile(timestamps, songPath)
+
+    if not applyChapterFileToSong(songPath, songName):
+        cfg.logger.error(f"Failed to Add Timestamps To Song {songName}\n")
+
 
 def createNumLabel(n,numDigets):
     n = str(n)

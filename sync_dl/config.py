@@ -7,55 +7,60 @@ from ntpath import dirname
 contains all global variables, also parses config into global variables
 '''
 
-def createDefaultConfig(parser):
+modulePath = dirname(__file__)
+
+#loading config
+_parser = configparser.ConfigParser(allow_no_value=True)
+_parser.optionxform = str 
+
+def writeToConfig(key,value):
+    _parser.set('CONFIG',key,value)
+    with open(f'{modulePath}/config.ini', 'w') as configfile:
+        _parser.write(configfile)
+
+def _getConfig():
     defaultConfig = {
         'metaDataName' : '.metaData',
         'manualAddId' : '-manualAddition',
         'testPlPath' : 'tests/testPlaylists',
         'tmpDownloadPath' : 'tmp',
         'musicDir' : '',
+        'autoScrapeCommentTimestamps': '0'
     }
+    cfgPath = f'{modulePath}/config.ini'
 
-    parser['CONFIG'] = defaultConfig
-    with open(f'{modulePath}/config.ini','w+') as f:
-        parser.write(f)
-    
-def writeToConfig(key,value):
-    parser.set('CONFIG',key,value)
-    with open(f'{modulePath}/config.ini', 'w') as configfile:
-        parser.write(configfile)
-
-modulePath = dirname(__file__)
-
-#loading config
-parser = configparser.ConfigParser(allow_no_value=True)
-parser.optionxform = str 
-
-if not os.path.exists(f'{modulePath}/config.ini'):
-    createDefaultConfig(parser)
+    if not os.path.exists(cfgPath):
+        _parser['CONFIG'] = defaultConfig
+        with open(cfgPath) as f:
+            _parser.write(f)
+    else:
+        _parser.read(cfgPath)
     
 
-else:
-    parser.read(f'{modulePath}/config.ini')
+    config = _parser['CONFIG']
+
+    for key in defaultConfig.keys():
+        if not key in config.keys():
+            writeToConfig(key, defaultConfig[key])
+            config[key] = defaultConfig[key]
+
+    return config
 
 
-section = parser['CONFIG']
+_config = _getConfig()
 
 # global config variables
 filePrependRE = compile(r'\d+_')
 plIdRe = compile(r'list=.{34}')
 
-metaDataName = section['metaDataName']
-
-manualAddId =section['manualAddId']
-
-testPlPath = f"{modulePath}/{section['testPlPath']}" 
-
-tmpDownloadPath = f"{modulePath}/{section['tmpDownloadPath']}"
-
-musicDir = section['musicDir']
-
+metaDataName = _config['metaDataName']
+manualAddId =_config['manualAddId']
+testPlPath = f"{modulePath}/{_config['testPlPath']}" 
+tmpDownloadPath = f"{modulePath}/{_config['tmpDownloadPath']}"
+musicDir = _config['musicDir']
 ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
+songSegmentsPath = f'{tmpDownloadPath}/songSegmants'
+autoScrapeCommentTimestamps = _config.getboolean('autoScrapeCommentTimestamps')
 
 #TODO move add to ini
 defualtPeekFmt='{index}: {url} {title}'
@@ -71,16 +76,28 @@ params={"quiet": True, "noplaylist": True,
 }
 
 
+_ffmpegTested = False
+_hasFfmpeg = False
 def testFfmpeg():
+    global _ffmpegTested
+    global _hasFfmpeg
+    if _ffmpegTested:
+        return _hasFfmpeg
     try:
         import subprocess
         subprocess.check_output(['ffmpeg', '-version'])
     except:
+        _ffmpegTested = True
+        _hasFfmpeg = False
         return False
+
+    _ffmpegTested = True
+    _hasFfmpeg = True
     return True
 
 
 if testFfmpeg(): # used to embed metadata
+    testFfmpeg()
     params['postprocessors'] =  [
         {'key': 'FFmpegExtractAudio'},
         #{'key': 'EmbedThumbnail'},
