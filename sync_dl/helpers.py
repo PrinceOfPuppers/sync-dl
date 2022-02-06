@@ -129,14 +129,14 @@ def download(metaData,plPath, songId, index,numDigets, counter = ''):
     return ''
 
 
-def addTimestampsIfNoneExist(songPath, songName, videoId):
-
+def addTimestampsIfNoneExist(plPath, songName, videoId):
+    songPath = f"{plPath}/{songName}"
     if not createChapterFile(songPath, songName):
         return
 
     existingTimestamps = wipeChapterFile()
     if len(existingTimestamps) > 0:
-        cfg.logger.debug(f"No Existing Timestamps Found\n")
+        cfg.logger.info(f"Timestamps Found\n")
         return
 
     # Get timestamps
