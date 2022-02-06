@@ -3,7 +3,7 @@ from threading import current_thread
 from sync_dl import config as cfg
 from signal import signal, SIGINT, Signals#,SIGABRT,SIGTERM
 
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 
 class InterruptTriggered(Exception):
     pass

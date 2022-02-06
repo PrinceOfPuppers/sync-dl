@@ -97,7 +97,6 @@ def testFfmpeg():
 
 
 if testFfmpeg(): # used to embed metadata
-    testFfmpeg()
     params['postprocessors'] =  [
         {'key': 'FFmpegExtractAudio'},
         #{'key': 'EmbedThumbnail'},
