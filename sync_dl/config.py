@@ -31,7 +31,7 @@ def _getConfig():
 
     if not os.path.exists(cfgPath):
         _parser['CONFIG'] = defaultConfig
-        with open(cfgPath) as f:
+        with open(cfgPath, 'w+') as f:
             _parser.write(f)
     else:
         _parser.read(cfgPath)

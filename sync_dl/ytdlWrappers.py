@@ -111,6 +111,7 @@ def downloadToTmp(videoId,numberStr):
 def moveFromTmp(path):
     tmp = os.listdir(path=cfg.tmpDownloadPath) 
     shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
+    return tmp[0]
 
 def getJsonPlData(url):
     '''returns list of dicts of data for each video in playlist at url (order is playlist order)'''

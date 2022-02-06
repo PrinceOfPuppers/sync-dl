@@ -3,7 +3,7 @@ import re
 import shelve
 
 from sync_dl import noInterrupt
-from sync_dl.helpers import createNumLabel, getLocalSongs,download, delete, relabel, getNumDigets, getSongNum
+from sync_dl.helpers import createNumLabel, getLocalSongs,download, delete, relabel, getNumDigets, getSongNum, addTimestampsIfNoneExist
 import sync_dl.config as cfg
 
 def _checkDeletions(plPath,metaData):
@@ -11,15 +11,12 @@ def _checkDeletions(plPath,metaData):
     checks if metadata has songs that are no longer in directory
     '''
     currentDir = getLocalSongs(plPath)
-
-
     idsLen = len(metaData['ids'])
 
     # there have been no deletions, however there may be a gap in numberings
     # which would be falsely detected as a deletion if this check wheren't here
     if idsLen == len(currentDir):
         return
-
 
     #song numbers in currentDir
     currentDirNums = [int(re.match(cfg.filePrependRE,song).group()[:-1]) for song in currentDir]
@@ -28,8 +25,6 @@ def _checkDeletions(plPath,metaData):
 
     #difference between whats in the folder and whats in metadata
     deleted = [i for i in numRange if i not in currentDirNums]
-    
-
     numDeleted = len(deleted)
 
     if numDeleted > 0:
@@ -80,7 +75,6 @@ def _checkBlanks(plPath,metaData):
 
 def _removeGaps(plPath):
     currentDir = getLocalSongs(plPath)
-
     numDidgets = len(str(len(currentDir)))
 
     for i,oldName in enumerate(currentDir):
@@ -94,7 +88,6 @@ def _removeGaps(plPath):
 
 
 
-
 def _restorePrepend(plPath,metaData):
 
     if "removePrependOrder" not in metaData:
@@ -104,7 +97,6 @@ def _restorePrepend(plPath,metaData):
     cfg.logger.debug("Restoring Prepends")
     
     currentDir = os.listdir(path=plPath)
-
     idsLen = len(metaData["ids"])
     numDigets = getNumDigets(idsLen)
 
@@ -129,6 +121,7 @@ def _restorePrepend(plPath,metaData):
     # and the playlist can be treated like normal
 
     del metaData["removePrependOrder"]
+
 
 def correctStateCorruption(plPath,metaData):
     cfg.logger.debug("Checking for playlist state Corruption")
@@ -172,7 +165,6 @@ def editPlaylist(plPath, newOrder, deletions=False):
     '''
 
     currentDir = getLocalSongs(plPath)
-
     numDigets = len(str(2*len(newOrder))) #needed for creating starting number for auto ordering ie) 001, 0152
                                            # len is doubled because we will be first numbering with numbers above the
                                            # so state remains recoverable in event of crash
@@ -184,19 +176,17 @@ def editPlaylist(plPath, newOrder, deletions=False):
 
         for i in range(len(newOrder)):
             newId,oldIndex = newOrder[i]
-
             newIndex = idsLen + i # we reorder the playlist with exclusivly new numbers in case a crash occurs
 
             if oldIndex == None: 
                 # must download new song
-                download(metaData,plPath,newId,newIndex,numDigets)
-
+                songName = download(metaData,plPath,newId,newIndex,numDigets)
+                if songName and cfg.autoScrapeCommentTimestamps:
+                    addTimestampsIfNoneExist(plPath, songName, newId)
             
             else:
                 #song exists locally, but must be reordered/renamed
-
                 oldName = currentDir[oldIndex]
-
                 relabel(metaData,cfg.logger.debug,plPath,oldName,oldIndex,newIndex,numDigets)
 
 

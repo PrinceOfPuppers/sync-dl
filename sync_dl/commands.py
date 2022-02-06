@@ -9,7 +9,7 @@ from sync_dl import noInterrupt
 
 from sync_dl.ytdlWrappers import getIDs, getIdsAndTitles,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets, numOccurance, getNthOccuranceIndex, getOrdinalIndicator
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets, numOccurance, getNthOccuranceIndex, getOrdinalIndicator, addTimestampsIfNoneExist
 
 from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
 from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
@@ -50,9 +50,13 @@ def newPlaylist(plPath,url):
         for i,songId in enumerate(ids):
 
             counter = f'{i+1}/{idsLen}'
-            success = download(metaData,plPath,songId,-1,numDigits,counter)
-            if not success:
+            songName = download(metaData,plPath,songId,-1,numDigits,counter)
+            if not songName:
                 invalidSongs+=1
+                continue
+            if cfg.autoScrapeCommentTimestamps:
+                addTimestampsIfNoneExist(plPath, songName, songId)
+
 
         cfg.logger.info(f"Downloaded {idsLen-invalidSongs}/{idsLen} Songs")
     
@@ -118,7 +122,9 @@ def appendNew(plPath):
 
         for remoteId in remoteIds:
             if remoteId not in metaData['ids']:
-                download(metaData,plPath,remoteId,len(metaData['ids']),numDigits)
+                songName = download(metaData,plPath,remoteId,idsLen,numDigits)
+                if songName and cfg.autoScrapeCommentTimestamps:
+                    addTimestampsIfNoneExist(plPath, songName, remoteId)
 
 
 

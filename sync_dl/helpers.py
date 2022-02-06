@@ -119,17 +119,17 @@ def download(metaData,plPath, songId, index,numDigets, counter = ''):
     if downloadToTmp(songId,num): #returns true if succeeds
 
         with noInterrupt: # moving the song from tmp and editing the metadata must occur togeather
-            moveFromTmp(plPath)
+            songName = moveFromTmp(plPath)
             if index >= len(metaData["ids"]):
                 metaData["ids"].append(songId)
             else:
                 metaData["ids"][index] = songId
             cfg.logger.debug("Download Complete")
-            return True
-    return False
+            return songName
+    return ''
 
 
-def addTimestampsIfNoneExist(songName, songPath, videoId):
+def addTimestampsIfNoneExist(songPath, songName, videoId):
 
     if not createChapterFile(songPath, songName):
         return

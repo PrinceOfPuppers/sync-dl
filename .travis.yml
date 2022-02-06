@@ -19,4 +19,6 @@ script:
 
 after_failure:
   - ls
-  - echo $(cat tests/testing.log)
+  - ls sync_dl
+  - ls sync_dl/tests
+  - echo $(cat sync_dl/tests/testing.log)

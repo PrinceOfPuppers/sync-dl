@@ -149,7 +149,8 @@ def setupParsers():
 
     config = subparsers.add_parser("config", help='change configuration', formatter_class=ArgsOnce)
     # the '\n' are used as defaults so they dont get confused with actual paths
-    config.add_argument('-l','--local-dir', nargs='?',metavar='PATH',const='\n',type=str, help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory' )
+    config.add_argument('-l','--local-dir',nargs='?',metavar='PATH',const='\n',type=str,help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory')
+    config.add_argument('-t', '--toggle-timestamps', action='store_true', help='toggles automatic scraping of comments for timestamps when downloading')
     config.set_defaults(func= lambda args: configHandler(args, config))
 
     #info
@@ -211,7 +212,16 @@ def configHandler(args,parser):
         cfg.writeToConfig('musicDir',music)
         cfg.musicDir = music
 
-    else:
+    if args.toggle_timestamps:
+        cfg.autoScrapeCommentTimestamps = not cfg.autoScrapeCommentTimestamps
+        if cfg.autoScrapeCommentTimestamps:
+            cfg.logger.info("Automatic Comment Timestamp Scraping: ON")
+        else:
+            cfg.logger.info("Automatic Comment Timestamp Scraping: OFF")
+
+        cfg.writeToConfig('autoScrapeCommentTimestamps', str(int(cfg.autoScrapeCommentTimestamps)))
+
+    if not (args.toggle_timestamps or args.local_dir):
         parser.print_help()
         cfg.logger.error("Please Select an Option")
 
