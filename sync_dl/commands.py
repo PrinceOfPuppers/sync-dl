@@ -9,7 +9,7 @@ from sync_dl import noInterrupt
 
 from sync_dl.ytdlWrappers import getIDs, getIdsAndTitles,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets, numOccurance, getNthOccuranceIndex, getOrdinalIndicator, addTimestampsIfNoneExist
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets, numOccurance, getNthOccuranceIndex, getOrdinalIndicator, addTimestampsIfNoneExist, padZeros
 
 from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
 from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
@@ -602,11 +602,20 @@ def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite 
 
                 # existing timestamps, plus timestamps found
                 cfg.logger.info(f"\nExisting Timestamps Found:")
-                for timestamp in existingTimestamps:
-                    cfg.logger.info(timestamp)
+                numDigitsExistingTimestamps = len(str(len(existingTimestamps)))
+                numDigitsCommentTimestamps = len(str(len(timestamps)))
+                for i,timestamp in enumerate(existingTimestamps):
+                    leadChar = ' '
+                    if timestamp not in timestamps:
+                        leadChar = '-'
+                    cfg.logger.info(f"{leadChar} {padZeros(i, numDigitsExistingTimestamps)}) {timestamp}")
                 cfg.logger.info(f"\nComment Timestamps Found:")
-                for timestamp in timestamps:
-                    cfg.logger.info(timestamp)
+                for i,timestamp in enumerate(timestamps):
+                    leadChar = ' '
+                    if timestamp not in existingTimestamps:
+                        leadChar = '+'
+                    cfg.logger.info(f"{leadChar} {padZeros(i, numDigitsCommentTimestamps)}) {timestamp}")
+
                 cfg.logger.info('\n')
 
                 if autoOverwrite and autoAccept:

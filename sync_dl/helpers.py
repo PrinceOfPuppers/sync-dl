@@ -151,9 +151,8 @@ def addTimestampsIfNoneExist(plPath, songName, videoId):
     cfg.logger.debug(f"\nComment Timestamps Found:")
     for timestamp in timestamps:
         cfg.logger.debug(timestamp)
-    cfg.logger.info('\n')
 
-    cfg.logger.info(f"\nAdding Comment Timestamps")
+    cfg.logger.info(f"Adding Comment Timestamps\n")
     addTimestampsToChapterFile(timestamps, songPath)
 
     if not applyChapterFileToSong(songPath, songName):

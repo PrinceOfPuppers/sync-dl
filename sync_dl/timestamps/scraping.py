@@ -1,7 +1,9 @@
 import requests
 import re
 import json
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Union
+
+import sync_dl.config as cfg
 
 
 def jsonRegex(*args, surroundingBrace = False):
@@ -20,7 +22,7 @@ apiKeyRe = re.compile(jsonRegex("INNERTUBE_API_KEY", "(.*?)"))
 clientVersionRe = re.compile(jsonRegex("key", "cver", "value", "(.*?)" , surroundingBrace = True))
 continuationTokenRe = re.compile(r'[\'\"]token[\'\"]:[\'\"](.*?)[\'\"]')
 
-labelSanitizeRe = re.compile(r'^(?:[:\-|\s>]*)(?:\d{1,3}[\.:|])?\]?(?:\s)?(.*?)[:\-|\s>]*$')
+labelSanitizeRe = re.compile(r'^(?:[:\-|\s>]*)(?:\d{1,3}[\.:|\)])?\]?(?:\s)?(.*?)[:\-|\s>]*$')
 
 class Timestamp(NamedTuple):
     time: int
@@ -152,16 +154,56 @@ def _getTime(url, timeRe):
         return int(matches.group(2))
     return None
 
-def _getTimestamp(line, timeRe):
-    '''line must be of len 2  checks if line is [timestamp, label] or [label, timestamp]'''
-    for i in range(0,2):
-        url = scrapeFirstJson(line[i], "url")
-        if url is not None:
-            time = _getTime(url,timeRe)
-            if time!=None:
-                label = line[(i+1)%2]['text']
-                if not scrapeFirstJson(label,"url"):
-                    return Timestamp(label=_sanitizeLabel(label), time=time)
+def _getTimestamp(line, timeRe) -> Union[Timestamp, None]:
+    '''line must be of form [text] [time] or [time] [text]'''
+    text = ""
+    url = ""
+    time = -1
+    if len(line) == 0:
+        return None
+
+    urlFirst = False
+    ele = line[0]
+    foundUrl = scrapeFirstJson(ele, "url")
+    if foundUrl is None:
+        text+=ele['text']
+    else:
+        urlFirst = True
+        url = foundUrl
+        foundTime = _getTime(url,timeRe)
+        if foundTime is None:
+            return None
+        time=foundTime
+
+    for i in range(1,len(line)):
+        ele = line[i]
+        foundUrl = scrapeFirstJson(ele, "url")
+
+        # found text
+        if foundUrl is None:
+            if url and not urlFirst:
+                if ele['text'].isspace():
+                    continue
+                return None
+
+            text+=ele['text']
+            continue
+
+        # found url
+        if foundUrl is not None:
+            if urlFirst:
+                return None
+            if url:
+                return None
+
+            url = foundUrl
+            foundTime = _getTime(url,timeRe)
+            if foundTime is None:
+                return None
+            time = foundTime
+
+    if text and url and time != -1:
+        return Timestamp(label=_sanitizeLabel(text), time=time)
     return None
 
 
@@ -190,8 +232,6 @@ def _getTimeStamps(comments, videoId):
         # parse lines for timestamps
         timeStamps:List[Timestamp] = []
         for line in lines:
-            if (len(line) != 2):
-                continue
             timeStamp = _getTimestamp(line,timeRe)
             if timeStamp is not None:
                 timeStamps.append(timeStamp)
@@ -209,9 +249,13 @@ def _getTimeStamps(comments, videoId):
 def scrapeCommentsForTimestamps(videoId):
     url = 'https://www.youtube.com/watch?v=' + videoId
 
-    comments = _getComments(url)
-    timeStamps = _getTimeStamps(comments, videoId)
+    try:
+        comments = _getComments(url)
+    except:
+        cfg.logger.info("No Comments Found")
+        return []
 
+    timeStamps = _getTimeStamps(comments, videoId)
     return timeStamps
 
 if __name__ == '__main__':
@@ -226,4 +270,5 @@ if __name__ == '__main__':
     '04.1 "Goodmorning America!"',
     '04.1 "Goodmorning America!"',
     '104. "Goodmorning America!"',
+    "01. ＬＯＯＫＩＮＧ ＵＰ_______________ "
     ]
