@@ -153,6 +153,7 @@ def setupParsers():
     config.add_argument('-f','--audio-format',nargs='?',metavar='FMT',const='\n',type=str,help='sets audio format to FMT (eg bestaudio, m4a, mp3, aac). if no FMT is provided, prints current FMT')
     config.add_argument('-t', '--toggle-timestamps', action='store_true', help='toggles automatic scraping of comments for timestamps when downloading')
     config.add_argument('-T', '--toggle-thumbnails', action='store_true', help='toggles embedding of thumbnails on download')
+    config.add_argument('-s', '--show-config', action='store_true', help='shows current configuration')
     config.set_defaults(func= lambda args: configHandler(args, config))
 
     #info
@@ -248,7 +249,22 @@ def configHandler(args,parser):
 
         cfg.writeToConfig('autoScrapeCommentTimestamps', str(int(cfg.autoScrapeCommentTimestamps)))
 
-    if not (args.toggle_timestamps or args.local_dir or args.audio_format or args.toggle_thumbnails):
+    if args.show_config:
+        cfg.logger.info(f"(-l) (--local-dir):         {cfg.musicDir}")
+
+        cfg.logger.info(f"(-f) (--audio-format):      {cfg.audioFormat}")
+
+        if cfg.autoScrapeCommentTimestamps:
+            cfg.logger.info("(-t) (--toggle-timestamps): ON")
+        else:
+            cfg.logger.info("(-t) (--toggle-timestamps): OFF")
+
+        if cfg.embedThumbnail:
+            cfg.logger.info("(-T) (--toggle-thumbnails): ON")
+        else:
+            cfg.logger.info("(-T) (--toggle-thumbnails): OFF")
+
+    if not (args.toggle_timestamps or args.local_dir or args.audio_format or args.toggle_thumbnails or args.show_config):
         parser.print_help()
         cfg.logger.error("Please Select an Option")
 
