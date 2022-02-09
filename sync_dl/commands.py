@@ -515,7 +515,6 @@ def peek(urlOrPlName,fmt="{index}: {url} {title}"):
     plData = getJsonPlData(urlOrPlName)
 
     for i,songData in enumerate(plData):
-        songData["url"] = "https://www.youtube.com/watch?v="+songData["url"]
         songStr = fmt.format(index = i,**songData)
         cfg.logger.info(songStr)
 
