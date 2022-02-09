@@ -2,6 +2,7 @@ import configparser
 import os
 from re import compile
 from ntpath import dirname
+from yt_dlp.postprocessor import FFmpegExtractAudioPP
 
 '''
 contains all global variables, also parses config into global variables
@@ -18,6 +19,7 @@ def writeToConfig(key,value):
     with open(f'{modulePath}/config.ini', 'w') as configfile:
         _parser.write(configfile)
 
+
 def _getConfig():
     defaultConfig = {
         'metaDataName' : '.metaData',
@@ -25,7 +27,8 @@ def _getConfig():
         'testPlPath' : 'tests/testPlaylists',
         'tmpDownloadPath' : 'tmp',
         'musicDir' : '',
-        'autoScrapeCommentTimestamps': '0'
+        'autoScrapeCommentTimestamps': '0',
+        'audioFormat': 'best'
     }
     cfgPath = f'{modulePath}/config.ini'
 
@@ -53,6 +56,8 @@ _config = _getConfig()
 filePrependRE = compile(r'\d+_')
 plIdRe = compile(r'list=.{34}')
 
+knownFormats = FFmpegExtractAudioPP.SUPPORTED_EXTS
+
 metaDataName = _config['metaDataName']
 manualAddId =_config['manualAddId']
 testPlPath = f"{modulePath}/{_config['testPlPath']}" 
@@ -61,6 +66,7 @@ musicDir = _config['musicDir']
 ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
 songSegmentsPath = f'{tmpDownloadPath}/songSegmants'
 autoScrapeCommentTimestamps = _config.getboolean('autoScrapeCommentTimestamps')
+audioFormat = _config['audioFormat']
 
 #TODO move add to ini
 defualtPeekFmt='{index}: {url} {title}'
@@ -71,13 +77,12 @@ logger = logging.getLogger('sync_dl')
 
 
 # youtube-dl params, used in downloadToTmp
-params={"quiet": True, "noplaylist": True,
-    'format': 'bestaudio', 
-}
+params={"quiet": True, "noplaylist": True, 'audio_format': 'best'}
 
 
 _ffmpegTested = False
 _hasFfmpeg = False
+
 def testFfmpeg():
     global _ffmpegTested
     global _hasFfmpeg
@@ -96,9 +101,45 @@ def testFfmpeg():
     return True
 
 
-if testFfmpeg(): # used to embed metadata
+if testFfmpeg():
     params['postprocessors'] =  [
-        {'key': 'FFmpegExtractAudio'},
         #{'key': 'EmbedThumbnail'},
-        {'key': 'FFmpegMetadata'}
+        {'key': 'FFmpegMetadata'},
         ]
+
+def setAudioFormat():
+    audioFormat = _config['audioFormat']
+    params['audio_format'] = 'best'
+
+    if audioFormat == 'best':
+        params['audio_format'] = 'best'
+    else:
+        params['audio_format'] = audioFormat
+    if testFfmpeg():
+        for i in range(len(params['postprocessors'])):
+            post = params['postprocessors'][i]
+            if post['key'] == 'FFmpegExtractAudio':
+                if audioFormat == 'best':
+                    params['postprocessors'][i] = {'key': 'FFmpegExtractAudio'}
+                else:
+                    params['postprocessors'][i] = ({
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': audioFormat,
+                        'preferredquality': 'bestaudio',
+                        'nopostoverwrites': True,
+                        'key': 'FFmpegExtractAudio'
+                    })
+                return
+
+        if audioFormat == 'best':
+            params['postprocessors'].append({'key': 'FFmpegExtractAudio'})
+        else:
+            params['postprocessors'].append({
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': audioFormat,
+                'preferredquality': 'bestaudio',
+                'nopostoverwrites': True,
+                'key': 'FFmpegExtractAudio'
+            })
+
+setAudioFormat()
