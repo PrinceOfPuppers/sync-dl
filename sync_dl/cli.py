@@ -152,6 +152,7 @@ def setupParsers():
     config.add_argument('-l','--local-dir',nargs='?',metavar='PATH',const='\n',type=str,help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory')
     config.add_argument('-f','--audio-format',nargs='?',metavar='FMT',const='\n',type=str,help='sets audio format to FMT (eg bestaudio, m4a, mp3, aac). if no FMT is provided, prints current FMT')
     config.add_argument('-t', '--toggle-timestamps', action='store_true', help='toggles automatic scraping of comments for timestamps when downloading')
+    config.add_argument('-T', '--toggle-thumbnails', action='store_true', help='toggles embedding of thumbnails on download')
     config.set_defaults(func= lambda args: configHandler(args, config))
 
     #info
@@ -225,6 +226,19 @@ def configHandler(args,parser):
         cfg.setAudioFormat()
         cfg.logger.info(f"Audio Format Set to: {fmt}")
 
+    if args.toggle_thumbnails:
+        if cfg.embedThumbnail:
+            cfg.writeToConfig('embedThumbnail', '0')
+            cfg.setEmbedThumbnails()
+        else:
+            cfg.writeToConfig('embedThumbnail', '1')
+            cfg.setEmbedThumbnails()
+
+        if cfg.embedThumbnail:
+            cfg.logger.info("Embedding Thumbnails: ON")
+        else:
+            cfg.logger.info("Embedding Thumbnails: OFF")
+
     if args.toggle_timestamps:
         cfg.autoScrapeCommentTimestamps = not cfg.autoScrapeCommentTimestamps
         if cfg.autoScrapeCommentTimestamps:
@@ -234,7 +248,7 @@ def configHandler(args,parser):
 
         cfg.writeToConfig('autoScrapeCommentTimestamps', str(int(cfg.autoScrapeCommentTimestamps)))
 
-    if not (args.toggle_timestamps or args.local_dir or args.audio_format):
+    if not (args.toggle_timestamps or args.local_dir or args.audio_format or args.toggle_thumbnails):
         parser.print_help()
         cfg.logger.error("Please Select an Option")
 

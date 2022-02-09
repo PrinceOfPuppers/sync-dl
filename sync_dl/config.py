@@ -28,7 +28,8 @@ def _getConfig():
         'tmpDownloadPath' : 'tmp',
         'musicDir' : '',
         'autoScrapeCommentTimestamps': '0',
-        'audioFormat': 'best'
+        'audioFormat': 'best',
+        'embedThumbnail': '0'
     }
     cfgPath = f'{modulePath}/config.ini'
 
@@ -67,6 +68,7 @@ ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
 songSegmentsPath = f'{tmpDownloadPath}/songSegmants'
 autoScrapeCommentTimestamps = _config.getboolean('autoScrapeCommentTimestamps')
 audioFormat = _config['audioFormat']
+embedThumbnail = _config.getboolean('embedThumbnail')
 
 #TODO move add to ini
 defualtPeekFmt='{index}: {url} {title}'
@@ -77,7 +79,7 @@ logger = logging.getLogger('sync_dl')
 
 
 # youtube-dl params, used in downloadToTmp
-params={"quiet": True, "noplaylist": True, 'audio_format': 'best'}
+params={"quiet": True, "noplaylist": True, 'audio_format': 'best', }
 
 
 _ffmpegTested = False
@@ -103,43 +105,52 @@ def testFfmpeg():
 
 if testFfmpeg():
     params['postprocessors'] =  [
-        #{'key': 'EmbedThumbnail'},
         {'key': 'FFmpegMetadata'},
         ]
+
+def _addIfNotExists(l, key, val):
+    for i in range(len(l)):
+        if l[i]['key'] == key:
+            l[i] = val
+            return
+
+    l.append(val)
+
+def _removeIfExists(l, key):
+    for i in range(len(l)):
+        if l[i]['key'] == key:
+            l.pop(i)
+            return
+
 
 def setAudioFormat():
     audioFormat = _config['audioFormat']
     params['audio_format'] = 'best'
-
     if audioFormat == 'best':
-        params['audio_format'] = 'best'
+        _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {'key': 'FFmpegExtractAudio'})
     else:
-        params['audio_format'] = audioFormat
-    if testFfmpeg():
-        for i in range(len(params['postprocessors'])):
-            post = params['postprocessors'][i]
-            if post['key'] == 'FFmpegExtractAudio':
-                if audioFormat == 'best':
-                    params['postprocessors'][i] = {'key': 'FFmpegExtractAudio'}
-                else:
-                    params['postprocessors'][i] = ({
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': audioFormat,
-                        'preferredquality': 'bestaudio',
-                        'nopostoverwrites': True,
-                        'key': 'FFmpegExtractAudio'
-                    })
-                return
-
-        if audioFormat == 'best':
-            params['postprocessors'].append({'key': 'FFmpegExtractAudio'})
-        else:
-            params['postprocessors'].append({
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': audioFormat,
-                'preferredquality': 'bestaudio',
-                'nopostoverwrites': True,
-                'key': 'FFmpegExtractAudio'
-            })
+        _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': audioFormat,
+            'preferredquality': 'bestaudio',
+            'nopostoverwrites': True,
+            'key': 'FFmpegExtractAudio'
+        })
 
 setAudioFormat()
+
+def setEmbedThumbnails():
+    global embedThumbnail
+    embedThumbnail = _config.getboolean('embedThumbnail')
+    if embedThumbnail:
+        params['writethumbnail'] = True
+        _addIfNotExists(params['postprocessors'], 'EmbedThumbnail', {
+            'key': 'EmbedThumbnail',
+            'already_have_thumbnail': False
+        })
+    else:
+        _removeIfExists(params['postprocessors'], 'EmbedThumbnail')
+        if 'writethumbnail' in params:
+            params.pop('writethumbnail')
+
+setEmbedThumbnails()
