@@ -1,4 +1,5 @@
 import configparser
+from tempfile import TemporaryDirectory
 import os
 from re import compile
 from ntpath import dirname
@@ -52,6 +53,7 @@ def _getConfig():
 
 
 _config = _getConfig()
+_tmpDir = TemporaryDirectory()
 
 # global config variables
 filePrependRE = compile(r'\d+_')
@@ -62,7 +64,7 @@ knownFormats = FFmpegExtractAudioPP.SUPPORTED_EXTS
 metaDataName = _config['metaDataName']
 manualAddId =_config['manualAddId']
 testPlPath = f"{modulePath}/{_config['testPlPath']}" 
-tmpDownloadPath = f"{modulePath}/{_config['tmpDownloadPath']}"
+tmpDownloadPath = _tmpDir.name#f"{modulePath}/{_config['tmpDownloadPath']}"
 musicDir = _config['musicDir']
 ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
 songSegmentsPath = f'{tmpDownloadPath}/songSegmants'

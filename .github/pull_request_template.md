@@ -14,4 +14,4 @@ python3 test.py [PLAYLIST_URL]
 - [ ] other (specify below):
 
 ## Details:
-Be sure to include links relevent issues if applicable.
+Be sure to include links relevant issues if applicable.
