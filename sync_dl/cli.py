@@ -5,6 +5,7 @@ import logging
 import argparse
 import shelve
 
+
 from sync_dl import __version__, InterruptTriggered
 from sync_dl.plManagement import correctStateCorruption
 import sync_dl.config as cfg
@@ -96,7 +97,6 @@ def setupParsers():
     parser.add_argument('-v','--verbose',action='store_true', help='runs application in verbose mode' )
     parser.add_argument('-q','--quiet',action='store_true', help='runs application with no print outs' )
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
-    parser.add_argument('-f','--force-m4a', action='store_true', help='Will only download m4a, rather than seeking for best audio' )
     parser.set_defaults(func = lambda args: baseHandler(args, parser))
 
     subparsers = parser.add_subparsers()
@@ -147,10 +147,14 @@ def setupParsers():
     transfer.set_defaults(func = lambda args: transferHandler(args, transfer))
 
 
-    config = subparsers.add_parser("config", help='change configuration', formatter_class=ArgsOnce)
+    config = subparsers.add_parser("config", help='change configuration (carries over between runs)', formatter_class=ArgsOnce)
     # the '\n' are used as defaults so they dont get confused with actual paths
     config.add_argument('-l','--local-dir',nargs='?',metavar='PATH',const='\n',type=str,help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory')
+    config.add_argument('-f','--audio-format',nargs='?',metavar='FMT',const='\n',type=str,help='sets audio format to FMT (eg bestaudio, m4a, mp3, aac). if no FMT is provided, prints current FMT')
+    config.add_argument('--list-formats',action='store_true', help='list all acceptable audio formats')
     config.add_argument('-t', '--toggle-timestamps', action='store_true', help='toggles automatic scraping of comments for timestamps when downloading')
+    config.add_argument('-T', '--toggle-thumbnails', action='store_true', help='toggles embedding of thumbnails on download')
+    config.add_argument('-s', '--show-config', action='store_true', help='shows current configuration')
     config.set_defaults(func= lambda args: configHandler(args, config))
 
     #info
@@ -212,6 +216,34 @@ def configHandler(args,parser):
         cfg.writeToConfig('musicDir',music)
         cfg.musicDir = music
 
+    if args.audio_format:
+        if args.audio_format == '\n':
+            cfg.logger.info(cfg.audioFormat)
+            return
+        fmt = args.audio_format
+        if fmt not in cfg.knownFormats:
+            cfg.logger.error(f"Unknown Format: {fmt}\nKnown Formats Are: {', '.join(cfg.knownFormats)}")
+            return
+        cfg.writeToConfig('audioFormat', fmt)
+        cfg.setAudioFormat()
+        cfg.logger.info(f"Audio Format Set to: {fmt}")
+
+    if args.list_formats:
+        cfg.logger.info(' '.join(cfg.knownFormats))
+
+    if args.toggle_thumbnails:
+        if cfg.embedThumbnail:
+            cfg.writeToConfig('embedThumbnail', '0')
+            cfg.setEmbedThumbnails()
+        else:
+            cfg.writeToConfig('embedThumbnail', '1')
+            cfg.setEmbedThumbnails()
+
+        if cfg.embedThumbnail:
+            cfg.logger.info("Embedding Thumbnails: ON")
+        else:
+            cfg.logger.info("Embedding Thumbnails: OFF")
+
     if args.toggle_timestamps:
         cfg.autoScrapeCommentTimestamps = not cfg.autoScrapeCommentTimestamps
         if cfg.autoScrapeCommentTimestamps:
@@ -221,7 +253,22 @@ def configHandler(args,parser):
 
         cfg.writeToConfig('autoScrapeCommentTimestamps', str(int(cfg.autoScrapeCommentTimestamps)))
 
-    if not (args.toggle_timestamps or args.local_dir):
+    if args.show_config:
+        cfg.logger.info(f"(-l) (--local-dir):         {cfg.musicDir}")
+
+        cfg.logger.info(f"(-f) (--audio-format):      {cfg.audioFormat}")
+
+        if cfg.autoScrapeCommentTimestamps:
+            cfg.logger.info("(-t) (--toggle-timestamps): ON")
+        else:
+            cfg.logger.info("(-t) (--toggle-timestamps): OFF")
+
+        if cfg.embedThumbnail:
+            cfg.logger.info("(-T) (--toggle-thumbnails): ON")
+        else:
+            cfg.logger.info("(-T) (--toggle-thumbnails): OFF")
+
+    if not (args.toggle_timestamps or args.local_dir or args.audio_format or args.list_formats or args.toggle_thumbnails or args.show_config):
         parser.print_help()
         cfg.logger.error("Please Select an Option")
 
@@ -392,9 +439,6 @@ def cli():
     Runs command line application, talking in args and running commands
     '''
     args = setupParsers()
-
-    if args.force_m4a:
-        cfg.params["format"] = 'm4a'
 
     setupLogger(args)
 

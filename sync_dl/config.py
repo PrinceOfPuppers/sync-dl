@@ -2,6 +2,7 @@ import configparser
 import os
 from re import compile
 from ntpath import dirname
+from yt_dlp.postprocessor import FFmpegExtractAudioPP
 
 '''
 contains all global variables, also parses config into global variables
@@ -18,6 +19,7 @@ def writeToConfig(key,value):
     with open(f'{modulePath}/config.ini', 'w') as configfile:
         _parser.write(configfile)
 
+
 def _getConfig():
     defaultConfig = {
         'metaDataName' : '.metaData',
@@ -25,7 +27,9 @@ def _getConfig():
         'testPlPath' : 'tests/testPlaylists',
         'tmpDownloadPath' : 'tmp',
         'musicDir' : '',
-        'autoScrapeCommentTimestamps': '0'
+        'autoScrapeCommentTimestamps': '0',
+        'audioFormat': 'best',
+        'embedThumbnail': '0'
     }
     cfgPath = f'{modulePath}/config.ini'
 
@@ -53,6 +57,8 @@ _config = _getConfig()
 filePrependRE = compile(r'\d+_')
 plIdRe = compile(r'list=.{34}')
 
+knownFormats = FFmpegExtractAudioPP.SUPPORTED_EXTS
+
 metaDataName = _config['metaDataName']
 manualAddId =_config['manualAddId']
 testPlPath = f"{modulePath}/{_config['testPlPath']}" 
@@ -61,6 +67,8 @@ musicDir = _config['musicDir']
 ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
 songSegmentsPath = f'{tmpDownloadPath}/songSegmants'
 autoScrapeCommentTimestamps = _config.getboolean('autoScrapeCommentTimestamps')
+audioFormat = _config['audioFormat']
+embedThumbnail = _config.getboolean('embedThumbnail')
 
 #TODO move add to ini
 defualtPeekFmt='{index}: {url} {title}'
@@ -71,13 +79,12 @@ logger = logging.getLogger('sync_dl')
 
 
 # youtube-dl params, used in downloadToTmp
-params={"quiet": True, "noplaylist": True,
-    'format': 'bestaudio', 
-}
+params={"quiet": True, "noplaylist": True, 'format': 'bestaudio'}
 
 
 _ffmpegTested = False
 _hasFfmpeg = False
+
 def testFfmpeg():
     global _ffmpegTested
     global _hasFfmpeg
@@ -96,9 +103,55 @@ def testFfmpeg():
     return True
 
 
-if testFfmpeg(): # used to embed metadata
+if testFfmpeg():
     params['postprocessors'] =  [
-        {'key': 'FFmpegExtractAudio'},
-        #{'key': 'EmbedThumbnail'},
-        {'key': 'FFmpegMetadata'}
+        {'key': 'FFmpegMetadata'},
         ]
+
+def _addIfNotExists(l, key, val):
+    for i in range(len(l)):
+        if l[i]['key'] == key:
+            l[i] = val
+            return
+
+    l.append(val)
+
+def _removeIfExists(l, key):
+    for i in range(len(l)):
+        if l[i]['key'] == key:
+            l.pop(i)
+            return
+
+
+def setAudioFormat():
+    audioFormat = _config['audioFormat']
+
+    if audioFormat == 'best':
+        params['format'] = f'bestaudio'
+        _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {'key': 'FFmpegExtractAudio'})
+    else:
+        params['format'] = f'{_config["audioFormat"]}/bestaudio'
+        _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': audioFormat,
+            'preferredquality': 'bestaudio',
+            'nopostoverwrites': True
+        })
+
+setAudioFormat()
+
+def setEmbedThumbnails():
+    global embedThumbnail
+    embedThumbnail = _config.getboolean('embedThumbnail')
+    if embedThumbnail:
+        params['writethumbnail'] = True
+        _addIfNotExists(params['postprocessors'], 'EmbedThumbnail', {
+            'key': 'EmbedThumbnail',
+            'already_have_thumbnail': False
+        })
+    else:
+        _removeIfExists(params['postprocessors'], 'EmbedThumbnail')
+        if 'writethumbnail' in params:
+            params.pop('writethumbnail')
+
+setEmbedThumbnails()
