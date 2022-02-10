@@ -79,7 +79,7 @@ logger = logging.getLogger('sync_dl')
 
 
 # youtube-dl params, used in downloadToTmp
-params={"quiet": True, "noplaylist": True, 'audio_format': 'best', }
+params={"quiet": True, "noplaylist": True, 'format': 'bestaudio'}
 
 
 _ffmpegTested = False
@@ -125,16 +125,17 @@ def _removeIfExists(l, key):
 
 def setAudioFormat():
     audioFormat = _config['audioFormat']
-    params['audio_format'] = 'best'
+
     if audioFormat == 'best':
+        params['format'] = f'bestaudio'
         _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {'key': 'FFmpegExtractAudio'})
     else:
+        params['format'] = f'{_config["audioFormat"]}/bestaudio'
         _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {
             'key': 'FFmpegExtractAudio',
             'preferredcodec': audioFormat,
             'preferredquality': 'bestaudio',
-            'nopostoverwrites': True,
-            'key': 'FFmpegExtractAudio'
+            'nopostoverwrites': True
         })
 
 setAudioFormat()
