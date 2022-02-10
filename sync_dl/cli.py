@@ -151,6 +151,7 @@ def setupParsers():
     # the '\n' are used as defaults so they dont get confused with actual paths
     config.add_argument('-l','--local-dir',nargs='?',metavar='PATH',const='\n',type=str,help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory')
     config.add_argument('-f','--audio-format',nargs='?',metavar='FMT',const='\n',type=str,help='sets audio format to FMT (eg bestaudio, m4a, mp3, aac). if no FMT is provided, prints current FMT')
+    config.add_argument('--list-formats',action='store_true', help='list all acceptable audio formats')
     config.add_argument('-t', '--toggle-timestamps', action='store_true', help='toggles automatic scraping of comments for timestamps when downloading')
     config.add_argument('-T', '--toggle-thumbnails', action='store_true', help='toggles embedding of thumbnails on download')
     config.add_argument('-s', '--show-config', action='store_true', help='shows current configuration')
@@ -227,6 +228,9 @@ def configHandler(args,parser):
         cfg.setAudioFormat()
         cfg.logger.info(f"Audio Format Set to: {fmt}")
 
+    if args.list_formats:
+        cfg.logger.info(' '.join(cfg.knownFormats))
+
     if args.toggle_thumbnails:
         if cfg.embedThumbnail:
             cfg.writeToConfig('embedThumbnail', '0')
@@ -264,7 +268,7 @@ def configHandler(args,parser):
         else:
             cfg.logger.info("(-T) (--toggle-thumbnails): OFF")
 
-    if not (args.toggle_timestamps or args.local_dir or args.audio_format or args.toggle_thumbnails or args.show_config):
+    if not (args.toggle_timestamps or args.local_dir or args.audio_format or args.list_formats or args.toggle_thumbnails or args.show_config):
         parser.print_help()
         cfg.logger.error("Please Select an Option")
 
