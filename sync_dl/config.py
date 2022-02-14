@@ -26,7 +26,6 @@ def _getConfig():
         'metaDataName' : '.metaData',
         'manualAddId' : '-manualAddition',
         'testPlPath' : 'tests/testPlaylists',
-        'tmpDownloadPath' : 'tmp',
         'musicDir' : '',
         'autoScrapeCommentTimestamps': '0',
         'audioFormat': 'best',
@@ -64,7 +63,7 @@ knownFormats = FFmpegExtractAudioPP.SUPPORTED_EXTS
 metaDataName = _config['metaDataName']
 manualAddId =_config['manualAddId']
 testPlPath = f"{modulePath}/{_config['testPlPath']}" 
-tmpDownloadPath = _tmpDir.name#f"{modulePath}/{_config['tmpDownloadPath']}"
+tmpDownloadPath = _tmpDir.name
 musicDir = _config['musicDir']
 ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
 songSegmentsPath = f'{tmpDownloadPath}/songSegmants'
