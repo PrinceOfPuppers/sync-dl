@@ -1,6 +1,7 @@
 import re
 import os
 import subprocess
+import shutil
 
 import sync_dl.config as cfg
 from sync_dl.timestamps.scraping import Timestamp
@@ -104,6 +105,6 @@ def applyChapterFileToSong(songPath:str, songName:str) -> bool:
         return False
 
     with noInterrupt:
-        os.replace(f"{cfg.tmpDownloadPath}/{songName}", songPath)
+        shutil.move(f"{cfg.tmpDownloadPath}/{songName}", songPath)
     return True
 
