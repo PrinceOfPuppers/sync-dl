@@ -220,13 +220,18 @@ def configHandler(args,parser):
         if args.audio_format == '\n':
             cfg.logger.info(cfg.audioFormat)
             return
-        fmt = args.audio_format
+        fmt = args.audio_format.lower()
         if fmt not in cfg.knownFormats:
             cfg.logger.error(f"Unknown Format: {fmt}\nKnown Formats Are: {', '.join(cfg.knownFormats)}")
             return
+
+        if fmt != 'best' and not cfg.testFfmpeg():
+            cfg.logger.error("ffmpeg is Required to Use Audio Format Other Than 'best'")
+            return
+
         cfg.writeToConfig('audioFormat', fmt)
         cfg.setAudioFormat()
-        cfg.logger.info(f"Audio Format Set to: {fmt}")
+        cfg.logger.info(f"Audio Format Set to: {cfg.audioFormat}")
 
     if args.list_formats:
         cfg.logger.info(' '.join(cfg.knownFormats))
