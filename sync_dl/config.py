@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 import os
 from re import compile
 from ntpath import dirname
+import subprocess
 from yt_dlp.postprocessor import FFmpegExtractAudioPP
 
 '''
@@ -92,7 +93,6 @@ def testFfmpeg():
     if _ffmpegTested:
         return _hasFfmpeg
     try:
-        import subprocess
         subprocess.check_output(['ffmpeg', '-version'])
     except:
         _ffmpegTested = True
@@ -104,10 +104,11 @@ def testFfmpeg():
     return True
 
 
+params['postprocessors'] = []
 if testFfmpeg():
-    params['postprocessors'] =  [
-        {'key': 'FFmpegMetadata'},
-        ]
+    params['postprocessors'].append(
+        {'key': 'FFmpegMetadata'}
+    )
 
 def _addIfNotExists(l, key, val):
     for i in range(len(l)):
@@ -129,8 +130,13 @@ def setAudioFormat():
 
     if audioFormat == 'best':
         params['format'] = f'bestaudio'
-        _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {'key': 'FFmpegExtractAudio'})
+        if testFfmpeg():
+            _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {'key': 'FFmpegExtractAudio'})
     else:
+        if not testFfmpeg():
+            writeToConfig('audioFormat', 'best')
+            audioFormat = _config['audioFormat']
+            raise Exception("ffmpeg is Required to Use Audio Format Other Than 'best'")
         params['format'] = f'{_config["audioFormat"]}/bestaudio'
         _addIfNotExists(params['postprocessors'], 'FFmpegExtractAudio', {
             'key': 'FFmpegExtractAudio',
