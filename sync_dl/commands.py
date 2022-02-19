@@ -461,8 +461,8 @@ def compareMetaData(plPath):
             if item == None:
                 inRemoteNotLocal.pop(j)
                 continue
-            j,_ , remoteId, title = item
-            cfg.logger.info(f"{' '*numDigits}:             -> {str(j).zfill(numDigits)}: {remoteId} : {title}")
+            x,_ , remoteId, title = item
+            cfg.logger.info(f"{' '*numDigits}:             -> {str(x).zfill(numDigits)}: {remoteId} : {title}")
             j+=1
 
         # summery
@@ -472,15 +472,15 @@ def compareMetaData(plPath):
             cfg.logger.info(f"\n------------[In Local But Not In Remote]-----------")
             cfg.logger.info(f"{' '*numDigits}: Local ID    : Local Title")
             for i, localOccuranceNum, localId, title in inLocalNotRemote:
-                    occuranceText = '' if localOccuranceNum == 0 else f' : {str(localOccuranceNum+1)}{getOrdinalIndicator(localOccuranceNum+1)} Occurance'
-                    cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}{occuranceText}")
+                occuranceText = '' if localOccuranceNum == 0 else f' : {str(localOccuranceNum+1)}{getOrdinalIndicator(localOccuranceNum+1)} Occurance'
+                cfg.logger.info(f"{str(i).zfill(numDigits)}: {localId} : {title}{occuranceText}")
 
         if len(inRemoteNotLocal)>0:
             cfg.logger.info(f"\n------------[In Remote But Not In Local]-----------")
             cfg.logger.info(f"{' '*numDigits}: Remote ID   : Remote Title")
             for j, remoteOccuranceNum, remoteId, title in inRemoteNotLocal:
-                    occuranceText = '' if remoteOccuranceNum== 0 else f' : {str(remoteOccuranceNum+1)}{getOrdinalIndicator(remoteOccuranceNum+1)} Occurance'
-                    cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}{occuranceText}")
+                occuranceText = '' if remoteOccuranceNum== 0 else f' : {str(remoteOccuranceNum+1)}{getOrdinalIndicator(remoteOccuranceNum+1)} Occurance'
+                cfg.logger.info(f"{str(j).zfill(numDigits)}: {remoteId} : {title}{occuranceText}")
 
         if len(inLocalNotRemote) == 0 and len(inRemoteNotLocal) == 0:
             cfg.logger.info(f"Local And Remote Contain The Same Songs")
