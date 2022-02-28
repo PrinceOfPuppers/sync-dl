@@ -168,8 +168,8 @@ def setupParsers():
 
 
     config = subparsers.add_parser("config", help='change configuration (carries over between runs)', formatter_class=ArgsOnce)
-    # the '\n' are used as defaults so they dont get confused with actual paths
-    config.add_argument('-l','--local-dir',nargs='?',metavar='PATH',const='\n',type=str,help='sets music directory to PATH, manages playlists in PATH in the future. if no PATH is provided, prints music directory')
+    # the '\n' are used as defaults so they dont get confused with actual paths, '' will reset 
+    config.add_argument('-l','--local-dir',nargs='?',metavar='PATH',const='\n',type=str,help="sets music directory to PATH. if no PATH is provided, prints current music directory. to reset pass '' for PATH")
     config.add_argument('-f','--audio-format',nargs='?',metavar='FMT',const='\n',type=str,help='sets audio format to FMT (eg bestaudio, m4a, mp3, aac). if no FMT is provided, prints current FMT')
     config.add_argument('--list-formats',action='store_true', help='list all acceptable audio formats')
     config.add_argument('-t', '--toggle-timestamps', action='store_true', help='toggles automatic scraping of comments for timestamps when downloading')
@@ -205,6 +205,7 @@ def syncHandler(args,parser):
 
     if args.recursive:
         plPaths = []
+        cfg.logger.info("Searching for Playlists...")
         getPlaylistPathsRecursive(path, plPaths)
         if len(plPaths) == 0:
             errMessage = f"No Playlists Found in: {path}"
@@ -243,21 +244,29 @@ def syncHandler(args,parser):
 
 
 def configHandler(args,parser):
-    if args.local_dir:
+    if args.local_dir is not None:
         if args.local_dir == '\n':
             if cfg.musicDir=='':
                 cfg.logger.error("Music Directory Not Set, Set With: sync-dl config -l PATH")
             else:
                 cfg.logger.info(cfg.musicDir)
             return
-        if not os.path.exists(args.local_dir):
-            cfg.logger.error("Provided Music Directory Does not Exist")
-            return
-        #saves args.local_dir to config
-        music = os.path.abspath(args.local_dir)
 
-        cfg.writeToConfig('musicDir',music)
-        cfg.musicDir = music
+        # reset musicDir to relative pathing
+        if args.local_dir == '':
+            cfg.writeToConfig('musicDir','')
+            cfg.musicDir = ''
+
+        #set music dir to args.local_dir
+        else:
+            if not os.path.exists(args.local_dir):
+                cfg.logger.error("Provided Music Directory Does not Exist")
+                return
+            #saves args.local_dir to config
+            music = os.path.abspath(args.local_dir)
+
+            cfg.writeToConfig('musicDir',music)
+            cfg.musicDir = music
 
     if args.audio_format:
         if args.audio_format == '\n':
@@ -316,7 +325,7 @@ def configHandler(args,parser):
         else:
             cfg.logger.info("(-T) (--toggle-thumbnails): OFF")
 
-    if not (args.toggle_timestamps or args.local_dir or args.audio_format or args.list_formats or args.toggle_thumbnails or args.show_config):
+    if not (args.toggle_timestamps or (args.local_dir is not None) or args.audio_format or args.list_formats or args.toggle_thumbnails or args.show_config):
         parser.print_help()
         cfg.logger.error("Please Select an Option")
 
