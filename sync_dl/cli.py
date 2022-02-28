@@ -62,7 +62,7 @@ def getCwd():
         return cfg.musicDir
 
 
-def playlistExists(plPath):
+def playlistExists(plPath, noError = False):
     '''tests if valid playlist with metadata file exists at provided path'''
     #everything past this point only works if the playlist exists
     if not os.path.exists(plPath):
@@ -70,8 +70,11 @@ def playlistExists(plPath):
         return False
     
     try:
-        shelve.open(f'{plPath}/{cfg.metaDataName}').close()
+        shelve.open(f'{plPath}/{cfg.metaDataName}', flag='r').close()
     except Exception as e:
+        if noError:
+            return False
+
         if e.args == (13, 'Permission denied') or e.__class__ == PermissionError:
             cfg.logger.error(f"Could Not Access Playlist at {plPath}, Permission Denined")
         else:
@@ -86,7 +89,23 @@ def playlistExists(plPath):
 def getPlPath(playlist):
     cwd = getCwd()
 
+    playlist = playlist.strip('/')
+    if playlist == '.':
+        return cwd
+
     return f"{cwd}/{playlist}"
+
+def getPlaylistPathsRecursive(path, plPaths):
+    if playlistExists(path, noError = True):
+        plPaths.append(path)
+        return
+    dir = os.listdir(path)
+    for f in dir:
+        fpath = f"{path}/{f}"
+        if not os.path.isdir(fpath):
+            continue
+        getPlaylistPathsRecursive(fpath,plPaths)
+    return
 
 def setupParsers():
     description = ("A tool for downloading and syncing remote playlists to your computer. Created to avoid having\n"
@@ -118,6 +137,7 @@ def setupParsers():
     sync = subparsers.add_parser("sync", help='smart sync playlist, unless options are added', formatter_class=ArgsOnce)
     sync.add_argument('-s','--smart-sync', action='store_true', help='smart sync local playlist with remote playlist')
     sync.add_argument('-a','--append-new', action='store_true', help='append new songs in remote playlist to end of local playlist')
+    sync.add_argument('-r','--recursive', action='store_true', help='syncs all playlists in subfolders of PLAYLIST recursively (effected by config --local-dir)')
     sync.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
     sync.set_defaults(func = lambda args: syncHandler(args, sync))
 
@@ -181,21 +201,44 @@ def newHandler(args,_):
 
 
 def syncHandler(args,parser):
-    plPath = getPlPath(args.PLAYLIST)
-    if not playlistExists(plPath):
-        return
+    path = getPlPath(args.PLAYLIST)
 
-    #smart syncing
-    if args.smart_sync:
-        smartSync(plPath)
+    if args.recursive:
+        plPaths = []
+        getPlaylistPathsRecursive(path, plPaths)
+        if len(plPaths) == 0:
+            errMessage = f"No Playlists Found in: {path}"
+            if cfg.musicDir:
+                errMessage += f"\n(Note, Pathing is relative to {cfg.musicDir} use sync-dl config -l '' to change this)"
+            cfg.logger.error(errMessage)
+            return
 
-    #appending
-    elif args.append_new:
-        appendNew(plPath)
-
+        plPathsStr = '\n'.join(plPaths)
+        answer = input(f"Playlists Found: \n{plPathsStr} \nContinue with Theses Playlists? (y)es/(n)o: ").lower().strip()
+        if answer != 'y':
+            return
     else:
-        parser.print_help()
-        cfg.logger.error("Please Select an Option")
+        if not playlistExists(path):
+            return
+        plPaths = [path]
+
+
+    for plPath in plPaths:
+        if len(plPaths) > 1:
+            cfg.logger.info("\n===============================================")
+
+        #smart syncing
+        if args.smart_sync:
+            smartSync(plPath)
+
+        #appending
+        elif args.append_new:
+            appendNew(plPath)
+
+        else:
+            parser.print_help()
+            cfg.logger.error("Please Select an Option")
+            break
 
 
 

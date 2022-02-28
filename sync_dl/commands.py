@@ -89,7 +89,7 @@ def smartSync(plPath):
     
     see test_smartSyncNewOrder in tests.py for more examples
     '''
-    cfg.logger.info("Smart Syncing...")
+    cfg.logger.info(f"Smart Syncing {plPath}")
 
 
 
@@ -109,7 +109,7 @@ def smartSync(plPath):
 def appendNew(plPath):
     '''will append new songs in remote playlist to local playlist in order that they appear'''
 
-    cfg.logger.info("Appending New Songs...")
+    cfg.logger.info(f"Appending New Songs to {plPath}")
 
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
