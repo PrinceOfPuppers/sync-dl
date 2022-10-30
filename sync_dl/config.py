@@ -14,7 +14,7 @@ modulePath = dirname(__file__)
 
 #loading config
 _parser = configparser.ConfigParser(allow_no_value=True)
-_parser.optionxform = str 
+_parser.optionxform = str
 
 def writeToConfig(key,value):
     _parser.set('CONFIG',key,value)
@@ -40,7 +40,7 @@ def _getConfig():
             _parser.write(f)
     else:
         _parser.read(cfgPath)
-    
+
 
     config = _parser['CONFIG']
 
@@ -59,11 +59,11 @@ _tmpDir = TemporaryDirectory()
 filePrependRE = compile(r'\d+_')
 plIdRe = compile(r'list=.{34}')
 
-knownFormats = FFmpegExtractAudioPP.SUPPORTED_EXTS
+knownFormats = (*FFmpegExtractAudioPP.SUPPORTED_EXTS, 'best')
 
 metaDataName = _config['metaDataName']
 manualAddId =_config['manualAddId']
-testPlPath = f"{modulePath}/{_config['testPlPath']}" 
+testPlPath = f"{modulePath}/{_config['testPlPath']}"
 tmpDownloadPath = _tmpDir.name
 musicDir = _config['musicDir']
 ffmpegMetadataPath = f'{tmpDownloadPath}/FFMETADATAFILE'
@@ -126,6 +126,7 @@ def _removeIfExists(l, key):
 
 
 def setAudioFormat():
+    global audioFormat
     audioFormat = _config['audioFormat']
 
     if audioFormat == 'best':

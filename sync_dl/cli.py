@@ -68,7 +68,7 @@ def playlistExists(plPath, noError = False):
     if not os.path.exists(plPath):
         cfg.logger.error(f"Directory {plPath} Doesnt Exist")
         return False
-    
+
     try:
         shelve.open(f'{plPath}/{cfg.metaDataName}', flag='r').close()
     except Exception as e:
@@ -128,7 +128,7 @@ def setupParsers():
 
     timestamps.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
     timestamps.set_defaults(func = lambda args: timestampsHandler(args, timestamps))
-    
+
     new = subparsers.add_parser('new', help='downloads new playlist from URL with name PLAYLIST', formatter_class=ArgsOnce)
     new.add_argument('URL', type=str, help='playlist URL')
     new.add_argument('PLAYLIST', type=str, help='the name of the directory for the playlist')
@@ -160,15 +160,15 @@ def setupParsers():
     #transfer
     ytapiSubParsers = ytapi.add_subparsers()
     transfer = ytapiSubParsers.add_parser("transfer", help="transfer songs between playlist on both local and remote", formatter_class=ArgsOnce)
-    transfer.add_argument('-t','--transfer',nargs=2, metavar=('S1','DI'), type = int, help='makes SRC_PLAYLIST song index I1 come after DEST_PLAYLIST song index NI (NI=-1 will move to start)') 
-    transfer.add_argument('-r','--transfer-range',nargs=3, metavar=('S1','S2','DI'), type = int, help='makes SRC_PLAYLIST songs in range [I1, I2] come after DEST_PLAYLIST song index NI (NI=-1 will move to start)') 
+    transfer.add_argument('-t','--transfer',nargs=2, metavar=('S1','DI'), type = int, help='makes SRC_PLAYLIST song index I1 come after DEST_PLAYLIST song index NI (NI=-1 will move to start)')
+    transfer.add_argument('-r','--transfer-range',nargs=3, metavar=('S1','S2','DI'), type = int, help='makes SRC_PLAYLIST songs in range [I1, I2] come after DEST_PLAYLIST song index NI (NI=-1 will move to start)')
     transfer.add_argument('SRC_PLAYLIST', type=str, help='the name of the playlist to transfer songs from')
     transfer.add_argument('DEST_PLAYLIST', type=str, help='the name of the playlist to transfer songs to')
     transfer.set_defaults(func = lambda args: transferHandler(args, transfer))
 
 
     config = subparsers.add_parser("config", help='change configuration (carries over between runs)', formatter_class=ArgsOnce)
-    # the '\n' are used as defaults so they dont get confused with actual paths, '' will reset 
+    # the '\n' are used as defaults so they dont get confused with actual paths, '' will reset
     config.add_argument('-l','--local-dir',nargs='?',metavar='PATH',const='\n',type=str,help="sets music directory to PATH. if no PATH is provided, prints current music directory. to reset pass '' for PATH")
     config.add_argument('-f','--audio-format',nargs='?',metavar='FMT',const='\n',type=str,help='sets audio format to FMT (eg bestaudio, m4a, mp3, aac). if no FMT is provided, prints current FMT')
     config.add_argument('--list-formats',action='store_true', help='list all acceptable audio formats')
@@ -330,7 +330,7 @@ def configHandler(args,parser):
         cfg.logger.error("Please Select an Option")
 
 
-def editHandler(args,parser): 
+def editHandler(args,parser):
 
     plPath = getPlPath(args.PLAYLIST)
     if not playlistExists(plPath):
@@ -338,7 +338,7 @@ def editHandler(args,parser):
 
     if args.move:
         moveRange(plPath,args.move[0],args.move[0],args.move[1])
-    
+
     elif args.move_range:
         moveRange(plPath,args.move_range[0],args.move_range[1],args.move_range[2])
 
@@ -394,7 +394,7 @@ def transferHandler(args, parser):
 
     if args.transfer:
         transferSongs(srcPlPath, destPlPath, args.transfer[0], args.transfer[0], args.transfer[1])
-    
+
     elif args.transfer_range:
         transferSongs(srcPlPath, destPlPath, args.transfer_range[0], args.transfer_range[1], args.transfer_range[2])
 
@@ -428,7 +428,7 @@ def infoHandler(args,parser):
     if not playlistExists(plPath):
         return
 
-    #viewing playlist     
+    #viewing playlist
     if args.print:
         showPlaylist(plPath)
 
@@ -454,7 +454,7 @@ def timestampsHandler(args,parser):
 
     if args.scrape:
         addTimestampsFromComments(plPath, args.scrape[0], args.scrape[0], autoAccept=autoAccept, overwrite=overwrite, autoOverwrite=autoOverwrite)
-    
+
     elif args.scrape_range:
         addTimestampsFromComments(plPath, args.scrape_range[0], args.scrape_range[1], autoAccept=autoAccept, overwrite=overwrite, autoOverwrite=autoOverwrite)
 
@@ -504,8 +504,8 @@ def cli():
 
     except InterruptTriggered as e:
         checkAllStateCorruption(args)
-        
+
     except Exception as e:
         cfg.logger.exception(e)
         checkAllStateCorruption(args)
-        
+

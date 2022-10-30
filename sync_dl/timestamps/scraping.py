@@ -37,7 +37,7 @@ class Timestamp(NamedTuple):
 
     def __repr__(self):
         secondsRemainder = self.time%60
-        
+
         minutes = (self.time//60)
         minutesRemainder = minutes % 60
 
@@ -52,9 +52,9 @@ class Timestamp(NamedTuple):
 
 
     def toFfmpegChapter(self, nextTime):
-        return self.chapterFmt.format(start = 1000*self.time, end = int(1000*nextTime) - 1, title = self.label) 
+        return self.chapterFmt.format(start = 1000*self.time, end = int(1000*nextTime) - 1, title = self.label)
 
-    
+
 
 
 def scrapeJson(j, desiredKey: str, results:List):
@@ -137,7 +137,7 @@ def _getComments(url):
         },
         "continuation": "'''+continuationToken+'''"
     }'''
-    
+
     b = requests.post('https://www.youtube.com/youtubei/v1/next?key='+key,data=requestData)
     commentJson:dict = json.loads(b.text)
     comments = []

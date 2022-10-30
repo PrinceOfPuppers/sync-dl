@@ -1,7 +1,7 @@
 __pycache__
 sync_dl/tests/testPlaylists
 sync_dl/tests/testing.log
-notepad.py
+notepad*
 debug.log
 sync_dl/tmp
 sync_dl/config.ini
@@ -11,5 +11,3 @@ sync_dl.egg-info
 /build
 /dist
 sync_dl/yt_api/credentials
-
-sync-dl-obfuscation

@@ -9,10 +9,10 @@ from sync_dl import noInterrupt
 
 from sync_dl.ytdlWrappers import getIDs, getIdsAndTitles,getJsonPlData
 from sync_dl.plManagement import editPlaylist, correctStateCorruption, removePrepend
-from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets, numOccurance, getNthOccuranceIndex, getOrdinalIndicator, addTimestampsIfNoneExist, padZeros
+from sync_dl.helpers import createNumLabel, smartSyncNewOrder, getLocalSongs, rename, relabel,download,getNumDigets, numOccurance, getNthOccuranceIndex, getOrdinalIndicator, padZeros
 
 from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
-from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
+from sync_dl.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile, addTimestampsIfNoneExist
 
 import sync_dl.config as cfg
 
@@ -27,7 +27,7 @@ def newPlaylist(plPath,url):
     elif len(os.listdir(path=plPath))!=0:
         cfg.logger.error(f"Directory Exists and is Not Empty, Cannot Make Playlist in {plPath}")
         return
-    
+
 
     cfg.logger.info(f"Creating New Playlist Named {ntpath.basename(plPath)} from URL: {url}")
 
@@ -39,7 +39,7 @@ def newPlaylist(plPath,url):
         if answer != 'y':
             os.rmdir(plPath)
             return
-        
+
     numDigits = getNumDigets(idsLen) #needed for creating starting number for auto ordering ie) 001, 0152
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -59,7 +59,7 @@ def newPlaylist(plPath,url):
 
 
         cfg.logger.info(f"Downloaded {idsLen-invalidSongs}/{idsLen} Songs")
-    
+
     if (idsLen-invalidSongs == 0) and dirMade and idsLen!=0:
         cfg.logger.error(f"Unable to Download any Songs from {url}")
         answer = input("Proceed with Creating Empty Playlist (y)es/(n)o: ").lower().strip()
@@ -69,24 +69,24 @@ def newPlaylist(plPath,url):
 
 def smartSync(plPath):
     '''
-    Syncs to remote playlist however will Not delete local songs (will reorder). Songs not in remote (ie ones deleted) 
+    Syncs to remote playlist however will Not delete local songs (will reorder). Songs not in remote (ie ones deleted)
     will be after the song they are currently after in local
     Example 1
-        Local order: A B C D 
+        Local order: A B C D
         Remote order: A 1 B C 2
 
         Local becomes: A 1 B C D 2
 
         notice D was removed from remote but is still after C in Local
-    
+
     Example 2
-        Local order: A B C D 
+        Local order: A B C D
         Remote order: A 1 C B 2
 
         Local becomes: A 1 C D B 2
 
         notice C and B where swapped and D was deleted from Remote
-    
+
     see test_smartSyncNewOrder in tests.py for more examples
     '''
     cfg.logger.info(f"Smart Syncing {plPath}")
@@ -148,7 +148,7 @@ def manualAdd(plPath, songPath, posistion):
             posistion = idsLen
         elif posistion < 0:
             posistion = 0
-        
+
         cfg.logger.info(f"Adding {ntpath.basename(songPath)} to {ntpath.basename(plPath)} in Posistion {posistion}")
 
         #shifting elements
@@ -200,7 +200,7 @@ def swap(plPath, index1, index2):
         oldName = currentDir[index1]
         tempName = relabel(metaData,cfg.logger.debug,plPath,oldName,index1,idsLen,numDigits)
 
-        
+
         #move index2 to index1's old location
 
         oldName = currentDir[index2]
@@ -243,26 +243,26 @@ def move(plPath, currentIndex, newIndex):
             newIndex = idsLen-1
         elif newIndex < 0:
             newIndex = 0
-        
+
         cfg.logger.info(f"Moving {currentDir[currentIndex]} to Index {newIndex}")
-        
+
         #moves song to end of list
         tempName = relabel(metaData,cfg.logger.debug,plPath,currentDir[currentIndex],currentIndex,idsLen,numDigits)
 
         if currentIndex>newIndex:
             #shifts all songs from newIndex to currentIndex-1 by +1
             for i in reversed(range(newIndex,currentIndex)):
-                
+
                 oldName = currentDir[i]
                 relabel(metaData,cfg.logger.debug,plPath,oldName,i,i+1,numDigits)
-    
-        
+
+
         else:
             #shifts all songs from currentIndex+1 to newIndex by -1
             for i in range(currentIndex+1,newIndex+1):
                 oldName = currentDir[i]
                 relabel(metaData,cfg.logger.debug,plPath,oldName,i,i-1,numDigits)
-        
+
         #moves song back
         relabel(metaData,cfg.logger.debug,plPath,tempName,idsLen,newIndex,numDigits)
         del metaData['ids'][idsLen]
@@ -273,7 +273,7 @@ def moveRange(plPath, start, end, newStart):
     moves block of songs from start to end indices, to after newStart
     ie) start = 4, end = 6, newStart = 2
     0 1 2 3 4 5 6 7 -> 0 1 2 4 5 6 3
-    '''    
+    '''
 
     if start == newStart:
         return
@@ -283,7 +283,7 @@ def moveRange(plPath, start, end, newStart):
         correctStateCorruption(plPath,metaData)
 
         currentDir = getLocalSongs(plPath)
-        
+
         idsLen = len(metaData["ids"])
         numDigits = getNumDigets(idsLen)
 
@@ -295,7 +295,7 @@ def moveRange(plPath, start, end, newStart):
         elif start<0:
             cfg.logger.error(f"No Song has a Negative Index")
             return
-            
+
         #clamp end index
         if end>=idsLen or end == -1:
             end = idsLen-1
@@ -309,7 +309,7 @@ def moveRange(plPath, start, end, newStart):
             newStart = idsLen - 1
         elif newStart < -1:
             newStart = -1
-        
+
         # Sanatization over
 
         # number of elements to move
@@ -320,25 +320,25 @@ def moveRange(plPath, start, end, newStart):
             oldName = currentDir[i]
             newIndex =i+blockSize
             relabel(metaData,cfg.logger.debug,plPath,oldName,i,newIndex,numDigits)
-        
+
 
         #accounts for block of songs being shifted if start>newStart
         offset = 0
         if start>newStart:
             currentDir = getLocalSongs(plPath)
             offset = blockSize
-        
+
         # shift block into gap made
         for i,oldIndex in enumerate(range(start,end+1)):
-            
+
             oldName = currentDir[oldIndex]
-            
+
             newIndex = i + newStart+1
             relabel(metaData,cfg.logger.debug,plPath,oldName,oldIndex+offset,newIndex,numDigits)
 
         # remove number gap in playlist and remove blanks in metadata
         correctStateCorruption(plPath,metaData)
-    
+
     # logged changes
     startSong = re.sub(cfg.filePrependRE,"",currentDir[start])
     endSong = re.sub(cfg.filePrependRE,"",currentDir[end])
@@ -346,28 +346,28 @@ def moveRange(plPath, start, end, newStart):
 
     ######## Single song moved ##########
     if start==end:
-        cfg.logger.info(f"Song {start}: {startSong}")        
+        cfg.logger.info(f"Song {start}: {startSong}")
         if newStart == -1:
-            cfg.logger.info(f"Is Now First in The Playlist")        
+            cfg.logger.info(f"Is Now First in The Playlist")
         else:
-            cfg.logger.info(f"Is Now After Song {newStart}: {leaderSong}")       
+            cfg.logger.info(f"Is Now After Song {newStart}: {leaderSong}")
 
-        return 
+        return
     #####################################
 
 
     ####### Multiple Songs Moved ########
     cfg.logger.info(f"Moved Songs in Range [{start}, {end}] to After {newStart}")
-    
+
     cfg.logger.info(f"Start Range:   {startSong}")
     cfg.logger.info(f"End Range:     {endSong}")
 
-    if newStart != -1: 
+    if newStart != -1:
         leaderSong = re.sub(cfg.filePrependRE,"",currentDir[newStart]) # the name of the song the range will come after
         cfg.logger.info(f"Are Now After: {leaderSong}")
     else:
         cfg.logger.info(f"Are Now First in the Playlist")
-    
+
     ######################################
 
 
@@ -378,7 +378,7 @@ def shuffle(plPath):
     from random import randint
 
     cfg.logger.info("Shuffling Playlist")
-    
+
 
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath,metaData)
@@ -391,7 +391,7 @@ def shuffle(plPath):
         for _ in range(plLen):
             oldIndex = avalibleNums.pop(randint(0,len(avalibleNums)-1))
             newOrder.append( (ids[oldIndex],oldIndex) )
-    
+
     editPlaylist(plPath, newOrder)
 
 
@@ -404,7 +404,7 @@ def showPlaylist(plPath, lineBreak='', urlWithoutId = "https://www.youtube.com/w
         cfg.logger.info(f"Playlist URL: {metaData['url']}")
 
         correctStateCorruption(plPath,metaData)
-        
+
         currentDir = getLocalSongs(plPath)
 
         maxNum = len(currentDir)
@@ -425,7 +425,7 @@ def compareMetaData(plPath):
     '''Tool for comparing ids held in metadata and their order compared to remote playlist ids'''
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         correctStateCorruption(plPath, metaData)
-        
+
         remoteIds, remoteTitles = getIdsAndTitles(metaData["url"])
         localIds = metaData["ids"]
         assert isinstance(localIds, list)
@@ -433,7 +433,7 @@ def compareMetaData(plPath):
 
         maxNum = max(len(localIds), len(remoteIds))
         numDigits = len(str(maxNum))
-        
+
 
         cfg.logger.info(f"\n==================[Playlist Data]==================")
         cfg.logger.info(f"{' '*numDigits}: Local ID    -> {' '*numDigits}: Remote ID   : Title")
@@ -485,7 +485,7 @@ def compareMetaData(plPath):
         if len(inLocalNotRemote) == 0 and len(inRemoteNotLocal) == 0:
             cfg.logger.info(f"Local And Remote Contain The Same Songs")
 
-         
+
 
 def peek(urlOrPlName,fmt="{index}: {url} {title}"):
     '''
@@ -497,14 +497,14 @@ def peek(urlOrPlName,fmt="{index}: {url} {title}"):
         - view_count (currently bugged in youtube-dl, will always be none)
         - uploader (soon to be fixed in youtube-dl)
     '''
-    
+
     # check if urlOrPlName is playlist name
     if not cfg.musicDir:
         musicPath = os.getcwd()
     else:
         musicPath = cfg.musicDir
 
-    musicDir = os.listdir(path= musicPath) 
+    musicDir = os.listdir(path= musicPath)
 
     if urlOrPlName in musicDir:
         with shelve.open(f"{musicPath}/{urlOrPlName}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -523,7 +523,7 @@ def togglePrepends(plPath):
     with shelve.open(f"{plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
         if "removePrependOrder" in metaData:
             # prepends where removed, hence we must add them
-            correctStateCorruption(plPath,metaData) # part of correcting state corruption is re-adding prepends 
+            correctStateCorruption(plPath,metaData) # part of correcting state corruption is re-adding prepends
             cfg.logger.info("Prepends Added")
             return
         removePrepend(plPath,metaData)
@@ -546,7 +546,7 @@ def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite 
         elif start < 0:
             cfg.logger.error(f"No Song has a Negative Index")
             return
-            
+
         #clamp end index
         if end >= idsLen or end == -1:
             end = idsLen-1
@@ -641,7 +641,7 @@ def addTimestampsFromComments(plPath, start, end, autoAccept = False, overwrite 
                     cfg.logger.info(timestamp)
                 cfg.logger.info('\n')
 
-                
+
                 if not autoAccept:
                     response = (input(f"\nAccept Timestamps for: {songName}? \n[y]es, [n]o" + (", [a]uto-accept" if multipleSongs else "") + ":")).lower()
                     if response == 'a':

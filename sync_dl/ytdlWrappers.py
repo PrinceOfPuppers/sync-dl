@@ -56,6 +56,7 @@ def getIdsAndTitles(url):
     except:
         return [],[]
 
+
 def getTitle(url):
     '''
     used to check for corrupted metadata in integration tests
@@ -67,27 +68,28 @@ def getTitle(url):
     params['quiet'] = True
     params["outtmpl"] = f'%(title)s'
     params['logger'] = MyLogger()
-    
+
     with youtube_dl.YoutubeDL(params) as ydl:
-        
+
         song = ydl.extract_info(url,download=False)
 
         title = ydl.prepare_filename(song)
     return title
 
+
 def downloadToTmp(videoId,numberStr):
     url = f"https://www.youtube.com/watch?v={videoId}"
-    
+
     if not os.path.exists(cfg.tmpDownloadPath):
         os.mkdir(cfg.tmpDownloadPath)
-    
+
     cfg.params["outtmpl"] = f'{cfg.tmpDownloadPath}/{numberStr}_%(title)s.%(ext)s'
     cfg.params['logger'] = MyLogger()
-    
+
     with youtube_dl.YoutubeDL(cfg.params) as ydl:
 
         #ensures tmp is empty
-        tmp = os.listdir(path=cfg.tmpDownloadPath) 
+        tmp = os.listdir(path=cfg.tmpDownloadPath)
         for f in tmp:
             os.remove(f"{cfg.tmpDownloadPath}/{f}")
 
@@ -109,14 +111,14 @@ def downloadToTmp(videoId,numberStr):
 
 
 def moveFromTmp(path):
-    tmp = os.listdir(path=cfg.tmpDownloadPath) 
+    tmp = os.listdir(path=cfg.tmpDownloadPath)
     shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
     return tmp[0]
 
 def getJsonPlData(url):
     '''returns list of dicts of data for each video in playlist at url (order is playlist order)'''
     params = {}
-    params['extract_flat'] = True 
+    params['extract_flat'] = True
 
     params['quiet'] = True
     params['logger'] = MyLogger()

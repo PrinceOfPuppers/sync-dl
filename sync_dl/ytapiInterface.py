@@ -37,14 +37,14 @@ def promptInstall():
 
     _sync_dl_api_installed = True
     return True
-    
+
 
 def pushLocalOrder(plPath):
 
     installed = promptInstall()
 
     if not installed:
-        return 
+        return
 
     from sync_dl_ytapi.commands import pushLocalOrder
     pushLocalOrder(plPath)
@@ -54,7 +54,7 @@ def logout():
     installed = promptInstall()
 
     if not installed:
-        return 
+        return
 
     from sync_dl_ytapi.commands import logout
     logout()
@@ -69,12 +69,12 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
 
     becomes:
     srcPl: s0 s1 s2 s3 s7   destPl: d0 d1 d2 s4 s5 s6 d3 d4 d5 d6
-    '''    
+    '''
 
     installed = promptInstall()
 
     if not installed:
-        return 
+        return
 
     from sync_dl_ytapi.commands import getPlAdder, getPlRemover
 
@@ -120,7 +120,7 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
         elif srcStart<0:
             cfg.logger.error(f"No Song has a Negative Index")
             return
-            
+
         if srcEnd>=srcIdsLen or srcEnd == -1:
             srcEnd = srcIdsLen-1
 
@@ -187,7 +187,7 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
                             cfg.logger.error(f"- (r)evert Transfer for This Song")
                             cfg.logger.error(f"- (m)anually Adding https://www.youtube.com/watch?v={move.songId} to Remote Playlist Provided Above And (c)ontinuing or (f)inishing this song.")
 
-                
+
                             answer = promptAndSanitize("Would You Like to: (r)evert song, (m)anual fix, (q)uit: ", 'r', 'm', 'q')
 
                             if answer == 'r':

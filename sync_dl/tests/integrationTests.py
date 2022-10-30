@@ -11,7 +11,7 @@ from sync_dl.commands import compareMetaData, showPlaylist
 from sync_dl.helpers import getLocalSongs
 from sync_dl.ytdlWrappers import getTitle,getIdsAndTitles
 
-from sync_dl.timestamps.timestamps import getTimestamps, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
+from sync_dl.timestamps import getTimestamps, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
 from sync_dl.timestamps.scraping import Timestamp, scrapeCommentsForTimestamps
 
 
@@ -94,10 +94,10 @@ def metaDataMatches(metaData,plPath):
 
 class test_integration(unittest.TestCase):
     '''All tests are in order, failing one will fail subsequent tests.
-    This is intentional, redownloading entire playlist for each 
+    This is intentional, redownloading entire playlist for each
     test would be a waste of bandwidth'''
 
-    PL_URL = None #must be passed 
+    PL_URL = None #must be passed
     plName = 'integration'
     plPath = f'{cfg.testPlPath}/{plName}'
 
@@ -117,7 +117,7 @@ class test_integration(unittest.TestCase):
         self.assertTrue(passed)
 
 
-    
+
     def test_1_smartSyncNoEdit(self):
         cfg.logger.info("Running test_smartSyncNoEdit")
         smartSync(self.plPath)
@@ -125,7 +125,7 @@ class test_integration(unittest.TestCase):
             passed = metaDataMatches(metaData,self.plPath)
 
         self.assertTrue(passed)
-    
+
 
     def test_2_smartSyncSwap(self):
         '''Simulates remote reordering by reordering local'''
@@ -145,7 +145,7 @@ class test_integration(unittest.TestCase):
             numIds = len(metaData['ids'])
 
         move(self.plPath,0 , int(numIds/2))
-        
+
         smartSync(self.plPath)
 
         with shelve.open(f"{self.plPath}/{cfg.metaDataName}", 'c',writeback=True) as metaData:
@@ -170,7 +170,7 @@ class test_integration(unittest.TestCase):
         shuffle(self.plPath)
 
         currentDir = getLocalSongs(self.plPath)
-        
+
         #deletes a third (rounded down) of the songs in the playlist
         toDelete = []
         for _ in range(int(len(currentDir)/3)):
@@ -179,7 +179,7 @@ class test_integration(unittest.TestCase):
             while randSong in toDelete:
                 #ensures we dont try to delete the same song twice
                 randSong = random.choice(currentDir)
-            
+
             toDelete.append(randSong)
 
         for song in toDelete:
@@ -192,7 +192,7 @@ class test_integration(unittest.TestCase):
             passed = metaDataMatches(metaData,self.plPath)
 
         self.assertTrue(passed)
-    
+
 
     def test_6_addTimeStamps(self):
         currentDir = getLocalSongs(self.plPath)
@@ -242,7 +242,7 @@ class test_integration(unittest.TestCase):
     def test_8_stateSummery(self):
         '''logs state of playlist after all tests (should be last in test chain)'''
         cfg.logger.info("Integration Test End Report:")
-        
+
         compareMetaData(self.plPath)
         showPlaylist(self.plPath)
 

@@ -3,7 +3,8 @@ import re
 import shelve
 
 from sync_dl import noInterrupt
-from sync_dl.helpers import createNumLabel, getLocalSongs,download, delete, relabel, getNumDigets, getSongNum, addTimestampsIfNoneExist
+from sync_dl.helpers import createNumLabel, getLocalSongs,download, delete, relabel, getNumDigets, getSongNum
+from sync_dl.timestamps import addTimestampsIfNoneExist
 import sync_dl.config as cfg
 
 def _checkDeletions(plPath,metaData):
@@ -20,7 +21,7 @@ def _checkDeletions(plPath,metaData):
 
     #song numbers in currentDir
     currentDirNums = [int(re.match(cfg.filePrependRE,song).group()[:-1]) for song in currentDir]
-    
+
     numRange = range(idsLen)
 
     #difference between whats in the folder and whats in metadata
@@ -52,12 +53,12 @@ def _checkDeletions(plPath,metaData):
                         del deleted[0]
 
                     cfg.logger.debug("Renaming Complete")
-        
+
 
 
         while len(deleted)!=0:
             index = deleted[0]
-            # we remove any remaining deleted entries from metadata 
+            # we remove any remaining deleted entries from metadata
             # note even if the program crashed at this point, running this fuction
             # again would yeild an uncorrupted state
             removedAlready = (numDeleted - len(deleted))
@@ -91,11 +92,11 @@ def _removeGaps(plPath):
 def _restorePrepend(plPath,metaData):
 
     if "removePrependOrder" not in metaData:
-        #prepends already restored 
+        #prepends already restored
         return
-    
+
     cfg.logger.debug("Restoring Prepends")
-    
+
     currentDir = os.listdir(path=plPath)
     idsLen = len(metaData["ids"])
     numDigets = getNumDigets(idsLen)
@@ -114,10 +115,10 @@ def _restorePrepend(plPath,metaData):
         with noInterrupt:
             os.rename(f"{plPath}/{file}",f"{plPath}/{label}_{file}")
 
-            # removed item from dictionary to prevent double restoring 
+            # removed item from dictionary to prevent double restoring
             del metaData["removePrependOrder"][file]
 
-    # metaData["removePrependOrder"] is removed, this is used to signal that all the prepends are there 
+    # metaData["removePrependOrder"] is removed, this is used to signal that all the prepends are there
     # and the playlist can be treated like normal
 
     del metaData["removePrependOrder"]
@@ -130,18 +131,18 @@ def correctStateCorruption(plPath,metaData):
 
     _restorePrepend(plPath,metaData) # can only restore if prepends where removed by remove prepends
 
-    _checkDeletions(plPath,metaData) 
+    _checkDeletions(plPath,metaData)
 
     _removeGaps(plPath) # must come after check deletions (if user manually deletes, then we only have number
                      # on song to go off of, hence removing gaps by chaning the numbers would break this)
 
 
-def removePrepend(plPath, metaData):    
+def removePrepend(plPath, metaData):
     #TODO this step might be unnessisary because its already done in togglePrepend
     if "removePrependOrder" in metaData:
-        # prepends already removed or partially removed 
+        # prepends already removed or partially removed
         return
-    
+
     currentDir = getLocalSongs(plPath)
 
     metaData["removePrependOrder"] = {}
@@ -178,12 +179,12 @@ def editPlaylist(plPath, newOrder, deletions=False):
             newId,oldIndex = newOrder[i]
             newIndex = idsLen + i # we reorder the playlist with exclusivly new numbers in case a crash occurs
 
-            if oldIndex == None: 
+            if oldIndex == None:
                 # must download new song
                 songName = download(metaData,plPath,newId,newIndex,numDigets)
                 if songName and cfg.autoScrapeCommentTimestamps:
                     addTimestampsIfNoneExist(plPath, songName, newId)
-            
+
             else:
                 #song exists locally, but must be reordered/renamed
                 oldName = currentDir[oldIndex]
@@ -196,6 +197,6 @@ def editPlaylist(plPath, newOrder, deletions=False):
             for i in reversed(range(len(currentDir))):
                 if i not in oldIndices:
                     delete(metaData,plPath,currentDir[i],i)
-        
+
         _checkBlanks(plPath,metaData)
         _removeGaps(plPath)

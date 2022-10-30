@@ -6,8 +6,6 @@ from typing import Union, List
 from sync_dl import noInterrupt
 import sync_dl.config as cfg
 from sync_dl.ytdlWrappers import downloadToTmp,moveFromTmp
-from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
-from sync_dl.timestamps.timestamps import createChapterFile, addTimestampsToChapterFile, applyChapterFileToSong, wipeChapterFile
 
 _ords = ('th', 'st', 'nd', 'rd')
 def getOrdinalIndicator(n: int):
@@ -37,7 +35,7 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
     used for changing the number of an element in the playlist
     will blank out old posistion in the metaData
 
-    note this does NOT prevent you from overwriting numbering of 
+    note this does NOT prevent you from overwriting numbering of
     an existing song
 
     returns new name which is needed in some cases (ie when a song is temporarily moved)
@@ -53,10 +51,10 @@ def relabel(metaData, printer,plPath, oldName, oldIndex, newIndex, numDigets):
 
         numIds = len(metaData["ids"])
         if newIndex >= numIds:
-            
+
             for _ in range(newIndex-numIds):
                 metaData["ids"].append('')
-            
+
             metaData["ids"].append(songId)
         else:
             metaData["ids"][newIndex] = songId
@@ -78,7 +76,7 @@ def copy(srcMetaData, destMetaData, printer, srcPlPath, destPlPath, srcName, src
         if destIndex >= numDestIds:
             for _ in range(destIndex-numDestIds):
                 destMetaData["ids"].append('')
-            
+
             destMetaData["ids"].append(songId)
         else:
             destMetaData["ids"][destIndex] = songId
@@ -102,11 +100,11 @@ def download(metaData,plPath, songId, index,numDigets, counter = ''):
     '''
     downloads song and adds it to metadata at index
     returns whether or not the download succeeded
-    
+
     counter is an optional string indicating what number the download is ie) 10 or 23/149
     '''
     if index == -1:
-        index = len(metaData["ids"]) 
+        index = len(metaData["ids"])
 
     num = createNumLabel(index,numDigets)
 
@@ -114,7 +112,7 @@ def download(metaData,plPath, songId, index,numDigets, counter = ''):
         message = f"Dowloading song {counter}, Id {songId}"
     else:
         message = f"Dowloading song Id {songId}"
-    
+
     cfg.logger.info(message)
     if downloadToTmp(songId,num): #returns true if succeeds
 
@@ -127,36 +125,6 @@ def download(metaData,plPath, songId, index,numDigets, counter = ''):
             cfg.logger.debug("Download Complete")
             return songName
     return ''
-
-
-def addTimestampsIfNoneExist(plPath, songName, videoId):
-    songPath = f"{plPath}/{songName}"
-    if not createChapterFile(songPath, songName):
-        return
-
-    existingTimestamps = wipeChapterFile()
-    if len(existingTimestamps) > 0:
-        cfg.logger.info(f"Timestamps Found\n")
-        return
-
-    # Get timestamps
-    cfg.logger.debug(f"Scraping Comments for Timestamps of Song: {songName}")
-    timestamps = scrapeCommentsForTimestamps(videoId)
-
-    if len(timestamps) == 0:
-        cfg.logger.info(f"No Comment Timestamps Found\n")
-        return
-
-    # comment timestamps found, no existing timestamps found
-    cfg.logger.debug(f"\nComment Timestamps Found:")
-    for timestamp in timestamps:
-        cfg.logger.debug(timestamp)
-
-    cfg.logger.info(f"Adding Comment Timestamps\n")
-    addTimestampsToChapterFile(timestamps, songPath)
-
-    if not applyChapterFileToSong(songPath, songName):
-        cfg.logger.error(f"Failed to Add Timestamps To Song {songName}\n")
 
 
 def createNumLabel(n,numDigets):
@@ -188,7 +156,7 @@ def _filterFunc(element):
     match = re.match(cfg.filePrependRE,element)
     if match:
         return True
-    
+
     return False
 
 
@@ -196,7 +164,7 @@ def getLocalSongs(plPath):
     '''
     returns sanatized list of all songs in local playlist, in order
     '''
-    currentDir = os.listdir(path=plPath) 
+    currentDir = os.listdir(path=plPath)
     currentDir = sorted(filter(_filterFunc,currentDir), key= getSongNum) #sorted and sanitized dir
     return currentDir
 
@@ -232,7 +200,7 @@ def smartSyncNewOrder(localIds,remoteIds):
             # current local song has been removed from remote playlist, it must remain in current order
             newOrder.append( localIdPairs.pop(0) )
 
-        
+
         # at this point the current local song and remote song arent the same, but the current local
         # song still exists remotly, hence we can insert the remote song into the current posistion
         elif remoteId in localIds:
@@ -248,16 +216,16 @@ def smartSyncNewOrder(localIds,remoteIds):
             assert j != -1
             newOrder.append( localIdPairs.pop(j) )
             remoteId = remoteIds.pop(0) #must also remove this remote element
-            
+
             #checks if songs after the moved song are not in remote, if so they must be moved with it
             while j<len(localIdPairs) and (localIdPairs[j][0] not in remoteIds):
                 newOrder.append( localIdPairs.pop(j) )
-                
+
 
 
         else:
             newOrder.append( (remoteIds.pop(0),None) )
-    
+
     return newOrder
 
 def getNthOccuranceIndex(l: list, item, n:int) -> Union[int, None]:
@@ -336,15 +304,15 @@ class TransferMove:
 
     def remoteDeleteAction(self, srcRemoteDeleteIndex):
         self.performRemoteDelete  = True
-        self.srcRemoteDeleteIndex = srcRemoteDeleteIndex 
+        self.srcRemoteDeleteIndex = srcRemoteDeleteIndex
 
         assert self.performRemoteAdd
         assert self.performLocalDelete
 
 
-def calcuateTransferMoves(currentSrcDir: List[str], 
-                          srcLocalIds:   List[str], destLocalIds:  List[str], 
-                          srcRemoteIds:  List[str], destRemoteIds: List[str], 
+def calcuateTransferMoves(currentSrcDir: List[str],
+                          srcLocalIds:   List[str], destLocalIds:  List[str],
+                          srcRemoteIds:  List[str], destRemoteIds: List[str],
                           srcStart:int, srcEnd:int, destIndex:int) -> List[TransferMove]:
 
     '''calculates moves for transferSongs'''
@@ -407,7 +375,7 @@ def promptAndSanitize(promptText, *args):
             continue
         return answer
 
-    
+
 
 def logTransferInfo(songTransfers, srcPlName, destPlName, srcIdsLen, destIdsLen, srcRemoteIds, destRemoteIds, currentDestDir, srcStart, srcEnd, destIndex):
     blockSize = srcEnd-srcStart+1
@@ -452,7 +420,7 @@ def logTransferInfo(songTransfers, srcPlName, destPlName, srcIdsLen, destIdsLen,
 
 
     cfg.logger.info(f"------------[Legend]-----------")
-    cfg.logger.info ( 
+    cfg.logger.info (
          f"LC: Local  Copy, from {srcPlName} to {destPlName}\n" \
          f"RA: Remote Add to {destPlName} \n" \
          f"LR: Local  Remove from {srcPlName} \n" \
@@ -466,7 +434,7 @@ def logTransferInfo(songTransfers, srcPlName, destPlName, srcIdsLen, destIdsLen,
     cfg.logger.info(f"  Start Range:   {songTransfers[-1].songName}")
     cfg.logger.info(f"  End Range:     {songTransfers[0].songName}")
 
-    if destIndex != -1: 
+    if destIndex != -1:
         leaderSong = re.sub(cfg.filePrependRE,"", currentDestDir[destIndex]) # the name of the song the range will come after
         cfg.logger.info(f"\nTo After song Index {destIndex} in {destPlName}")
         cfg.logger.info(f"  {destIndex}: {leaderSong}")
@@ -474,8 +442,17 @@ def logTransferInfo(songTransfers, srcPlName, destPlName, srcIdsLen, destIdsLen,
         cfg.logger.info(f"\nTo Start of {destPlName}")
 
 
-    
+
     cfg.logger.info(f"\n------------[Note]-----------")
     cfg.logger.info(f"For Best Remote Playlists Results, Ensure Local and Remote Playlists are Synced")
     cfg.logger.info(f"(failing to do so may lead to ordering changes in remote if there are duplicate songs)")
+
+
+def clearTmpDownloadPath():
+    if not os.path.exists(cfg.tmpDownloadPath):
+        os.mkdir(cfg.tmpDownloadPath)
+        return
+
+    for f in os.listdir(path=cfg.tmpDownloadPath):
+        os.remove(f"{cfg.tmpDownloadPath}/{f}")
 
