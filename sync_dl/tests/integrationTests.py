@@ -193,37 +193,6 @@ class test_integration(unittest.TestCase):
 
         self.assertTrue(passed)
 
-
-    def test_6_addTimeStamps(self):
-        currentDir = getLocalSongs(self.plPath)
-
-        songName = currentDir[0]
-        songPath = f"{self.plPath}/{songName}"
-
-        # Get timestamps
-        timestamps = [Timestamp(time=0, label="test 0"), Timestamp(time = 1, label="test1"), Timestamp(time=2, label="test2")]
-
-        if not createChapterFile(songPath, songName):
-            self.fail("Chapter Creation Failed")
-
-        wipeChapterFile()
-
-        addTimestampsToChapterFile(timestamps, songPath)
-
-        if not applyChapterFileToSong(songPath, songName):
-            cfg.logger.error(f"Failed to Add Timestamps To Song {songName}")
-            self.fail("Chapter Creation Failed")
-
-        preAppliedTimestamps = getTimestamps(cfg.ffmpegMetadataPath)
-        appliedTimestamps = extractChapters(songPath)
-
-        self.assertEqual(len(timestamps), len(appliedTimestamps))
-        self.assertEqual(len(timestamps), len(preAppliedTimestamps))
-
-        for i in range(0,len(timestamps)):
-            self.assertEqual(timestamps[i], appliedTimestamps[i])
-            self.assertEqual(timestamps[i], preAppliedTimestamps[i])
-
     def test_7_scrapeTimeStamps(self):
         videoId = '9WbtgupHTPA'
         knownTimeStamps = [
