@@ -80,18 +80,12 @@ def getTitle(url):
 def downloadToTmp(videoId,numberStr):
     url = f"https://www.youtube.com/watch?v={videoId}"
 
-    if not os.path.exists(cfg.tmpDownloadPath):
-        os.mkdir(cfg.tmpDownloadPath)
+    cfg.dlParams["outtmpl"] = f'{cfg.songDownloadPath}/{numberStr}_%(title)s.%(ext)s'
+    cfg.dlParams['logger'] = MyLogger()
 
-    cfg.params["outtmpl"] = f'{cfg.tmpDownloadPath}/{numberStr}_%(title)s.%(ext)s'
-    cfg.params['logger'] = MyLogger()
+    with youtube_dl.YoutubeDL(cfg.dlParams) as ydl:
 
-    with youtube_dl.YoutubeDL(cfg.params) as ydl:
-
-        #ensures tmp is empty
-        tmp = os.listdir(path=cfg.tmpDownloadPath)
-        for f in tmp:
-            os.remove(f"{cfg.tmpDownloadPath}/{f}")
+        cfg.clearTmpSubPath(cfg.songDownloadPath)
 
         attemptNumber = 1
         numAttempts = 2
@@ -111,8 +105,8 @@ def downloadToTmp(videoId,numberStr):
 
 
 def moveFromTmp(path):
-    tmp = os.listdir(path=cfg.tmpDownloadPath)
-    shutil.move(f"{cfg.tmpDownloadPath}/{tmp[0]}", path)
+    tmp = os.listdir(path=cfg.songDownloadPath)
+    shutil.move(f"{cfg.songDownloadPath}/{tmp[0]}", path)
     return tmp[0]
 
 def getJsonPlData(url):
@@ -129,3 +123,52 @@ def getJsonPlData(url):
             cfg.logger.error(f"No Playlist At URL: {url}")
             entries = []
     return entries
+
+
+def _getBestThumbnail(thumbnails):
+    maxWidth = 0
+    best = None
+    for thumbnail in thumbnails:
+        width = thumbnail['width']
+        if width > maxWidth:
+            maxWidth = width
+            best = thumbnail['url']
+
+    if best is None:
+        return None
+
+    return best.split('?')[0]
+
+def getThumbnailUrls(url:str) -> dict:
+    '''
+    used to check for corrupted metadata in integration tests
+    Title will differ from what is on youtube because it is sanitized for use in filenames
+    '''
+
+    params = {
+        "extract_flat": True, 
+        "quiet": True, 
+        "simulate": True,
+        #"list_thumbnails": True,
+        "logger": MyLogger(),
+    }
+
+    with youtube_dl.YoutubeDL(params) as ydl:
+        result = ydl.extract_info(url,download=False)
+
+    try:
+        entries = result['entries']
+    except KeyError:
+        return {}
+
+    thumbnails = {}
+    for entry in entries:
+        try:
+            thumbnail = _getBestThumbnail(entry['thumbnails'])
+            if thumbnail is None:
+                continue
+            thumbnails[entry['id']] = thumbnail
+        except KeyError:
+            continue
+
+    return thumbnails

@@ -48,11 +48,11 @@ class Timestamp(NamedTuple):
     @classmethod
     def fromFfmpegChapter(cls, timeBase:str, start, title) -> 'Timestamp':
         timeBaseNum = eval(timeBase)
-        return cls(label = title, time = int(timeBaseNum*int(start)))
+        return cls(label = title, time = round(timeBaseNum*int(start)))
 
 
     def toFfmpegChapter(self, nextTime):
-        return self.chapterFmt.format(start = 1000*self.time, end = int(1000*nextTime) - 1, title = self.label)
+        return self.chapterFmt.format(start = round(1000*self.time), end = round(1000*nextTime) - 1, title = self.label)
 
 
 

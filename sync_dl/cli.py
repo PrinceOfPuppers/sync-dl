@@ -255,7 +255,6 @@ def configHandler(args,parser):
         # reset musicDir to relative pathing
         if args.local_dir == '':
             cfg.writeToConfig('musicDir','')
-            cfg.musicDir = ''
 
         #set music dir to args.local_dir
         else:
@@ -266,7 +265,6 @@ def configHandler(args,parser):
             music = os.path.abspath(args.local_dir)
 
             cfg.writeToConfig('musicDir',music)
-            cfg.musicDir = music
 
     if args.audio_format:
         if args.audio_format == '\n':

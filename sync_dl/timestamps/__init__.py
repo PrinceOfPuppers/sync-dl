@@ -7,7 +7,6 @@ import sync_dl.config as cfg
 from sync_dl.timestamps.scraping import Timestamp
 from typing import List
 from sync_dl import noInterrupt
-from sync_dl.helpers import clearTmpDownloadPath
 
 from sync_dl.timestamps.scraping import scrapeCommentsForTimestamps
 
@@ -32,6 +31,19 @@ def getTimestamps(ffmpegMetadataPath:str) -> List[Timestamp]:
 
         return timestamps
 
+def extractChapters(songPath:str) -> List[Timestamp]:
+    cfg.clearTmpSubPath(cfg.ffmpegMetadataPath)
+    createChapterFileCmd = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', songPath, '-an', '-vn', '-sn','-f', 'ffmetadata', cfg.ffmpegMetadataPath]
+
+    try:
+        cfg.logger.debug(f"Extracting Chapters from Song Using FFMPEG Metadata File")
+        subprocess.run(createChapterFileCmd, check=True)
+    except subprocess.CalledProcessError as e:
+        cfg.logger.debug(e)
+        cfg.logger.error(f"Failed to Extract Chapters for Song: {songName}")
+        return []
+
+    return getTimestamps(cfg.ffmpegMetadataPath)
 
 
 def createChapterFile(songPath:str, songName:str) -> bool:
@@ -39,7 +51,7 @@ def createChapterFile(songPath:str, songName:str) -> bool:
         cfg.logger.error(f"No Song at Path {songPath}")
         return False
 
-    clearTmpDownloadPath()
+    cfg.clearTmpSubPath(cfg.ffmpegMetadataPath)
 
     createChapterFileCmd = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', songPath,'-f', 'ffmetadata', cfg.ffmpegMetadataPath]
 
@@ -48,7 +60,7 @@ def createChapterFile(songPath:str, songName:str) -> bool:
         subprocess.run(createChapterFileCmd, check=True)
     except subprocess.CalledProcessError as e:
         cfg.logger.debug(e)
-        cfg.logger.error(f"Failed to Create ffmpeg Chapter File For Song {songName}")
+        cfg.logger.error(f"Failed to Create ffmpeg Chapter File for Song: {songName}")
         return False
 
     return True
@@ -94,7 +106,9 @@ def addTimestampsToChapterFile(timestamps:List[Timestamp], songPath:str):
 
 
 def applyChapterFileToSong(songPath:str, songName:str) -> bool:
-    applyChapterFile = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', songPath, '-i', cfg.ffmpegMetadataPath, '-map_metadata', '1', '-map_chapters', '1', '-codec', 'copy', f"{cfg.tmpDownloadPath}/{songName}"]
+    cfg.clearTmpSubPath(cfg.songEditPath)
+
+    applyChapterFile = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', songPath, '-i', cfg.ffmpegMetadataPath, '-map_metadata', '1', '-map_chapters', '1', '-codec', 'copy', f"{cfg.songEditPath}/{songName}"]
 
     try:
         subprocess.run(applyChapterFile,check=True)
@@ -103,7 +117,7 @@ def applyChapterFileToSong(songPath:str, songName:str) -> bool:
         return False
 
     with noInterrupt:
-        shutil.move(f"{cfg.tmpDownloadPath}/{songName}", songPath)
+        shutil.move(f"{cfg.songEditPath}/{songName}", songPath)
     return True
 
 

@@ -11,7 +11,7 @@ from sync_dl.commands import compareMetaData, showPlaylist
 from sync_dl.helpers import getLocalSongs
 from sync_dl.ytdlWrappers import getTitle,getIdsAndTitles
 
-from sync_dl.timestamps import getTimestamps, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
+from sync_dl.timestamps import getTimestamps, extractChapters, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
 from sync_dl.timestamps.scraping import Timestamp, scrapeCommentsForTimestamps
 
 
@@ -214,12 +214,15 @@ class test_integration(unittest.TestCase):
             cfg.logger.error(f"Failed to Add Timestamps To Song {songName}")
             self.fail("Chapter Creation Failed")
 
-        appliedTimestamps = getTimestamps(cfg.ffmpegMetadataPath)
+        preAppliedTimestamps = getTimestamps(cfg.ffmpegMetadataPath)
+        appliedTimestamps = extractChapters(songPath)
 
         self.assertEqual(len(timestamps), len(appliedTimestamps))
+        self.assertEqual(len(timestamps), len(preAppliedTimestamps))
 
         for i in range(0,len(timestamps)):
             self.assertEqual(timestamps[i], appliedTimestamps[i])
+            self.assertEqual(timestamps[i], preAppliedTimestamps[i])
 
     def test_7_scrapeTimeStamps(self):
         videoId = '9WbtgupHTPA'

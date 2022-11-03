@@ -13,6 +13,9 @@ from sync_dl.plManagement import editPlaylist,correctStateCorruption
 
 from sync_dl.commands import move, swap, manualAdd, moveRange,togglePrepends
 
+from sync_dl.timestamps import getTimestamps, extractChapters, createChapterFile, wipeChapterFile, addTimestampsToChapterFile, applyChapterFileToSong
+from sync_dl.timestamps.scraping import Timestamp
+
 try:
     from sync_dl_ytapi.helpers import longestIncreasingSequence,oldToNewPushOrder,pushOrderMoves
 except:
@@ -1330,3 +1333,28 @@ class test_calculateTransferMoves(unittest.TestCase):
         self.assertListEqual(destDir, ['dA', cfg.manualAddId, 'sB', 'dB', 'dC', 'dD'])
         self.assertListEqual(destLocalIds, ['dA', cfg.manualAddId, 'sB', 'dB', 'dC', 'dD'])
         self.assertListEqual(destRemoteIds, ['dA', 'sB', 'dB', 'dC', 'dD'])
+
+    def test_addTimeStamps(self):
+        # Get timestamps
+        timestamps = [Timestamp(time=0, label="test 0"), Timestamp(time = 1, label="test1"), Timestamp(time=2, label="test2")]
+
+        if not createChapterFile(cfg.testSongPath, cfg.testSongName):
+            self.fail("Chapter Creation Failed")
+
+        wipeChapterFile()
+
+        addTimestampsToChapterFile(timestamps, cfg.testSongPath)
+
+        if not applyChapterFileToSong(cfg.testSongPath, cfg.testSongName):
+            cfg.logger.error(f"Failed to Add Timestamps To Song {cfg.testSongName}")
+            self.fail("Chapter Creation Failed")
+
+        preAppliedTimestamps = getTimestamps(cfg.ffmpegMetadataPath)
+        appliedTimestamps = extractChapters(cfg.testSongPath)
+
+        self.assertEqual(len(timestamps), len(appliedTimestamps))
+        self.assertEqual(len(timestamps), len(preAppliedTimestamps))
+
+        for i in range(0,len(timestamps)):
+            self.assertEqual(timestamps[i], appliedTimestamps[i])
+            self.assertEqual(timestamps[i], preAppliedTimestamps[i])

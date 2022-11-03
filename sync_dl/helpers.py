@@ -448,11 +448,3 @@ def logTransferInfo(songTransfers, srcPlName, destPlName, srcIdsLen, destIdsLen,
     cfg.logger.info(f"(failing to do so may lead to ordering changes in remote if there are duplicate songs)")
 
 
-def clearTmpDownloadPath():
-    if not os.path.exists(cfg.tmpDownloadPath):
-        os.mkdir(cfg.tmpDownloadPath)
-        return
-
-    for f in os.listdir(path=cfg.tmpDownloadPath):
-        os.remove(f"{cfg.tmpDownloadPath}/{f}")
-
