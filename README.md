@@ -76,7 +76,6 @@ sync-dl has a submodule which uses the youtube api the preform the reverse of Sm
 
 For more information see https://github.com/PrinceOfPuppers/sync-dl-ytapi
 
-the order of songs which work well for large playlists, ie) 
 ## Many More!
 Includes tools managing large playlists, For example `sync-dl edit --move-range [I1] [I2] [NI] [PLAYLIST]` which allows a user to move a block of songs From [I1] to [I2] to after song [N1].
 
