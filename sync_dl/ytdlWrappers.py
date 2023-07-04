@@ -98,6 +98,7 @@ def downloadToTmp(videoId,numberStr):
                 cfg.logger.debug(e)
                 cfg.logger.info(f"Unable to Download Song at {url}")
                 if attemptNumber == numAttempts:
+                    cfg.logger.info(f"Max Download Retries Reached! If Song URL is Accessable Try Updating yt-dlp")
                     return False
                 cfg.logger.info("Retrying...")
                 time.sleep(0.5)

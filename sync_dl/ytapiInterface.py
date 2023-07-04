@@ -8,54 +8,13 @@ from sync_dl.plManagement import correctStateCorruption
 from sync_dl.helpers import getLocalSongs, relabel, getNumDigets, copy, delete, padZeros, calcuateTransferMoves, logTransferInfo, promptAndSanitize
 import sync_dl.config as cfg
 
-_sync_dl_api_installed = False
-
-def promptInstall():
-    global _sync_dl_api_installed
-
-    if _sync_dl_api_installed:
-        return True
-
-    try:
-        from sync_dl_ytapi.commands import pushLocalOrder, logout, getPlAdder, getPlRemover
-    except:
-
-        answer = input("Missing Optional Dependancies For This Command.\nWould You Like to Install Them? (y)es/(n)o: ").lower().strip()
-        if answer!='y':
-            return False
-
-        try:
-            import subprocess
-            subprocess.run(["pip","install", '-U','sync-dl-ytapi'],check=True)
-        except:
-            cfg.logger.error("Unable to Install Optional Dependancies")
-            return False
-        cfg.logger.info("Optional Dependancies Installed")
-
-        _sync_dl_api_installed = True
-        cfg.logger.info("----------------------------------")
-
-    _sync_dl_api_installed = True
-    return True
-
 
 def pushLocalOrder(plPath):
-
-    installed = promptInstall()
-
-    if not installed:
-        return
-
     from sync_dl_ytapi.commands import pushLocalOrder
     pushLocalOrder(plPath)
 
 
 def logout():
-    installed = promptInstall()
-
-    if not installed:
-        return
-
     from sync_dl_ytapi.commands import logout
     logout()
 
@@ -70,11 +29,6 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
     becomes:
     srcPl: s0 s1 s2 s3 s7   destPl: d0 d1 d2 s4 s5 s6 d3 d4 d5 d6
     '''
-
-    installed = promptInstall()
-
-    if not installed:
-        return
 
     from sync_dl_ytapi.commands import getPlAdder, getPlRemover
 
@@ -108,7 +62,7 @@ def transferSongs(srcPlPath: str, destPlPath: str, srcStart: int, srcEnd: int, d
         destRemoteIds = getIDs(destPlUrl)
 
         plRemover, srcRemoteIds = getPlRemover(srcPlUrl)
-        if plRemover is None:
+        if plRemover is None or srcRemoteIds is None:
             return
 
 
