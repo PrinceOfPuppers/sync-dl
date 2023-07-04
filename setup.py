@@ -29,7 +29,7 @@ setuptools.setup(
     url="https://github.com/PrinceOfPuppers/sync-dl",
     packages=setuptools.find_packages(),
     include_package_data=True,
-    install_requires=['yt-dlp', 'sync-dl-ytapi>=1.1.1'],
+    install_requires=['yt-dlp', 'sync-dl-ytapi>=1.1.2'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
